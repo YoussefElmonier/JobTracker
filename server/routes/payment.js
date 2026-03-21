@@ -25,32 +25,19 @@ router.post('/create-checkout', auth, async (req, res) => {
     const key = process.env.PADDLE_API_KEY?.trim()
     console.log('📦 Creating checkout with key:', key ? `${key.slice(0, 10)}...${key.slice(-4)}` : 'MISSING')
 
-    // Use native fetch directly (bypasses SDK)
-    const paddleRes = await fetch(`${apiBase}/transactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${key}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        items: [{ price_id: process.env.PADDLE_PRODUCT_ID, quantity: 1 }],
-        custom_data: { userId: user._id.toString() }
-      })
+    // Use the official SDK to create the transaction
+    const transaction = await paddle.transactions.create({
+      items: [{ priceId: process.env.PADDLE_PRODUCT_ID, quantity: 1 }],
+      customData: { userId: user._id.toString() }
     })
-    const paddleData = await paddleRes.json()
-    console.log('📦 Paddle raw response:', JSON.stringify(paddleData).slice(0, 300))
 
-    if (!paddleRes.ok || !paddleData.data?.id) {
-      const detail = paddleData.error?.detail || 'Unknown Paddle error'
-      console.error('❌ Paddle error detail:', detail)
-      return res.status(500).json({ error: 'checkout_creation_failed', message: detail })
-    }
-
-    console.log('✅ Created transaction:', paddleData.data.id)
-    res.json({ transactionId: paddleData.data.id })
+    console.log('✅ Created transaction via SDK:', transaction.id)
+    res.json({ transactionId: transaction.id })
   } catch (err) {
-    console.error('❌ Paddle API Error:', err.message)
-    res.status(500).json({ error: 'checkout_creation_failed', message: err.message })
+    console.error('❌ Paddle SDK Error:', err.message)
+    // If it's a Paddle error, it will have more details
+    const detail = err.response?.data?.error?.detail || err.message
+    res.status(500).json({ error: 'checkout_creation_failed', message: detail })
   }
 })
 
@@ -58,17 +45,13 @@ router.post('/create-checkout', auth, async (req, res) => {
 // Fallback for manual verification
 router.post('/verify-payment', auth, async (req, res) => {
   try {
-    const key = process.env.PADDLE_API_KEY?.trim()
     // List transactions to find if any are completed for this user
-    // Note: In a production app, you'd filter by customData or specific transactionId
-    const paddleRes = await fetch(`${apiBase}/transactions?status=completed`, {
-      headers: { 'Authorization': `Bearer ${key}` }
+    const transactions = await paddle.transactions.list({
+      status: ['completed']
     })
-    const paddleData = await paddleRes.json()
-    
-    // Find the latest transaction where custom_data matches our user
-    const userTransaction = paddleData.data?.find(txn => 
-      txn.custom_data?.userId === req.userId && txn.status === 'completed'
+
+    const userTransaction = transactions.data?.find(txn => 
+      txn.customData?.userId === req.userId
     )
 
     if (userTransaction) {
