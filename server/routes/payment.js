@@ -22,8 +22,17 @@ router.post('/create-checkout', auth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' })
     if (user.isPremium) return res.status(400).json({ message: 'Already Premium!' })
 
-    const key = process.env.PADDLE_API_KEY?.trim()
-    console.log('📦 Creating checkout with key:', key ? `${key.slice(0, 10)}...${key.slice(-4)}` : 'MISSING')
+    const envKey = process.env.PADDLE_API_KEY?.trim() || ''
+    const key = envKey.replace(/['"]+/g, '') // Remove any accidental quotes
+    
+    console.log('--- DEBUG PADDLE KEY ---')
+    console.log('Length:', key.length)
+    console.log('Starts with apikey_:', key.startsWith('apikey_'))
+    console.log('First 10:', key.slice(0, 10))
+    console.log('Last 4:', key.slice(-4))
+    console.log('Full Key (Careful!):', key.slice(0, 7) + '...' + key.slice(-4))
+    console.log('Environment:', paddleEnv)
+    console.log('--- END DEBUG ---')
 
     // Use the official SDK to create the transaction
     const transaction = await paddle.transactions.create({
