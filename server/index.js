@@ -16,7 +16,8 @@ const PORT = process.env.PORT || 5000
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.CLIENT_URL,
+  'https://trkr-job.vercel.app',
+  process.env.CLIENT_URL?.replace(/\/$/, ''), // strip trailing slash if any
 ].filter(Boolean)
 
 // Middleware
