@@ -55,15 +55,21 @@ router.post('/create-checkout', auth, async (req, res) => {
 // ─── POST /api/payment/verify-payment ────────────────────────────────────────
 // Fallback for manual verification
 router.post('/verify-payment', auth, async (req, res) => {
+  console.log('🔍 Manual verification requested for user:', req.userId)
   try {
     // List transactions to find if any are completed for this user
-    const transactions = await paddle.transactions.list({
-      status: ['completed']
+    const transactions = paddle.transactions.list({
+      status: ['completed', 'paid'] // Check both to be safe
     })
 
-    const userTransaction = transactions.data?.find(txn => 
-      txn.customData?.userId === req.userId
-    )
+    let userTransaction = null
+    // We should iterate through the collection, though usually it will be in the first few
+    for await (const txn of transactions) {
+      if (txn.customData?.userId === req.userId) {
+        userTransaction = txn
+        break
+      }
+    }
 
     if (userTransaction) {
       await User.findByIdAndUpdate(req.userId, { isPremium: true })
@@ -71,10 +77,11 @@ router.post('/verify-payment', auth, async (req, res) => {
       return res.json({ success: true, message: 'Upgraded successfully!' })
     }
 
+    console.warn(`⚠️ Verification failed: No completed transaction for user ${req.userId}`)
     res.status(404).json({ message: 'No completed transaction found yet. Please wait a moment.' })
   } catch (err) {
     console.error('❌ Verification Error:', err.message)
-    res.status(500).json({ error: 'verification_failed' })
+    res.status(500).json({ error: 'verification_failed', details: err.message })
   }
 })
 
@@ -82,30 +89,46 @@ router.post('/verify-payment', auth, async (req, res) => {
 // Receives Paddle webhook events and updates user premium status.
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['paddle-signature']
-  if (!signature) return res.status(400).json({ message: 'No signature' })
+  if (!signature) {
+    console.error('❌ Webhook Error: No signature header')
+    return res.status(400).json({ message: 'No signature' })
+  }
 
   try {
+    const rawBody = req.body.toString()
     // Note: Re-initializing paddle here for webhook unmarshal
     const paddleSDK = new Paddle(process.env.PADDLE_API_KEY?.trim(), { environment: paddleEnv })
+    
     const eventData = paddleSDK.webhooks.unmarshal(
-      req.body.toString(),
-      process.env.PADDLE_WEBHOOK_SECRET,
+      rawBody,
+      process.env.PADDLE_WEBHOOK_SECRET?.trim(),
       signature
     )
 
-    console.log('📦 Paddle Webhook:', eventData.eventType)
+    console.log('📦 Paddle Webhook Received:', eventData.eventType, 'Event ID:', eventData.eventId)
 
-    if (eventData.eventType === EventName.TransactionCompleted) {
+    if (eventData.eventType === EventName.TransactionCompleted || eventData.eventType === EventName.TransactionPaid) {
       const userId = eventData.data.customData?.userId
       if (userId) {
-        await User.findByIdAndUpdate(userId, { isPremium: true })
-        console.log(`✅ Webhook: User ${userId} upgraded to Premium`)
+        const updatedUser = await User.findByIdAndUpdate(userId, { isPremium: true }, { new: true })
+        if (updatedUser) {
+          console.log(`✅ Webhook: User ${userId} (${updatedUser.email}) upgraded to Premium`)
+        } else {
+          console.warn(`⚠️ Webhook: Received successful payment but user ${userId} NOT found in DB`)
+        }
+      } else {
+        console.warn('⚠️ Webhook: Transaction completed but NO userId found in customData')
+        console.dir(eventData.data.customData, { depth: null })
       }
     }
+    
     res.json({ received: true })
   } catch (err) {
-    console.error('Webhook error:', err.message)
-    res.status(400).json({ message: 'Webhook verification failed' })
+    console.error('❌ Webhook Verification Failed!', err.message)
+    // Log a bit of the body to see what we're getting
+    const bodyPreview = req.body ? req.body.toString().slice(0, 100) : 'EMPTY'
+    console.log('Body Preview:', bodyPreview)
+    res.status(400).json({ message: 'Webhook verification failed', error: err.message })
   }
 })
 
