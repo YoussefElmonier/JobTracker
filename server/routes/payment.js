@@ -10,7 +10,7 @@ const isLive = process.env.PADDLE_ENV !== 'sandbox' // Default to production unl
 const paddleEnv = isLive ? Environment.Production : Environment.Sandbox
 const apiBase = isLive ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com'
 
-const paddle = new Paddle(process.env.PADDLE_API_KEY, {
+const paddle = new Paddle(process.env.PADDLE_API_KEY?.trim(), {
   environment: paddleEnv
 })
 
