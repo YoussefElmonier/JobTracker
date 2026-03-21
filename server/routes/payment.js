@@ -44,7 +44,9 @@ router.post('/create-checkout', auth, async (req, res) => {
     res.json({ transactionId: transaction.id })
   } catch (err) {
     console.error('❌ Paddle SDK Error:', err.message)
-    // If it's a Paddle error, it will have more details
+    if (err.response?.data) {
+      console.error('📦 Full Paddle Error Detail:', JSON.stringify(err.response.data))
+    }
     const detail = err.response?.data?.error?.detail || err.message
     res.status(500).json({ error: 'checkout_creation_failed', message: detail })
   }
