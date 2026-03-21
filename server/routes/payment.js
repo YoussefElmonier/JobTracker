@@ -22,7 +22,7 @@ router.post('/create-checkout', auth, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' })
     if (user.isPremium) return res.status(400).json({ message: 'Already Premium!' })
 
-    const key = process.env.PADDLE_API_KEY
+    const key = process.env.PADDLE_API_KEY?.trim()
     console.log('📦 Creating checkout with key:', key ? `${key.slice(0, 10)}...${key.slice(-4)}` : 'MISSING')
 
     // Use native fetch directly (bypasses SDK)
@@ -58,7 +58,7 @@ router.post('/create-checkout', auth, async (req, res) => {
 // Fallback for manual verification
 router.post('/verify-payment', auth, async (req, res) => {
   try {
-    const key = process.env.PADDLE_API_KEY
+    const key = process.env.PADDLE_API_KEY?.trim()
     // List transactions to find if any are completed for this user
     // Note: In a production app, you'd filter by customData or specific transactionId
     const paddleRes = await fetch(`${apiBase}/transactions?status=completed`, {
@@ -92,7 +92,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
   try {
     // Note: Re-initializing paddle here for webhook unmarshal
-    const paddleSDK = new Paddle(process.env.PADDLE_API_KEY, { environment: Environment.Sandbox })
+    const paddleSDK = new Paddle(process.env.PADDLE_API_KEY?.trim(), { environment: paddleEnv })
     const eventData = paddleSDK.webhooks.unmarshal(
       req.body.toString(),
       process.env.PADDLE_WEBHOOK_SECRET,
