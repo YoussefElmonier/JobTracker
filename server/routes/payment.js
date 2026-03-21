@@ -6,9 +6,9 @@ const auth       = require('../middleware/auth')
 
 const router = express.Router()
 
-const isLive = process.env.PADDLE_ENV !== 'sandbox' // Default to production unless explicitly told otherwise
+const envVal = (process.env.PADDLE_ENV || 'production').trim().toLowerCase()
+const isLive = envVal !== 'sandbox' 
 const paddleEnv = isLive ? Environment.Production : Environment.Sandbox
-const apiBase = isLive ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com'
 
 const paddle = new Paddle(process.env.PADDLE_API_KEY?.trim(), {
   environment: paddleEnv
