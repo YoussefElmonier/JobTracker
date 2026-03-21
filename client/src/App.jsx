@@ -13,6 +13,9 @@ import Dashboard from './pages/Dashboard'
 import Kanban    from './pages/Kanban'
 import Reminders from './pages/Reminders'
 import Pricing   from './pages/Pricing'
+import Terms     from './pages/Terms'
+import Privacy   from './pages/Privacy'
+import Refund    from './pages/Refund'
 
 function AuthenticatedLayout({ children }) {
   return (
@@ -35,6 +38,9 @@ export default function App() {
           <Route path="/"         element={<Landing />} />
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/terms"    element={<Terms />} />
+          <Route path="/privacy"  element={<Privacy />} />
+          <Route path="/refund"   element={<Refund />} />
 
           {/* Protected */}
           <Route path="/dashboard" element={
