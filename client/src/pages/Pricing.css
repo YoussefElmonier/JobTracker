@@ -1,0 +1,193 @@
+/* ===== Pricing Page ===== */
+.pricing-page {
+  animation: fadeIn 0.4s ease;
+}
+
+.pricing-hero {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.pricing-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  background: var(--tag-blue-tint);
+  border: 1px solid var(--accent);
+  border-radius: 100px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.pricing-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 16px;
+}
+
+.pricing-sub {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Cards */
+.pricing-cards {
+  display: flex;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  flex: 1;
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+.pricing-card--premium {
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(75, 110, 245, 0.1);
+}
+
+.pricing-card__popular {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--accent);
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.pricing-card__header {
+  margin-bottom: 32px;
+}
+
+.pricing-card__plan {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.pricing-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.pricing-card__amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.pricing-card__per {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.pricing-card__features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex: 1;
+}
+
+.pricing-card__feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.pricing-card__feature--locked {
+  color: var(--text-muted);
+}
+
+.pricing-card__feature-icon {
+  font-size: 1.1rem;
+  display: flex;
+}
+
+.pricing-card__feature-icon.ok { color: #10b981; }
+.pricing-card__feature-icon.no { color: #f43f5e; }
+
+/* Buttons */
+.pricing-card__btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  border: none;
+}
+
+.pricing-card__btn--current {
+  background: var(--bg-page);
+  color: var(--text-muted);
+}
+
+.pricing-card__btn--upgrade {
+  background: var(--accent);
+  color: white;
+}
+
+.pricing-card__btn--owned {
+  background: var(--text-main);
+  color: var(--bg-surface);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pricing-hero {
+    margin-bottom: 32px;
+  }
+
+  .pricing-title {
+    font-size: 1.75rem;
+  }
+
+  .pricing-sub {
+    font-size: 0.9rem;
+  }
+
+  .pricing-cards {
+    flex-direction: column;
+    max-width: 480px;
+    gap: 16px;
+  }
+
+  .pricing-card {
+    padding: 24px;
+  }
+
+  .pricing-card__amount {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pricing-cards {
+    max-width: 100%;
+  }
+
+  .pricing-title {
+    font-size: 1.5rem;
+  }
+}

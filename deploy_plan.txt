@@ -1,0 +1,55 @@
+# PROMPT: Vercel Deployment for JobTracker (React + Express Monorepo)
+
+I need to deploy my full-stack JobTracker project to Vercel. 
+- Location: Monorepo with `/client` (Vite) and `/server` (Express).
+- Database: MongoDB Atlas.
+- Auth: Google OAuth 2.0 (Passport.js).
+- Payments: Paddle (Sandbox & Live).
+
+## 🛠️ Step 1: Project Structuring (Serverless)
+We need to configure Vercel to recognize the Express server as an API endpoint and the Vite app as the frontend.
+
+1.  Create a `vercel.json` in the root:
+```json
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server/index.js" },
+    { "source": "/(.*)", "destination": "/client/dist/$1" }
+  ]
+}
+```
+
+2.  Ensure `server/index.js` exports the app `module.exports = app` (for serverless).
+3.  Ensure `client/src/api/axios.js` uses a relative `/api` baseURL in production.
+
+## 🛠️ Step 2: External API Configurations
+
+### Google Console (https://console.cloud.google.com):
+- Update **Authorized JavaScript Origins**: Add production Vercel URL.
+- Update **Authorized Redirect URIs**: Add `https://<DOMAIN>/api/auth/google/callback`.
+
+### Paddle Dashboard (https://sandbox.paddle.com):
+- Update **Default Payment Link**: Set to production Vercel URL.
+- Add **Webhook Destination**: Set to `https://<DOMAIN>/api/payment/webhook`.
+- Event to listen: `transaction.completed`.
+- Capture **Webhook Secret**.
+
+## 🛠️ Step 3: Vercel Dashboard Environment Variables
+Add these to the Vercel project settings:
+
+- MONGO_URI
+- JWT_SECRET
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- CLIENT_URL (Set to production URL)
+- PADDLE_API_KEY
+- PADDLE_PRODUCT_ID
+- PADDLE_WEBHOOK_SECRET
+- GROQ_API_KEY
+
+## 🛠️ Step 4: Verification
+Verify that:
+1.  Google Sign-In redirects to the DASHBOARD on the correct production URL.
+2.  Payment checkout opens correctly from the production pricing page.
+3.  The webhook or manual fallback correctly updates the user to Premium after payment.

@@ -1,0 +1,283 @@
+/* ===== Import from URL Modal ===== */
+
+.ifu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: ifuFadeIn 0.2s ease;
+}
+
+@keyframes ifuFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ifu-modal {
+  background: var(--bg-surface);
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 520px;
+  animation: ifuSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+@keyframes ifuSlideUp {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Header ── */
+.ifu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 0;
+}
+
+.ifu-header__left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ifu-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.ifu-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.ifu-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.ifu-close {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.ifu-close:hover {
+  color: var(--text-main);
+  background: var(--border);
+}
+
+/* ── Body ── */
+.ifu-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ifu-hint {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bg-page);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* ── URL Input ── */
+.ifu-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ifu-input-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.ifu-input {
+  width: 100%;
+  padding: 13px 16px 13px 42px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.ifu-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.ifu-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Error ── */
+.ifu-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #b91c1c;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.ifu-error svg {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Loading state ── */
+.ifu-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.ifu-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: ifuSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ifuSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Footer ── */
+.ifu-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0 24px 24px;
+}
+
+.ifu-extract-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+  color: #fff !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  transition: filter 0.2s, transform 0.15s, opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.ifu-extract-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.ifu-extract-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Import button on Kanban header ── */
+.btn-import-url {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface) !important;
+  color: var(--text-main) !important;
+  border: 1.5px solid var(--border) !important;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 10px;
+  transition: var(--transition);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.btn-import-url:hover {
+  border-color: #6366f1 !important;
+  color: #6366f1 !important;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
+  background: rgba(99, 102, 241, 0.05) !important;
+}
+
+.btn-import-url svg {
+  font-size: 1rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .ifu-header {
+    padding: 18px 18px 0;
+  }
+
+  .ifu-body {
+    padding: 16px 18px;
+  }
+
+  .ifu-footer {
+    padding: 0 18px 18px;
+    flex-direction: column-reverse;
+  }
+
+  .ifu-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ifu-title {
+    font-size: 0.95rem;
+  }
+}

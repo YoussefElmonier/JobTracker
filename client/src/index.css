@@ -1,0 +1,330 @@
+/* ===================================================
+   TRKR Design System — Minimal & Modern
+   =================================================== */
+
+/* --- CSS Custom Properties (Design Tokens) --- */
+:root {
+  /* Colors - Light Theme */
+  --bg-page:        #f0f0ed;
+  --bg-surface:     #ffffff;
+  --bg-dark:        #1a1a1a;
+  
+  --accent:         #4b6ef5;
+  --accent-light:   #6e8efb;
+  --accent-soft:    #eef2ff;
+  
+  --border:         #e5e5e0;
+  
+  /* Text */
+  --text-main:      #111111;
+  --text-muted:     #888888;
+  --text-white:     #ffffff;
+
+  /* Tags */
+  --tag-green:      #d4f7a0;
+  --tag-lavender:   #e4dcff;
+  --tag-blue-tint:  #eef2ff;
+
+  /* Spacing & Shapes */
+  --radius-card:    18px;
+  --radius-pill:    50px;
+  --shadow-soft:    0 2px 12px rgba(0,0,0,0.06);
+
+  /* Transitions */
+  --transition:     all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Dark Theme Overrides --- */
+[data-theme='dark'] {
+  --bg-page:        #212121;
+  --bg-surface:     #2d2d2d;
+  --bg-dark:        #111111;
+  
+  --border:         #3a3a3a;
+  
+  --text-main:      #eeeeee;
+  --text-muted:     #999999;
+  
+  --accent-soft:    #2a3149;
+  --accent-light:   #5b7efb;
+  
+  --tag-blue-tint:  #2d2d3a;
+  
+  --shadow-soft:    0 4px 24px rgba(0,0,0,0.2);
+}
+
+/* --- Reset --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  transition: background-color 0.4s ease;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-surface);
+  border-color: var(--text-main);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  background: rgba(0,0,0,0.04);
+  color: var(--text-main);
+}
+
+/* --- Layout Helpers --- */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 0;
+}
+
+.page-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 40px 40px;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Page Header (shared across Dashboard/Kanban/Reminders) --- */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade { animation: fadeIn 0.4s ease forwards; }
+.animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-down { animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-scale { animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+.stagger-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-4 { animation-delay: 0.4s; opacity: 0; animation-fill-mode: forwards; }
+
+/* --- Common Components Styles --- */
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+  transition: var(--transition);
+  border: 1px solid var(--border);
+}
+
+.card:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* ===================================================
+   Global Responsive Breakpoints
+   =================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 0 24px 32px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0 16px 100px; /* bottom padding for mobile nav bar */
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-header > div:first-child {
+    flex: 1;
+  }
+
+  .page-header .btn,
+  .page-header > button,
+  .page-header > div:last-child {
+    width: 100%;
+  }
+
+  .page-header > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .page-header > div:last-child .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-title {
+    font-size: 1.4rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.85rem !important;
+  }
+
+  .btn {
+    font-size: 0.85rem;
+    padding: 11px 18px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: 0 12px 100px;
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "watch": ["index.js", "routes/", "models/", "middleware/"],
+  "ext": "js,json",
+  "restartable": "rs",
+  "ignore": ["node_modules/"],
+  "delay": 300
+}
