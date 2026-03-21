@@ -6,15 +6,18 @@ const auth       = require('../middleware/auth')
 
 const router = express.Router()
 
+const isLive = process.env.PADDLE_ENV !== 'sandbox' // Default to production unless explicitly told otherwise
+const paddleEnv = isLive ? Environment.Production : Environment.Sandbox
+const apiBase = isLive ? 'https://api.paddle.com' : 'https://sandbox-api.paddle.com'
+
 const paddle = new Paddle(process.env.PADDLE_API_KEY, {
-  environment: Environment.Sandbox
+  environment: paddleEnv
 })
 
 // ─── POST /api/payment/create-checkout ──────────────────────────────────────
 router.post('/create-checkout', auth, async (req, res) => {
   console.log('⚡ /create-checkout route hit by user:', req.userId)
   try {
-    console.log('⚡ fetching user from db...')
     const user = await User.findById(req.userId)
     if (!user) return res.status(404).json({ message: 'User not found' })
     if (user.isPremium) return res.status(400).json({ message: 'Already Premium!' })
@@ -22,8 +25,8 @@ router.post('/create-checkout', auth, async (req, res) => {
     const key = process.env.PADDLE_API_KEY
     console.log('📦 Creating checkout with key:', key ? `${key.slice(0, 10)}...${key.slice(-4)}` : 'MISSING')
 
-    // Use native fetch directly (bypasses SDK) - matches working curl command
-    const paddleRes = await fetch('https://sandbox-api.paddle.com/transactions', {
+    // Use native fetch directly (bypasses SDK)
+    const paddleRes = await fetch(`${apiBase}/transactions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${key}`,
@@ -52,13 +55,13 @@ router.post('/create-checkout', auth, async (req, res) => {
 })
 
 // ─── POST /api/payment/verify-payment ────────────────────────────────────────
-// Fallback for localhost testing: Frontend calls this when redirecting back.
+// Fallback for manual verification
 router.post('/verify-payment', auth, async (req, res) => {
   try {
     const key = process.env.PADDLE_API_KEY
     // List transactions to find if any are completed for this user
     // Note: In a production app, you'd filter by customData or specific transactionId
-    const paddleRes = await fetch('https://sandbox-api.paddle.com/transactions?status=completed', {
+    const paddleRes = await fetch(`${apiBase}/transactions?status=completed`, {
       headers: { 'Authorization': `Bearer ${key}` }
     })
     const paddleData = await paddleRes.json()

@@ -55,8 +55,8 @@ export default function Pricing() {
 
   useEffect(() => {
     initializePaddle({
-      token: 'test_1530feb29663f9db2a5f54eee60',
-      environment: 'sandbox',
+      token: import.meta.env.VITE_PADDLE_TOKEN || 'live_317e28edda2ce78f0630e0efb32', // Used the token we saw in your dashboard
+      environment: import.meta.env.VITE_PADDLE_ENV || 'production',
       checkout: {
         settings: { displayMode: 'overlay', theme: 'dark', locale: 'en' }
       }
