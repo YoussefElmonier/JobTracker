@@ -9,7 +9,8 @@ const jobRoutes     = require('./routes/jobs')
 const logoRoutes    = require('./routes/logo')
 const paymentRoutes = require('./routes/payment')
 const notificationRoutes = require('./routes/notifications')
-const { startEmailScanner } = require('./services/emailScanner')
+const { startEmailScanner, scanUserEmails } = require('./services/emailScanner')
+const auth = require('./middleware/auth')
 
 const app  = express()
 const PORT = process.env.PORT || 5000
@@ -47,6 +48,24 @@ app.use('/api/jobs',    jobRoutes)
 app.use('/api/logo',    logoRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/notifications', notificationRoutes)
+
+// TEMPORARY: Test route to manually scan emails
+app.get('/api/test/scan-emails', auth, async (req, res) => {
+  try {
+    const User = require('./models/User')
+    const user = await User.findById(req.user.id)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    if (!user.gmailConnected) return res.status(400).json({ message: 'Gmail not connected' })
+
+    console.log(`Manual scan requested for ${user.email}`)
+    await scanUserEmails(user)
+    
+    res.json({ message: 'Email scan triggered successfully. Check your notifications for updates.' })
+  } catch (err) {
+    console.error('Manual scan error:', err)
+    res.status(500).json({ message: 'Failed to scan emails', error: err.message })
+  }
+})
 
 // Start Cron Services
 startEmailScanner()
