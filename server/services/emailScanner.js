@@ -89,14 +89,14 @@ async function scanUserEmails(user) {
     const allKeywords = [...offerKeywords, ...interviewKeywords, ...rejectionKeywordsArr];
 
     for (const email of emails) {
-      if (user.scannedEmailIds?.includes(email.id)) continue;
+      // if (user.scannedEmailIds?.includes(email.id)) continue;
 
       const textToCheck = (email.subject + ' ' + (email.snippet || '')).toLowerCase();
       const matched = allKeywords.some(k => textToCheck.includes(k));
       console.log('Email subject:', email.subject, 'Keywords matched:', matched);
 
       if (!matched) {
-        user.scannedEmailIds.push(email.id);
+        // user.scannedEmailIds.push(email.id);
         continue;
       }
 
@@ -120,14 +120,14 @@ async function scanUserEmails(user) {
           result = JSON.parse(raw);
         } catch {
           console.log('Failed to parse Groq response');
-          user.scannedEmailIds.push(email.id);
+          // user.scannedEmailIds.push(email.id);
           continue;
         }
 
         console.log('Groq result:', result);
 
         if (result.type === 'unknown' || !result.company) {
-          user.scannedEmailIds.push(email.id);
+          // user.scannedEmailIds.push(email.id);
           continue;
         }
 
@@ -175,7 +175,7 @@ async function scanUserEmails(user) {
         console.error('Email processing error:', err.message);
       }
 
-      user.scannedEmailIds.push(email.id);
+      // user.scannedEmailIds.push(email.id);
     }
 
     if (user.scannedEmailIds.length > 1000) {
