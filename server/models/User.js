@@ -55,6 +55,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  autoTrackEmails: {
+    type: Boolean,
+    default: true,
+  },
   scannedEmailIds: {
     type: [String],
     default: [],

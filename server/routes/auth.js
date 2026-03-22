@@ -208,12 +208,29 @@ router.post('/gmail/disconnect', auth, async (req, res) => {
      if (!user) return res.status(404).json({ message: 'User not found' })
      
      user.gmailConnected = false
+     user.autoTrackEmails = false
      user.gmailTokens = { accessToken: null, refreshToken: null }
      await user.save()
      
      res.json({ success: true, message: 'Gmail disconnected' })
   } catch(e) {
      res.status(500).json({ message: 'Failed to disconnect Gmail' })
+  }
+})
+
+// PUT /api/auth/gmail/toggle
+router.put('/gmail/toggle', auth, async (req, res) => {
+  try {
+     const { autoTrackEmails } = req.body
+     const user = await User.findById(req.userId)
+     if (!user) return res.status(404).json({ message: 'User not found' })
+     
+     user.autoTrackEmails = !!autoTrackEmails
+     await user.save()
+     
+     res.json({ success: true, autoTrackEmails: user.autoTrackEmails })
+  } catch(e) {
+     res.status(500).json({ message: 'Failed to update toggle' })
   }
 })
 

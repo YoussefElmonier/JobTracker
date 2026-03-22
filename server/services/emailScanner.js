@@ -192,7 +192,7 @@ async function scanUserEmails(user) {
 function startEmailScanner() {
   cron.schedule('0 * * * *', async () => {
     console.log('⏳ Running email scanner cron...')
-    const users = await User.find({ gmailConnected: true })
+    const users = await User.find({ gmailConnected: true, autoTrackEmails: true })
     for (const user of users) {
       await scanUserEmails(user)
     }

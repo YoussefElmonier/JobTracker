@@ -86,6 +86,17 @@ export default function Profile() {
     }
   }
 
+  const handleToggleTracking = async () => {
+    try {
+      const newValue = !(user?.autoTrackEmails !== false)
+      await api.put('/auth/gmail/toggle', { autoTrackEmails: newValue })
+      await refreshUser()
+      setMessage(`Auto-tracking ${newValue ? 'enabled' : 'disabled'}.`)
+    } catch (err) {
+      setError('Failed to toggle tracking')
+    }
+  }
+
   return (
     <div className="page-container animate-fade">
       <div className="profile__header" style={{ marginBottom: '24px' }}>
@@ -143,7 +154,35 @@ export default function Profile() {
           <h2>Gmail Integration</h2>
           {user?.gmailConnected ? (
             <div style={{ marginTop: '16px' }}>
-              <p style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '16px' }}>✅ Gmail connected — we'll auto-update your job statuses.</p>
+              <p style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '16px' }}>
+                ✅ Gmail connected
+              </p>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: 'var(--surface-color)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div style={{ flex: 1 }}>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>Auto-track email updates</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Automatically read recruiter emails and update job card statuses.</span>
+                </div>
+                <label className="toggle-switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={user?.autoTrackEmails !== false} 
+                    onChange={handleToggleTracking}
+                    style={{ opacity: 0, width: 0, height: 0 }} 
+                  />
+                  <span style={{
+                    position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: (user?.autoTrackEmails !== false) ? '#10b981' : '#ccc', transition: '.4s', borderRadius: '24px'
+                  }}>
+                    <span style={{
+                      position: 'absolute', content: '""', height: '18px', width: '18px', left: '3px', bottom: '3px',
+                      backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
+                      transform: (user?.autoTrackEmails !== false) ? 'translateX(20px)' : 'translateX(0)'
+                    }} />
+                  </span>
+                </label>
+              </div>
+
               <button onClick={handleDisconnectGmail} className="btn" style={{ background: '#fce7f3', color: '#be185d', border: 'none' }}>
                 Disconnect Gmail
               </button>
