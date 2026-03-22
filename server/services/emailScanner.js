@@ -84,95 +84,101 @@ async function scanUserEmails(user) {
 
     console.log('Full emails fetched:', emails.map(e => e.subject));
 
-    // Process the fetched emails
-    for (const email of emails) {
-      if (user.scannedEmailIds?.includes(email.id)) continue
+    // Process the fetched emails in parallel
+    await Promise.all(emails.map(async (email) => {
+      if (user.scannedEmailIds?.includes(email.id)) return
 
-      const checkText = (email.subject + ' ' + (email.snippet || '')).toLowerCase()
+      const subject = email.subject || '';
+      const snippet = email.snippet || '';
+      const textToCheck = (subject + ' ' + snippet).toLowerCase();
+
+      console.log('Checking email subject:', subject);
+
+      const interviewKeywordsList = ['interview', 'schedule', 'invitation', 'invited', 'assessment', 'next steps'];
+      const rejectionKeywordsList = ['unfortunately', 'not moving forward', 'other candidates', 'not selected', 'regret'];
+      const offerKeywordsList = ['offer', 'congratulations', 'pleased to inform', 'job offer', 'welcome to the team'];
+      const allKeywords = [...interviewKeywordsList, ...rejectionKeywordsList, ...offerKeywordsList];
+
+      const matched = allKeywords.some(k => textToCheck.includes(k));
+      console.log('Email subject:', subject, 'Keywords matched:', matched);
+
+      if (!matched) return
+
+      const contentToSend = `Subject: ${subject}\n\nFrom: ${email.from}\n\nSnippet: ${snippet}`
       
-      const hasInterview = interviewKeywords.some(kw => checkText.includes(kw))
-      const hasRejection = rejectionKeywords.some(kw => checkText.includes(kw))
-      const hasOffer = offerKeywords.some(kw => checkText.includes(kw))
+      try {
+        console.log('Calling Groq with model: llama-3.3-70b-versatile');
+        const aiRes = await groq.chat.completions.create({
+          messages: [
+            {
+              role: 'system',
+              content: "Analyze this recruiter email. Return only JSON: {type: 'interview'|'rejection'|'offer'|'unknown', company: string|null, date: string|null}. No explanation."
+            },
+            {
+              role: 'user',
+              content: contentToSend
+            }
+          ],
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0,
+          max_tokens: 150,
+          response_format: { type: 'json_object' }
+        })
 
-      console.log('Email subject:', email.subject, 'Keywords matched:', (hasInterview || hasRejection || hasOffer))
-
-      if (hasInterview || hasRejection || hasOffer) {
-        const contentToSend = `Subject: ${email.subject}\n\nFrom: ${email.from}\n\nSnippet: ${email.snippet}`
-        
+        const jsonContent = aiRes.choices[0]?.message?.content || '{}'
+        let json = {}
         try {
-          console.log('Calling Groq with model:', 'llama-3.3-70b-versatile');
-          const aiRes = await groq.chat.completions.create({
-            messages: [
-              {
-                role: 'system',
-                content: "Analyze this recruiter email. Return only JSON: {type: 'interview'|'rejection'|'offer'|'unknown', company: string|null, date: string|null}. No explanation."
-              },
-              {
-                role: 'user',
-                content: contentToSend
-              }
-            ],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0,
-            max_tokens: 150,
-            response_format: { type: 'json_object' }
-          })
-
-          const jsonContent = aiRes.choices[0]?.message?.content || '{}'
-          let json = {}
-          try {
-            json = JSON.parse(jsonContent)
-            console.log('Groq result:', json)
-          } catch(e) {
-            console.error('Failed to parse Groq response', jsonContent)
-          }
-
-          if (json.type && json.type !== 'unknown' && json.company) {
-             const regex = new RegExp(`^${json.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
-             const jobsFound = await Job.find({ user: user._id, company: { $regex: regex } })
-             console.log('Looking for company:', json.company, 'Job cards found:', jobsFound.length)
-             const job = jobsFound[0]
-             
-             let updateStatus = ''
-             let finalStatusStr = ''
-             
-             if (json.type === 'interview') {
-               updateStatus = 'interview'
-               finalStatusStr = 'Interview Scheduled'
-             } else if (json.type === 'rejection') {
-               updateStatus = 'rejected'
-               finalStatusStr = 'Rejected'
-             } else if (json.type === 'offer') {
-               updateStatus = 'offer'
-               finalStatusStr = 'Offer'
-             }
-
-             if (job && updateStatus) {
-                job.status = updateStatus
-                await job.save()
-                console.log('Job card updated:', job._id, 'new status:', updateStatus)
-                
-                await Notification.create({
-                   userId: user._id,
-                   type: 'email_detected',
-                   message: `${finalStatusStr} detected from ${json.company} — job card updated!`,
-                   jobId: job._id
-                })
-             } else {
-                await Notification.create({
-                   userId: user._id,
-                   type: 'email_detected',
-                   message: `Email regarding ${json.company} detected, but no matching job card found to update.`,
-                })
-             }
-          }
+          json = JSON.parse(jsonContent)
+          console.log('Groq result:', json)
         } catch(e) {
-          console.error('Groq email processing error', e)
+          console.error('Failed to parse Groq response', jsonContent)
         }
+
+        if (json.type && json.type !== 'unknown' && json.company) {
+           const regex = new RegExp(`^${json.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
+           const jobsFound = await Job.find({ user: user._id, company: { $regex: regex } })
+           console.log('Looking for company:', json.company, 'Job cards found:', jobsFound.length)
+           const job = jobsFound[0]
+           
+           let updateStatus = ''
+           let finalStatusStr = ''
+           
+           if (json.type === 'interview') {
+             updateStatus = 'interview'
+             finalStatusStr = 'Interview Scheduled'
+           } else if (json.type === 'rejection') {
+             updateStatus = 'rejected'
+             finalStatusStr = 'Rejected'
+           } else if (json.type === 'offer') {
+             updateStatus = 'offer'
+             finalStatusStr = 'Offer'
+           }
+
+           if (job && updateStatus) {
+              job.status = updateStatus
+              await job.save()
+              console.log('Job card updated:', job._id, 'new status:', updateStatus)
+              
+              await Notification.create({
+                 userId: user._id,
+                 type: 'email_detected',
+                 message: `${finalStatusStr} detected from ${json.company} — job card updated!`,
+                 jobId: job._id
+              })
+           } else {
+              await Notification.create({
+                 userId: user._id,
+                 type: 'email_detected',
+                 message: `Email regarding ${json.company} detected, but no matching job card found to update.`,
+              })
+           }
+        }
+      } catch(e) {
+        console.error('Groq email processing error', e)
       }
 
       user.scannedEmailIds.push(email.id)
-    }
+    }));
 
     if (user.scannedEmailIds.length > 1000) {
         user.scannedEmailIds = user.scannedEmailIds.slice(-1000)
