@@ -12,7 +12,7 @@ import './Navbar.css'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: <RiDashboardLine /> },
-  { to: '/kanban',    label: 'Kanban',    icon: <RiKanbanView2 /> },
+  { to: '/kanban',    label: 'Job Board', icon: <RiKanbanView2 /> },
   { to: '/reminders', label: 'Reminders', icon: <RiBellLine /> },
   { to: '/profile',   label: 'Profile',   icon: <RiUserLine /> },
   { to: '/pricing',   label: 'Pricing',   icon: <RiPriceTag2Line /> },

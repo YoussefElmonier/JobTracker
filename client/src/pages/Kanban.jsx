@@ -275,7 +275,7 @@ export default function Kanban() {
     <div className="page-container kanban-page animate-fade">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Kanban Board</h1>
+          <h1 className="page-title">Job Board</h1>
           <p className="page-subtitle">Drag cards to update their status</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>

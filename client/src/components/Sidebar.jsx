@@ -10,7 +10,7 @@ import './Sidebar.css'
 
 const NAV_ITEMS = [
   { to: '/dashboard',  icon: <RiDashboardLine />,  label: 'Dashboard' },
-  { to: '/kanban',     icon: <RiKanbanView2 />,    label: 'Kanban' },
+  { to: '/kanban',     icon: <RiKanbanView2 />,    label: 'Job Board' },
   { to: '/reminders',  icon: <RiBellLine />,        label: 'Reminders' },
   { to: '/profile',    icon: <RiUserLine />,        label: 'Profile' },
   { to: '/pricing',    icon: <RiPriceTag2Line />,   label: 'Pricing' },
