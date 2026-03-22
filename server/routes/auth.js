@@ -171,12 +171,18 @@ router.get('/me', auth, async (req, res) => {
   }
 })
 // GET /api/auth/google
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+router.get('/google', passport.authenticate('google', { 
+  scope: ['profile', 'email'],
+  accessType: 'offline',
+  prompt: 'consent'
+}))
 
 // GET /api/auth/google/gmail (From Profile page)
 router.get('/google/gmail', passport.authenticate('google', { 
   scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
-  state: 'connect_gmail'
+  state: 'connect_gmail',
+  accessType: 'offline',
+  prompt: 'consent'
 }))
 
 // GET /api/auth/google/callback
