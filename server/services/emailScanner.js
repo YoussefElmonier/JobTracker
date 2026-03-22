@@ -64,64 +64,40 @@ async function scanUserEmails(user) {
       maxResults: 5
     })
 
-    const messages = res.data.messages || []
-    console.log('Emails fetched for user:', user.email, 'count:', messages.length)
-    console.log('Starting to process emails...');
+    const messageIds = res.data.messages || []
+    console.log('Message IDs found:', messageIds.length)
 
-    await Promise.all(messages.map(async (msg, index) => {
-      if (user.scannedEmailIds?.includes(msg.id)) return
-
-      let msgData
-      try {
-        msgData = await gmail.users.messages.get({
+    // Parallel fetch for metadata (Faster than full format)
+    const emails = await Promise.all(
+      messageIds.map(async (msg) => {
+        const full = await gmail.users.messages.get({
           userId: 'me',
           id: msg.id,
-          format: 'full'
-        })
-      } catch (err) {
-        console.error('Failed to get message', msg.id, err.message)
-        return
-      }
+          format: 'metadata',
+          metadataHeaders: ['Subject', 'From', 'Date']
+        });
+        const subject = full.data.payload.headers.find(h => h.name === 'Subject')?.value || '';
+        const from = full.data.payload.headers.find(h => h.name === 'From')?.value || '';
+        return { id: msg.id, subject, from, snippet: full.data.snippet };
+      })
+    );
 
-      const payload = msgData.data.payload
-      const headers = payload.headers || []
-      const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject')
-      const subject = subjectHeader ? subjectHeader.value : ''
+    console.log('Full emails fetched:', emails.map(e => e.subject));
 
-      console.log(`Email ${index + 1}:`, subject || 'No subject found');
+    // Process the fetched emails
+    for (const email of emails) {
+      if (user.scannedEmailIds?.includes(email.id)) continue
 
-      let base64Body = ''
-      if (payload.parts) {
-        const textPart = payload.parts.find(p => p.mimeType === 'text/plain')
-        if (textPart && textPart.body && textPart.body.data) {
-          base64Body = textPart.body.data
-        } else if (payload.parts[0] && payload.parts[0].parts) {
-           const innerText = payload.parts[0].parts.find(p => p.mimeType === 'text/plain')
-           if (innerText && innerText.body && innerText.body.data) {
-             base64Body = innerText.body.data
-           }
-        }
-      } else if (payload.body && payload.body.data) {
-        base64Body = payload.body.data
-      }
-
-      let body = ''
-      if (base64Body) {
-        body = Buffer.from(base64Body, 'base64').toString('utf8')
-      } else {
-        body = msgData.data.snippet || ''
-      }
-
-      const checkText = (subject + ' ' + body.slice(0, 200)).toLowerCase()
+      const checkText = (email.subject + ' ' + (email.snippet || '')).toLowerCase()
       
       const hasInterview = interviewKeywords.some(kw => checkText.includes(kw))
       const hasRejection = rejectionKeywords.some(kw => checkText.includes(kw))
       const hasOffer = offerKeywords.some(kw => checkText.includes(kw))
 
-      console.log('Email subject:', subject, 'Keywords matched:', (hasInterview || hasRejection || hasOffer))
+      console.log('Email subject:', email.subject, 'Keywords matched:', (hasInterview || hasRejection || hasOffer))
 
       if (hasInterview || hasRejection || hasOffer) {
-        const contentToSend = `Subject: ${subject}\n\nBody: ${body.slice(0, 500)}`
+        const contentToSend = `Subject: ${email.subject}\n\nFrom: ${email.from}\n\nSnippet: ${email.snippet}`
         
         try {
           console.log('Calling Groq with model:', 'llama-3.3-70b-versatile');
@@ -195,8 +171,8 @@ async function scanUserEmails(user) {
         }
       }
 
-      user.scannedEmailIds.push(msg.id)
-    }))
+      user.scannedEmailIds.push(email.id)
+    }
 
     if (user.scannedEmailIds.length > 1000) {
         user.scannedEmailIds = user.scannedEmailIds.slice(-1000)
