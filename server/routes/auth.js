@@ -56,10 +56,11 @@ passport.use(new GoogleStrategy({
 ))
 
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
-  console.log('📝 Register attempt:', req.body.email)
+router.post('/register', upload.single('cvFile'), async (req, res) => {
+  console.log('📝 Register attempt:', req.body.email || 'Multipart incoming')
   try {
-    const { name, email, password, cvText } = req.body
+    const { name, email, password } = req.body
+    let cvText = req.body.cvText || ''
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' })
@@ -68,6 +69,15 @@ router.post('/register', async (req, res) => {
     const exists = await User.findOne({ email: email.toLowerCase() })
     if (exists) {
       return res.status(409).json({ message: 'An account with that email already exists' })
+    }
+
+    // Process optional PDF if provided during signup
+    if (req.file) {
+      if (req.file.mimetype === 'application/pdf') {
+        const pdfParse = require('pdf-parse-fork')
+        const pdfData = await pdfParse(req.file.buffer)
+        cvText = pdfData.text
+      }
     }
 
     const user  = await User.create({
