@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UpgradeModal from '../components/UpgradeModal'
 import api from '../api/axios'
+import { RiUpload2Line, RiCheckLine } from 'react-icons/ri'
 import './Profile.css'
 
 export default function Profile() {
@@ -122,8 +123,21 @@ export default function Profile() {
 
           <form onSubmit={handleSubmit} className="profile__cv-form">
             <div className="profile__cv-upload">
-              <label>Upload a PDF CV:</label>
-              <input type="file" accept="application/pdf" onChange={handleFileChange} />
+              <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
+              <label className="custom-file-upload">
+                {file ? (
+                  <>
+                    <RiCheckLine className="file-upload-icon" style={{ color: '#10b981' }} />
+                    <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>{file.name}</span>
+                  </>
+                ) : (
+                  <>
+                    <RiUpload2Line className="file-upload-icon" />
+                    <span>Choose PDF File</span>
+                  </>
+                )}
+                <input type="file" accept="application/pdf" onChange={handleFileChange} />
+              </label>
             </div>
             
             <div className="profile__cv-divider">OR</div>

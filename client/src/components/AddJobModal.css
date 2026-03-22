@@ -2,9 +2,9 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -15,15 +15,21 @@
 .modal {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 20px; /* Changed from 24px to 20px */
   width: 100%;
   max-width: 680px;
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25); /* Changed shadow opacity */
   animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Important for header/footer pinning if we did that, but here just for shape */
+}
+
+/* Dark mode modal - more solid for contrast */
+[data-theme='dark'] .modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes modalIn {
@@ -65,6 +71,66 @@
   letter-spacing: -0.02em;
 }
 
+/* Form Elements Styling */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-theme='dark'] .form-label {
+  color: #fff;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+[data-theme='dark'] .form-input {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+[data-theme='dark'] .form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+[data-theme='dark'] .form-input:focus {
+  background: rgba(15, 23, 42, 1);
+  border-color: var(--accent);
+}
+
 .modal__subtitle {
   font-size: 0.9rem;
   color: var(--text-muted);
@@ -96,6 +162,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  overflow-y: auto; /* Moved overflow from .modal to .modal__form */
 }
 
 .modal__row {

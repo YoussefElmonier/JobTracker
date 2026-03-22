@@ -12,11 +12,11 @@ import logoDark from '../assets/logo-dark.png'
 import './Navbar.css'
 
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', icon: <RiDashboardLine /> },
-  { to: '/kanban',    label: 'Job Board', icon: <RiKanbanView2 /> },
-  { to: '/reminders', label: 'Reminders', icon: <RiBellLine /> },
-  { to: '/profile',   label: 'Profile',   icon: <RiUserLine /> },
-  { to: '/pricing',   label: 'Pricing',   icon: <RiPriceTag2Line /> },
+  { to: '/dashboard', label: 'Home',     icon: <RiDashboardLine /> },
+  { to: '/kanban',    label: 'Board',    icon: <RiKanbanView2 /> },
+  { to: '/reminders', label: 'Alerts',   icon: <RiBellLine /> },
+  { to: '/profile',   label: 'Profile',  icon: <RiUserLine /> },
+  { to: '/pricing',   label: 'Pro',      icon: <RiPriceTag2Line /> },
 ]
 
 export default function Navbar() {
@@ -176,10 +176,7 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="navbar__avatar" title={user?.email}>
-              {initials}
-              {isPremium && <RiVipCrownFill className="navbar__avatar-crown" />}
-            </div>
+            <div className="navbar__avatar" title={user?.email}>{initials}</div>
             <button className="navbar__toggle" onClick={toggleTheme} title="Toggle Theme">
               {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}
             </button>

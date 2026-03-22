@@ -4,8 +4,8 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,13 +21,18 @@
 
 .ifu-modal {
   background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
   width: 100%;
   max-width: 520px;
   animation: ifuSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-  border: 1px solid var(--border);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .ifu-modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes ifuSlideUp {

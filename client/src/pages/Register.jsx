@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { RiBriefcaseLine, RiEyeLine, RiEyeOffLine, RiArrowRightLine } from 'react-icons/ri'
-import logo from '../assets/logo-light.png'
+import { 
+  RiBriefcaseLine, RiEyeLine, RiEyeOffLine, RiArrowRightLine, 
+  RiUpload2Line, RiCheckLine 
+} from 'react-icons/ri'
+import { useTheme } from '../context/ThemeContext'
+import logoLight from '../assets/logo-light.png'
+import logoDark from '../assets/logo-dark.png'
 import './Auth.css'
 
 export default function Register() {
+  const { theme } = useTheme()
   const { register, user } = useAuth()
   const navigate = useNavigate()
 
@@ -66,7 +72,11 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <Link to="/" className="auth-logo">
-          <img src={logo} alt="trkr" className="auth-logo-img" />
+          <img 
+            src={theme === 'light' ? logoLight : logoDark} 
+            alt="trkr" 
+            className="auth-logo-img" 
+          />
         </Link>
 
         <div className="auth-header">
@@ -81,118 +91,113 @@ export default function Register() {
         )}
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <div className="form-group">
-            <label className="form-label" htmlFor="reg-name">Full Name</label>
-            <input
-              id="reg-name"
-              name="name"
-              type="text"
-              className="form-input"
-              placeholder="John Doe"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="reg-email">Email</label>
-            <input
-              id="reg-email"
-              name="email"
-              type="email"
-              className="form-input"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="reg-password">Password</label>
-            <div className="auth-input-wrapper">
+          <div className="auth-form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-name">Full Name</label>
               <input
-                id="reg-password"
-                name="password"
-                type={showPw ? 'text' : 'password'}
+                id="reg-name"
+                name="name"
+                type="text"
                 className="form-input"
-                placeholder="Min. 6 characters"
-                value={form.password}
+                placeholder="John Doe"
+                value={form.name}
                 onChange={handleChange}
                 required
               />
-              <button
-                type="button"
-                className="auth-pw-toggle"
-                onClick={() => setShowPw(s => !s)}
-                tabIndex={-1}
-              >
-                {showPw ? <RiEyeOffLine /> : <RiEyeLine />}
-              </button>
             </div>
-            {form.password && (
-              <div className="auth-strength">
-                <div className="auth-strength-bars">
-                  {[1, 2, 3, 4].map(n => (
-                    <div
-                      key={n}
-                      className="auth-strength-bar"
-                      style={{ background: n <= strength ? strengthColor : '#f0f0ed' }}
-                    />
-                  ))}
-                </div>
-                <span className="auth-strength-label" style={{ color: strengthColor }}>
-                  {strengthLabel}
-                </span>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-email">Email</label>
+              <input
+                id="reg-email"
+                name="email"
+                type="email"
+                className="form-input"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="auth-form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-password">Password</label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="reg-password"
+                  name="password"
+                  type={showPw ? 'text' : 'password'}
+                  className="form-input"
+                  placeholder="Min. 6 chars"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-pw-toggle"
+                  onClick={() => setShowPw(s => !s)}
+                  tabIndex={-1}
+                >
+                  {showPw ? <RiEyeOffLine /> : <RiEyeLine />}
+                </button>
               </div>
-            )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="reg-confirm">Confirm Password</label>
+              <input
+                id="reg-confirm"
+                name="confirm"
+                type={showPw ? 'text' : 'password'}
+                className="form-input"
+                placeholder="Repeat password"
+                value={form.confirm}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="reg-confirm">Confirm Password</label>
-            <input
-              id="reg-confirm"
-              name="confirm"
-              type={showPw ? 'text' : 'password'}
-              className="form-input"
-              placeholder="Repeat password"
-              value={form.confirm}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group" style={{ marginTop: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div className="form-group" style={{ marginTop: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
               <label className="form-label" style={{ marginBottom: 0 }}>Your CV (Optional)</label>
               <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{form.cvText.length}/2000</span>
             </div>
             
-            {/* File Upload Option */}
-            <div style={{ marginBottom: '12px' }}>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={e => setFile(e.target.files[0])}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', alignItems: 'stretch' }}>
+              <label className="custom-file-upload" style={{ height: '44px', padding: '0 16px' }}>
+                {file ? (
+                  <>
+                    <RiCheckLine className="file-upload-icon" style={{ color: '#10b981' }} />
+                    <span style={{ color: 'var(--text-main)', fontSize: '0.75rem' }}>{file.name.slice(0, 15)}..</span>
+                  </>
+                ) : (
+                  <>
+                    <RiUpload2Line className="file-upload-icon" />
+                    <span>Upload CV</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={e => setFile(e.target.files[0])}
+                />
+              </label>
+              <textarea
+                name="cvText"
                 className="form-input"
-                style={{ fontSize: '0.85rem', padding: '10px' }}
+                style={{ height: '44px', minHeight: '44px', resize: 'none', fontSize: '0.85rem', padding: '12px 10px' }}
+                placeholder="Or paste text..."
+                value={form.cvText}
+                onChange={handleChange}
+                maxLength={2000}
               />
-              <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '4px' }}>Upload PDF (Max 2MB)</p>
             </div>
-
-            {/* Textarea Fallback */}
-            <textarea
-              name="cvText"
-              className="form-input"
-              style={{ minHeight: '80px', resize: 'vertical', fontSize: '0.9rem' }}
-              placeholder="Or paste your CV text here..."
-              value={form.cvText}
-              onChange={handleChange}
-              maxLength={2000}
-            />
-            <p style={{ marginTop: '8px', fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.4 }}>
-              💡 <strong>Hint:</strong> Adding your CV gives you <strong>personalized</strong> responses and tailored cover letters.
+            <p style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+              💡 <strong>Tip:</strong> Adding your CV allows AI to tailor responses for you.
             </p>
           </div>
 
@@ -223,7 +228,7 @@ export default function Register() {
           </button>
         </form>
 
-        <p className="auth-alt" style={{ marginTop: '24px' }}>
+        <p className="auth-alt" style={{ marginTop: '16px' }}>
           Already have an account?{' '}
           <Link to="/login" className="auth-alt-link">Log in</Link>
         </p>

@@ -50,6 +50,7 @@
 
 .profile__cv-upload {
   display: flex;
+  width: 23%;
   flex-direction: column;
   gap: 0.5rem;
 }

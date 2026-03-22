@@ -125,6 +125,7 @@
   grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 40px;
+  width: 100%;
 }
 
 .dashboard__chart-card {

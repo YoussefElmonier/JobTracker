@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { RiBriefcaseLine, RiEyeLine, RiEyeOffLine, RiArrowRightLine } from 'react-icons/ri'
-import logo from '../assets/logo-light.png'
+import { useTheme } from '../context/ThemeContext'
+import logoLight from '../assets/logo-light.png'
+import logoDark from '../assets/logo-dark.png'
 import './Auth.css'
 
 export default function Login() {
+  const { theme } = useTheme()
   const { login, user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -56,7 +59,11 @@ export default function Login() {
       <div className="auth-card">
         {/* Logo */}
         <Link to="/" className="auth-logo">
-          <img src={logo} alt="trkr" className="auth-logo-img" />
+          <img 
+            src={theme === 'light' ? logoLight : logoDark} 
+            alt="trkr" 
+            className="auth-logo-img" 
+          />
         </Link>
 
         <div className="auth-header">
