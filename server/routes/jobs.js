@@ -201,6 +201,7 @@ router.put('/:id', async (req, res) => {
       }
       merged.interviewQuestions = { free: null, premium: null }
       merged.aiCoverLetter      = { free: '', premium: '' }
+      merged.salaryInsights     = null
     }
 
     if (descriptionChanged || companyChanged) {
@@ -374,6 +375,89 @@ router.post('/:id/interview-questions/:questionIndex/confirm', async (req, res) 
   } catch (err) {
     console.error('POST confirmation error:', err)
     res.status(500).json({ message: 'Failed to confirm question' })
+  }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/jobs/:id/salary-insights
+// ═══════════════════════════════════════════════════════════════════════════════
+router.post('/:id/salary-insights', async (req, res) => {
+  try {
+    const job = await Job.findOne({ _id: req.params.id, user: req.userId })
+    if (!job) return res.status(404).json({ message: 'Job not found' })
+
+    const regenerate = req.body?.regenerate === true
+    if (job.salaryInsights && !regenerate) {
+        return res.json(job.salaryInsights)
+    }
+
+    const title = job.title.toLowerCase()
+    const isJunior = title.includes('junior') || title.includes('entry') || title.includes('graduate') || title.includes('intern')
+    const isSenior = title.includes('senior') || title.includes('lead') || title.includes('principal') || title.includes('head') || title.includes('manager')
+    const isMid = !isJunior && !isSenior
+
+    const seniority = isJunior ? 'junior' : isSenior ? 'senior' : 'mid'
+    const fallbackRanges = {
+      junior: { monthlyMin: 8000, monthlyMax: 15000, monthlySalary: 11000, currency: 'EGP', period: 'monthly', source: 'Fallback estimate' },
+      mid: { monthlyMin: 15000, monthlyMax: 30000, monthlySalary: 22000, currency: 'EGP', period: 'monthly', source: 'Fallback estimate' },
+      senior: { monthlyMin: 30000, monthlyMax: 60000, monthlySalary: 45000, currency: 'EGP', period: 'monthly', source: 'Fallback estimate' }
+    }
+
+    const location = job.location || ''
+    const egyptKeywords = ['egypt', 'cairo', 'alexandria', 'giza', 'masr', 'مصر', 'القاهرة']
+    const isEgypt = egyptKeywords.some(k => location.toLowerCase().includes(k)) || !location
+
+    // Groq call
+    let result
+    try {
+        const titleTrimmed = job.title.slice(0, 100)
+        const locTrimmed = location.slice(0, 100)
+        
+        const systemPrompt = "You are a salary expert for the Egyptian job market. Return only valid JSON with no explanation: {monthlyMin: number, monthlyMax: number, monthlySalary: number, currency: 'EGP', period: 'monthly', source: 'Egyptian market estimate'}. All values must be realistic Egyptian monthly salaries in EGP. For tech roles in Egypt: junior 8000-15000 EGP, mid 15000-30000 EGP, senior 30000-60000 EGP. Never return yearly values. Never return USD unless job is explicitly remote for US company."
+        
+        const chat = await groq.chat.completions.create({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Job Title: ${titleTrimmed}\nLocation: ${locTrimmed}\nDescription: ${job.description.slice(0, 500)}` }
+          ],
+          model: 'llama-3.1-8b-instant',
+          max_tokens: 150,
+          temperature: 0.2,
+          response_format: { type: 'json_object' }
+        })
+        
+        result = JSON.parse(chat.choices[0]?.message?.content || '{}')
+        
+        // Validation/Correction
+        if (result.monthlySalary > 500000) {
+          result.monthlySalary = Math.round(result.monthlySalary / 12)
+          result.monthlyMin = Math.round(result.monthlyMin / 12)
+          result.monthlyMax = Math.round(result.monthlyMax / 12)
+        }
+        
+        if (result.monthlySalary > 500000 || result.monthlySalary < 1000) {
+            result = fallbackRanges[seniority]
+        }
+
+    } catch (err) {
+        console.error('Groq Salary Error:', err)
+        result = fallbackRanges[seniority]
+    }
+    
+    // Final strict validation for EGP local jobs
+    if (isEgypt && result.currency === 'EGP') {
+        if (result.monthlySalary > 200000 || result.monthlySalary < 3000) {
+            result = fallbackRanges[seniority]
+        }
+    }
+
+    job.salaryInsights = result
+    await job.save()
+    
+    res.json(result)
+  } catch (err) {
+    console.error('POST /salary-insights error:', err)
+    res.status(500).json({ message: 'Failed to fetch salary insights' })
   }
 })
 

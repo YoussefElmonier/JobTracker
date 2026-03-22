@@ -90,6 +90,10 @@ const JobSchema = new mongoose.Schema({
     type: Object,
     default: null
   },
+  salaryInsights: {
+    type: Object,
+    default: null
+  },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Job', JobSchema)

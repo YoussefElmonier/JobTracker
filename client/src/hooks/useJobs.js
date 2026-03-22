@@ -101,5 +101,15 @@ export function useJobs() {
     }
   }, [])
 
-  return { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV }
+  const generateSalaryInsights = useCallback(async (jobId, regenerate = false) => {
+    try {
+      const res = await api.post(`/jobs/${jobId}/salary-insights`, { regenerate })
+      setJobs(prev => prev.map(j => j._id === jobId ? { ...j, salaryInsights: res.data } : j))
+      return res.data
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Failed to fetch salary insights')
+    }
+  }, [])
+
+  return { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights }
 }
