@@ -1,27 +1,38 @@
 .navbar {
   height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 40px;
   background: transparent;
   width: 100%;
   position: sticky;
   top: 0;
   z-index: 200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme='dark'] .navbar {
+  background: rgba(33, 33, 33, 0.5);
 }
 
 .navbar__container {
   width: 100%;
   max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .navbar__logo {
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .navbar__logo-img {
@@ -37,6 +48,7 @@
 
 /* Nav Pill */
 .navbar__nav-pill {
+  flex: 0 1 auto;
   background: var(--bg-dark);
   border-radius: var(--radius-pill);
   display: flex;
@@ -86,8 +98,10 @@
 
 /* Right Side */
 .navbar__right {
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
 }
 
