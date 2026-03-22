@@ -1,12 +1,10 @@
 .navbar {
   height: 64px;
-  background: transparent;
   width: 100%;
   position: sticky;
   top: 0;
   z-index: 200;
   display: flex;
-  justify-content: center;
   align-items: center;
   border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.5);
@@ -20,7 +18,7 @@
 
 .navbar__container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 40px;
   display: flex;
