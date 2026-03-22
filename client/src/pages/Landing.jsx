@@ -74,6 +74,21 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="landing__hero" ref={heroRef}>
+        <div className="hero-particles">
+          {[...Array(20)].map((_, i) => (
+            <div 
+              key={i} 
+              className="particle" 
+              style={{
+                left: `${Math.random() * 100}%`,
+                width: `${Math.random() * 6 + 2}px`,
+                height: `${Math.random() * 6 + 2}px`,
+                animationDelay: `${Math.random() * 10}s`,
+                animationDuration: `${Math.random() * 10 + 10}s`
+              }} 
+            />
+          ))}
+        </div>
         <div className="landing__hero-inner">
           <div className="landing__hero-content">
             {/* Badge */}

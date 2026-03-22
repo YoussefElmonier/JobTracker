@@ -106,10 +106,11 @@
 }
 
 .stat-card__value {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: 2.5rem;
+  font-weight: 800;
   color: var(--text-main);
   line-height: 1;
+  letter-spacing: -0.04em;
 }
 
 .stat-card__label {

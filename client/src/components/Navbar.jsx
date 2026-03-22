@@ -114,7 +114,7 @@ export default function Navbar() {
               >
                 {item.label}
                 {item.to === '/pricing' && isPremium && (
-                  <RiVipCrownFill className="navbar__premium-icon" />
+                  <RiVipCrownFill className="navbar__premium-icon crown-glow" />
                 )}
               </NavLink>
             ))}
@@ -125,65 +125,46 @@ export default function Navbar() {
             {/* Notifications */}
             <div className="navbar__notifs" ref={notifRef} style={{ position: 'relative' }}>
               <button 
-                className="navbar__toggle" 
+                className={`navbar__toggle ${unreadCount > 0 ? 'notif-pulse' : ''}`} 
                 onClick={() => setShowNotifs(!showNotifs)} 
                 title="Notifications"
                 style={{ position: 'relative' }}
               >
                 <RiBellLine />
                 {unreadCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '0', right: '0',
-                    background: '#ef4444', color: '#fff', fontSize: '0.65rem',
-                    fontWeight: 'bold', width: '16px', height: '16px',
-                    borderRadius: '50%', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', transform: 'translate(25%, -25%)'
-                  }}>
+                  <span className="notif-badge">
                     {unreadCount}
                   </span>
                 )}
               </button>
               
               {showNotifs && (
-                <div className="navbar__dropdown" style={{
-                  position: 'absolute', top: '120%', right: '0',
-                  width: '320px', background: 'var(--surface-color, #fff)',
-                  border: '1px solid var(--border-color, #e5e5e0)',
-                  borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                  zIndex: 100, overflow: 'hidden'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border-color, #e5e5e0)' }}>
-                    <strong style={{ color: 'var(--text-main)' }}>Notifications</strong>
+                <div className="navbar__dropdown glass-panel">
+                  <div className="notif-dropdown__header">
+                    <strong>Notifications</strong>
                     {unreadCount > 0 && (
-                      <button onClick={handleMarkAllRead} style={{ background: 'none', border: 'none', color: '#4b6ef5', fontSize: '0.8rem', cursor: 'pointer' }}>
+                      <button onClick={handleMarkAllRead} className="notif-dropdown__mark-all">
                         Mark all as read
                       </button>
                     )}
                   </div>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  <div className="notif-dropdown__list">
                     {notifications.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        No notifications yet.
+                      <div className="empty-state" style={{ padding: '24px' }}>
+                        <span className="empty-state__icon" style={{ fontSize: '2rem' }}>✨</span>
+                        <p className="empty-state__title" style={{ fontSize: '1rem' }}>No notifications yet</p>
                       </div>
                     ) : (
                       notifications.map(notif => (
                         <div 
                           key={notif._id} 
                           onClick={() => handleMarkAsRead(notif)}
-                          style={{
-                            padding: '12px 16px', borderBottom: '1px solid var(--border-color, #f0f0f0)',
-                            background: notif.read ? 'transparent' : 'rgba(75, 110, 245, 0.05)',
-                            cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '12px',
-                            transition: 'background 0.2s ease'
-                          }}
+                          className={`notif-item ${notif.read ? '' : 'notif-item--unread'}`}
                         >
-                          <div style={{
-                            width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0, marginTop: '6px',
-                            background: notif.read ? 'transparent' : '#4b6ef5'
-                          }} />
-                          <div>
-                            <p style={{ margin: '0 0 4px', fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.4 }}>{notif.message}</p>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <div className={`notif-item__dot ${notif.read ? '' : 'notif-item__dot--active'}`} />
+                          <div className="notif-item__body">
+                            <p className="notif-item__text">{notif.message}</p>
+                            <span className="notif-item__time">
                               {new Date(notif.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -207,19 +188,22 @@ export default function Navbar() {
       </nav>
 
       {/* ── Mobile Bottom Navigation Bar ── */}
-      <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {NAV_ITEMS.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `mobile-nav__link ${isActive ? 'mobile-nav__link--active' : ''}`
-            }
-          >
-            <span className="mobile-nav__icon">{item.icon}</span>
-            <span className="mobile-nav__label">{item.label}</span>
-          </NavLink>
-        ))}
+      <nav className="mobile-bottom-nav glass-panel" aria-label="Mobile navigation">
+        <div className="mobile-bottom-nav__inner">
+          {NAV_ITEMS.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `mobile-nav__link ${isActive ? 'mobile-nav__link--active' : ''}`
+              }
+            >
+              <span className="mobile-nav__icon">{item.icon}</span>
+              <span className="mobile-nav__label">{item.label}</span>
+              <div className="mobile-nav__indicator" />
+            </NavLink>
+          ))}
+        </div>
       </nav>
     </>
   )

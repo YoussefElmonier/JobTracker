@@ -1,23 +1,25 @@
 /* ===================================================
-   TRKR Design System — Minimal & Modern
+   TRKR Design System — Polish & Glass UI
    =================================================== */
 
 /* --- CSS Custom Properties (Design Tokens) --- */
 :root {
   /* Colors - Light Theme */
-  --bg-page:        #f0f0ed;
-  --bg-surface:     #ffffff;
-  --bg-dark:        #1a1a1a;
+  --bg-page:        #f8fafc;
+  --bg-surface:     rgba(255, 255, 255, 0.7);
+  --bg-dark:        #0f172a;
   
   --accent:         #4b6ef5;
+  --accent-glow:    rgba(75, 110, 245, 0.3);
   --accent-light:   #6e8efb;
-  --accent-soft:    #eef2ff;
+  --accent-soft:    #f1f5f9;
   
-  --border:         #e5e5e0;
+  --border:         rgba(0, 0, 0, 0.08);
+  --glass-border:   rgba(255, 255, 255, 0.2);
   
   /* Text */
-  --text-main:      #111111;
-  --text-muted:     #888888;
+  --text-main:      #0f172a;
+  --text-muted:     rgba(15, 23, 42, 0.5);
   --text-white:     #ffffff;
 
   /* Tags */
@@ -26,9 +28,9 @@
   --tag-blue-tint:  #eef2ff;
 
   /* Spacing & Shapes */
-  --radius-card:    18px;
+  --radius-card:    20px;
   --radius-pill:    50px;
-  --shadow-soft:    0 2px 12px rgba(0,0,0,0.06);
+  --shadow-glass:   0 8px 32px 0 rgba(31, 38, 135, 0.07);
 
   /* Transitions */
   --transition:     all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -36,45 +38,39 @@
 
 /* --- Dark Theme Overrides --- */
 [data-theme='dark'] {
-  --bg-page:        #212121;
-  --bg-surface:     #2d2d2d;
-  --bg-dark:        #111111;
+  --bg-page:        #020617;
+  --bg-surface:     rgba(15, 23, 42, 0.6);
+  --bg-dark:        #020617;
   
-  --border:         #3a3a3a;
+  --border:         rgba(255, 255, 255, 0.1);
   
-  --text-main:      #eeeeee;
-  --text-muted:     #999999;
+  --text-main:      #f8fafc;
+  --text-muted:     rgba(248, 250, 252, 0.5);
   
-  --accent-soft:    #2a3149;
-  --accent-light:   #5b7efb;
+  --accent-soft:    #1e293b;
   
   --tag-blue-tint:  #2d2d3a;
   
-  --shadow-soft:    0 4px 24px rgba(0,0,0,0.2);
+  --shadow-glass:   0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-/* --- Reset --- */
+/* --- Base --- */
 *, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
 }
 
 html {
   scroll-behavior: smooth;
-  transition: background-color 0.4s ease;
-  overflow-x: hidden;
 }
 
 body {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Sora', 'Inter', sans-serif;
   background: var(--bg-page);
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s ease, color 0.4s ease;
-  overflow-x: hidden;
   width: 100%;
 }
 
@@ -86,8 +82,27 @@ body {
   width: 100%;
 }
 
-/* --- Typography --- */
-h1, h2, h3, h4, h5, h6 {
+/* --- Typography Polish --- */
+h1.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+h1, h5, h6 {
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.02em;

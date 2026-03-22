@@ -26,9 +26,11 @@ const COLUMNS = [
   // { id: 'rejected', label: 'Rejected', icon: <RiCloseCircleLine /> },
 ]
 
-function CompanyLogo({ logo, company }) {
+function CompanyLogo({ logo, company, loading = false }) {
   const [error, setError] = useState(false)
   const fallback = company?.trim()?.[0]?.toUpperCase() || '?'
+
+  if (loading) return <div className="skeleton" style={{ width: '42px', height: '42px', borderRadius: '12px' }} />
 
   if (logo && !error) {
     const proxyUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/logo/proxy?url=${encodeURIComponent(logo)}`
@@ -48,13 +50,29 @@ function CompanyLogo({ logo, company }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#eee',
-      color: '#111',
+      background: 'rgba(255,255,255,0.05)',
+      color: 'var(--text-main)',
       fontWeight: 'bold',
       fontSize: '1rem',
       borderRadius: '8px'
     }}>
       {fallback}
+    </div>
+  )
+}
+
+function JobCardSkeleton() {
+  return (
+    <div className="job-card skeleton-card">
+      <div className="job-card__header">
+        <div className="skeleton" style={{ width: '42px', height: '42px', borderRadius: '12px' }} />
+      </div>
+      <div className="skeleton" style={{ width: '60%', height: '14px', marginBottom: '8px' }} />
+      <div className="skeleton" style={{ width: '90%', height: '20px', marginBottom: '20px' }} />
+      <div className="job-card__footer">
+        <div className="skeleton" style={{ width: '60px', height: '20px', borderRadius: '20px' }} />
+        <div className="skeleton" style={{ width: '80px', height: '14px' }} />
+      </div>
     </div>
   )
 }
@@ -437,12 +455,12 @@ export default function Kanban() {
             const hasMore = colJobs.length > 2
 
             return (
-              <div key={col.id} className="kanban__col">
+              <div key={col.id} className={`kanban__col kanban-col-${col.id}`}>
                 <div className="kanban__col-header">
                   <div className="kanban__col-title-row">
                     <span className="kanban__col-icon">{col.icon}</span>
                     <h2 className="kanban__col-title">{col.label}</h2>
-                    <span className="kanban__col-count">{colJobs.length}</span>
+                    <span className="kanban__col-count">{loading ? '...' : colJobs.length}</span>
                   </div>
                   <button className="kanban__col-add" onClick={() => handleAddForColumn(col.id)}>
                     <RiAddLine />
@@ -457,32 +475,42 @@ export default function Kanban() {
                         {...provided.droppableProps}
                         className={`kanban__drop-zone ${snapshot.isDraggingOver ? 'kanban__drop-zone--over' : ''} ${(!isExpanded && hasMore) ? 'kanban__drop-zone--limited' : ''}`}
                       >
-                        {colJobs.length === 0 && !snapshot.isDraggingOver && (
-                          <div className="kanban__empty">
-                            <RiBriefcaseLine />
-                            <span>Empty</span>
+                        {loading ? (
+                           <>
+                             <JobCardSkeleton />
+                             <JobCardSkeleton />
+                           </>
+                        ) : colJobs.length === 0 && !snapshot.isDraggingOver ? (
+                          <div className="empty-state animate-float">
+                            <span className="empty-state__icon">🎯</span>
+                            <h3 className="empty-state__title">No applications yet</h3>
+                            <p className="empty-state__text">Add your first job or use the Chrome extension</p>
+                            <button className="btn btn-secondary btn-sm" onClick={() => handleAddForColumn(col.id)}>
+                              + Add Job
+                            </button>
                           </div>
+                        ) : (
+                          colJobs.map((job, i) => (
+                            <JobCard
+                              key={job._id}
+                              job={job}
+                              index={i}
+                              user={user}
+                              isPremium={isPremium}
+                              onEdit={handleEdit => { setEditJob(handleEdit); setShowModal(true) }}
+                              onDelete={handleDelete}
+                              onConfirmQuestion={confirmQuestion}
+                              onGenerateQuestions={generateQuestions}
+                              onAnalyzeCV={analyzeCV}
+                              onGenerateSalary={generateSalaryInsights}
+                              onRefreshUser={refreshUser}
+                              onGenerateLetter={(j, forcedReason) => {
+                                if (forcedReason) { setUpgradeReason(forcedReason); setShowUpgrade(true); return }
+                                setLetterJob(j)
+                              }}
+                            />
+                          ))
                         )}
-                        {colJobs.map((job, i) => (
-                          <JobCard
-                            key={job._id}
-                            job={job}
-                            index={i}
-                            user={user}
-                            isPremium={isPremium}
-                            onEdit={handleEdit => { setEditJob(handleEdit); setShowModal(true) }}
-                            onDelete={handleDelete}
-                            onConfirmQuestion={confirmQuestion}
-                            onGenerateQuestions={generateQuestions}
-                            onAnalyzeCV={analyzeCV}
-                            onGenerateSalary={generateSalaryInsights}
-                            onRefreshUser={refreshUser}
-                            onGenerateLetter={(j, forcedReason) => {
-                              if (forcedReason) { setUpgradeReason(forcedReason); setShowUpgrade(true); return }
-                              setLetterJob(j)
-                            }}
-                          />
-                        ))}
                         {provided.placeholder}
                       </div>
                       

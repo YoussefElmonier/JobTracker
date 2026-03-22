@@ -90,10 +90,10 @@ export default function Reminders() {
       </div>
 
       {reminders.length === 0 ? (
-        <div className="reminders__empty">
-          <RiCheckLine className="reminders__empty-icon" />
-          <h2>You're all caught up!</h2>
-          <p>No pending follow-ups right now. Keep applying!</p>
+        <div className="empty-state animate-float">
+          <span className="empty-state__icon">🔔</span>
+          <h3 className="empty-state__title">You're all caught up!</h3>
+          <p className="empty-state__text">No follow-ups needed today. Keep crushing those applications!</p>
         </div>
       ) : (
         <div className="reminders__sections">

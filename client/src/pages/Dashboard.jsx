@@ -50,9 +50,18 @@ function CompanyLogo({ logo, company }) {
   )
 }
 
-function StatCard({ icon, label, value, color, trend }) {
+function StatCard({ icon, label, value, color, trend, loading = false }) {
+  if (loading) {
+    return (
+      <div className="stat-card">
+        <div className="skeleton" style={{ width: '42px', height: '42px', borderRadius: '50%' }} />
+        <div className="skeleton" style={{ width: '80%', height: '32px', marginTop: '12px' }} />
+        <div className="skeleton" style={{ width: '50%', height: '14px', marginTop: '8px' }} />
+      </div>
+    )
+  }
   return (
-    <div className="stat-card">
+    <div className="stat-card glass-panel">
       <div className="stat-card__header">
         <div className="stat-card__icon" style={{ background: `${color}18`, color }}>
           {icon}
@@ -164,34 +173,38 @@ export default function Dashboard() {
       <div className="stats-grid">
         <div className="animate-slide-up stagger-1">
           <StatCard
+            loading={loading}
             icon={<RiBriefcaseLine />}
             label="Total Applications"
-            value={loading ? '—' : stats.total}
+            value={stats.total}
             color="#4b6ef5"
             trend={12}
           />
         </div>
         <div className="animate-slide-up stagger-2">
           <StatCard
+            loading={loading}
             icon={<RiArrowRightUpLine />}
             label="Response Rate"
-            value={loading ? '—' : `${stats.responseRate}%`}
+            value={`${stats.responseRate}%`}
             color="#4b6ef5"
           />
         </div>
         <div className="animate-slide-up stagger-3">
           <StatCard
+            loading={loading}
             icon={<RiTrophyLine />}
             label="Offers Received"
-            value={loading ? '—' : stats.offers}
+            value={stats.offers}
             color="#4b6ef5"
           />
         </div>
         <div className="animate-slide-up stagger-4">
           <StatCard
+            loading={loading}
             icon={<RiTimeLine />}
             label="This Week"
-            value={loading ? '—' : stats.thisWeek}
+            value={stats.thisWeek}
             color="#4b6ef5"
           />
         </div>
@@ -275,11 +288,22 @@ export default function Dashboard() {
         </div>
         
         {loading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>Loading...</div>
+          <div className="dashboard__recent-list">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="dashboard__recent-item">
+                <div className="skeleton" style={{ width: '40px', height: '40px', borderRadius: '10px', marginRight: '16px' }} />
+                <div className="dashboard__recent-info">
+                  <div className="skeleton" style={{ width: '40%', height: '14px', marginBottom: '8px' }} />
+                  <div className="skeleton" style={{ width: '60%', height: '12px' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : recentJobs.length === 0 ? (
-          <div style={{ padding: '60px', textAlign: 'center', color: '#888' }}>
-            <RiBriefcaseLine style={{ fontSize: '2rem', marginBottom: '12px' }} />
-            <p>No applications yet.</p>
+          <div className="empty-state animate-float">
+            <span className="empty-state__icon">🎯</span>
+            <h3 className="empty-state__title">No applications yet</h3>
+            <p className="empty-state__text">Start your journey by adding your first application.</p>
           </div>
         ) : (
           <div className="dashboard__recent-list">
