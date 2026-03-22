@@ -23,6 +23,7 @@
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.15);
   animation: modal-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  padding: 12px 12px 12px 12px;
 }
 
 @keyframes modal-slide-up {
