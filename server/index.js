@@ -121,21 +121,6 @@ app.get('/api/test/scan-emails', auth, async (req, res) => {
   }
 })
 
-// Admin migration route to fix scannedEmailIds format
-app.get('/api/admin/fix-scanned-ids', async (req, res) => {
-  try {
-    const User = require('./models/User');
-    await User.updateMany(
-      {},
-      { $set: { scannedEmailIds: [] } }
-    );
-    console.log('Migrated all users scannedEmailIds to empty array');
-    res.json({ success: true, message: 'All scannedEmailIds cleared' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Start Cron Services
 // Removed for Vercel/serverless compatibility. 
 // Use /api/cron/scan-emails instead.
