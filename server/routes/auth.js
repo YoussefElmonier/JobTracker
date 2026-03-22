@@ -57,6 +57,15 @@ const googleAuthCallback = async (accessToken, refreshToken, profile, done) => {
       refreshToken: refreshToken || user.gmailTokens?.refreshToken
     }
     
+    // Migrate scannedEmailIds from old string format to new object format
+    if (user.scannedEmailIds && user.scannedEmailIds.length > 0) {
+      const isOldFormat = typeof user.scannedEmailIds[0] === 'string';
+      if (isOldFormat) {
+        console.log('Migrating scannedEmailIds to new format...');
+        user.scannedEmailIds = [];
+      }
+    }
+    
     await user.save()
     console.log('🛡️ Google Strategy: Execution successful for', user.email)
     return done(null, user)
