@@ -55,13 +55,13 @@ async function scanUserEmails(user) {
     if (!auth) return
 
     const gmail = google.gmail({ version: 'v1', auth })
-    const query = 'is:unread subject:(offer OR interview OR congratulations OR rejection OR hired)'
+    const query = 'is:unread (subject:offer OR subject:interview OR subject:congratulations OR subject:hired OR subject:position)'
 
     console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: query,
-      maxResults: 10
+      maxResults: 20
     })
 
     const messages = res.data.messages || []
