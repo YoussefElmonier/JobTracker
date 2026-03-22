@@ -59,7 +59,7 @@ passport.use(new GoogleStrategy({
 router.post('/register', async (req, res) => {
   console.log('📝 Register attempt:', req.body.email)
   try {
-    const { name, email, password } = req.body
+    const { name, email, password, cvText } = req.body
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email and password are required' })
@@ -70,7 +70,12 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ message: 'An account with that email already exists' })
     }
 
-    const user  = await User.create({ name, email, password })
+    const user  = await User.create({
+      name,
+      email: email.toLowerCase(),
+      password,
+      cvText: cvText ? cvText.trim().slice(0, 2000) : ''
+    })
     const token = signToken(user._id)
 
     res.status(201).json({
