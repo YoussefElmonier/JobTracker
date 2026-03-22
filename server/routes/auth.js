@@ -19,7 +19,8 @@ passport.use(new GoogleStrategy({
     callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
     proxy:        true,
     accessType:   'offline',
-    prompt:       'consent'
+    prompt:       'consent',
+    scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly']
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
