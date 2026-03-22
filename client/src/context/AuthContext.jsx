@@ -54,8 +54,15 @@ export function AuthProvider({ children }) {
     return u
   }, [])
 
-  const register = useCallback(async (name, email, password, cvText = '') => {
-    const res = await api.post('/auth/register', { name, email, password, cvText })
+  const register = useCallback(async (name, email, password, cvText = '', cvFile = null) => {
+    const formData = new FormData()
+    formData.append('name', name)
+    formData.append('email', email)
+    formData.append('password', password)
+    if (cvText) formData.append('cvText', cvText)
+    if (cvFile) formData.append('cvFile', cvFile)
+
+    const res = await api.post('/auth/register', formData)
     const { token: tk, user: u } = res.data
     localStorage.setItem('jt_token', tk)
     setToken(tk)
