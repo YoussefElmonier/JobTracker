@@ -164,7 +164,10 @@ router.get('/google/callback',
 router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
   try {
     const Job = require('../models/Job')
-    console.log('📁 CV Upload route hit user=', req.userId, 'file=', !!req.file, 'body=', !!req.body.cvText)
+    console.log('📁 CV Upload route hit user=', req.userId)
+    console.log('📁 Content-Type:', req.headers['content-type'])
+    console.log('📁 File present:', !!req.file)
+    console.log('📁 Body present:', !!req.body.cvText)
     let cvText = ''
 
     if (req.file) {
