@@ -4,7 +4,9 @@ const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User     = require('../models/User')
 const auth     = require('../middleware/auth')
-const router = express.Router()
+const multer   = require('multer')
+const upload   = multer({ storage: multer.memoryStorage() })
+const router   = express.Router()
 
 // Helper: sign token
 const signToken = (userId) =>
@@ -159,14 +161,11 @@ router.get('/google/callback',
 )
 
 // PUT /api/auth/profile/cv
-router.put('/profile/cv', auth, (req, res, next) => {
-  const multer = require('multer')
-  const upload = multer({ storage: multer.memoryStorage() }).single('cvFile')
-  upload(req, res, next)
-}, async (req, res) => {
+router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
   try {
     const Job = require('../models/Job')
-    console.log('📁 CV Upload route hit user=', req.userId)
+    console.log('📁 CV Upload route hit user=', req.userId, 'file=', !!req.file, 'body=', !!req.body.cvText)
+    let cvText = ''
 
     if (req.file) {
       if (req.file.mimetype !== 'application/pdf') {
