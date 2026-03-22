@@ -17,7 +17,9 @@ passport.use(new GoogleStrategy({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
-    proxy:        true
+    proxy:        true,
+    accessType:   'offline',
+    prompt:       'consent'
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
@@ -42,9 +44,17 @@ passport.use(new GoogleStrategy({
         // Link existing email account to google
         console.log('🛡️ Google Strategy: Linking existing account to google...')
         user.googleId = profile.id
-        await user.save()
         console.log('🛡️ Google Strategy: Account linked.')
       }
+
+      // Attach Gmail tokens
+      console.log('🛡️ Google Strategy: Attaching Gmail tokens...')
+      user.gmailTokens = {
+        accessToken,
+        refreshToken: refreshToken || user.gmailTokens?.refreshToken // Fallback to old refresh token if not present
+      }
+      
+      await user.save()
 
       console.log('🛡️ Google Strategy: Execution successful for', user.email)
       return done(null, user)
