@@ -73,6 +73,7 @@ app.get('/api/cron/scan-emails', async (req, res) => {
     const User = require('./models/User')
     // Find up to 3 users where gmailConnected: true (Vercel 10s timeout limit)
     const users = await User.find({ gmailConnected: true }).limit(3)
+    console.log('Users found:', users.length, users.map(u => u.email))
     
     if (users.length === 0) {
       return res.json({ success: true, scanned: 0, message: 'No users with Gmail connected' })

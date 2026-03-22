@@ -54,6 +54,7 @@ async function scanUserEmails(user) {
     })
 
     const messages = res.data.messages || []
+    console.log('Emails fetched for user:', user.email, 'count:', messages.length)
 
     for (const msg of messages) {
       if (user.scannedEmailIds?.includes(msg.id)) continue
@@ -103,6 +104,8 @@ async function scanUserEmails(user) {
       const hasRejection = rejectionKeywords.some(kw => checkText.includes(kw))
       const hasOffer = offerKeywords.some(kw => checkText.includes(kw))
 
+      console.log('Email subject:', subject, 'Keywords matched:', (hasInterview || hasRejection || hasOffer))
+
       if (hasInterview || hasRejection || hasOffer) {
         const contentToSend = `Subject: ${subject}\n\nBody: ${body.slice(0, 500)}`
         
@@ -128,13 +131,16 @@ async function scanUserEmails(user) {
           let json = {}
           try {
             json = JSON.parse(jsonContent)
+            console.log('Groq result:', json)
           } catch(e) {
             console.error('Failed to parse Groq response', jsonContent)
           }
 
           if (json.type && json.type !== 'unknown' && json.company) {
              const regex = new RegExp(`^${json.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
-             const job = await Job.findOne({ user: user._id, company: { $regex: regex } })
+             const jobsFound = await Job.find({ user: user._id, company: { $regex: regex } })
+             console.log('Looking for company:', json.company, 'Job cards found:', jobsFound.length)
+             const job = jobsFound[0]
              
              let updateStatus = ''
              let finalStatusStr = ''
@@ -154,6 +160,7 @@ async function scanUserEmails(user) {
                 // don't revert an offer if they send an interview later?? just blindly update as requested
                 job.status = updateStatus
                 await job.save()
+                console.log('Job card updated:', job._id, 'new status:', updateStatus)
                 
                 await Notification.create({
                    userId: user._id,
