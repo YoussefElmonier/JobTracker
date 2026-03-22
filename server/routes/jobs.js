@@ -258,7 +258,11 @@ router.post('/:id/cover-letter', async (req, res) => {
 
     console.log('[cover-letter] calling Groq...')
     const coverLetter = await ai.generateCoverLetter({
-      title: job.title, company: job.company, description: job.description, cvText: user.cvText
+      title: job.title, 
+      company: job.company, 
+      description: job.description, 
+      cvText: user.cvText,
+      analysis: job.cvAnalysis
     })
     console.log('[cover-letter] Groq returned length:', coverLetter?.length)
 
@@ -370,6 +374,58 @@ router.post('/:id/interview-questions/:questionIndex/confirm', async (req, res) 
   } catch (err) {
     console.error('POST confirmation error:', err)
     res.status(500).json({ message: 'Failed to confirm question' })
+  }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/jobs/:id/analyze-cv
+// ═══════════════════════════════════════════════════════════════════════════════
+router.post('/:id/analyze-cv', async (req, res) => {
+  try {
+    const user = await User.findById(req.userId)
+    const isPremium = !!user?.isPremium
+    
+    const job = await Job.findOne({ _id: req.params.id, user: req.userId })
+    if (!job) return res.status(404).json({ message: 'Job not found' })
+    
+    const regenerate = req.body?.regenerate === true
+    
+    // Return cache if it exists and no re-analyze requested
+    if (job.cvAnalysis && !regenerate) {
+      console.log('Returning cached CV analysis')
+      return res.json(job.cvAnalysis)
+    }
+    
+    if (!user.cvText) {
+      return res.json({ error: 'no_cv' })
+    }
+    
+    // Limit for free users
+    if (!isPremium && (user.cvAnalysisCount || 0) >= 3) {
+      return res.status(403).json({ error: 'limit_reached', message: 'Free limit reached (3 CV analyses). Upgrade for unlimited.' })
+    }
+    
+    if (!job.description) {
+      return res.status(400).json({ message: 'Add a job description to analyze your CV match.' })
+    }
+    
+    const analysis = await ai.analyzeResume(user.cvText, job.description)
+    if (!analysis) return res.status(500).json({ message: 'Failed to analyze CV.' })
+    
+    // Cache result
+    job.cvAnalysis = analysis
+    await job.save()
+    
+    // Increment count for free users
+    if (!isPremium) {
+      user.cvAnalysisCount = (user.cvAnalysisCount || 0) + 1
+      await user.save()
+    }
+    
+    res.json(analysis)
+  } catch (err) {
+    console.error('POST /jobs/:id/analyze-cv error:', err)
+    res.status(500).json({ message: 'Failed to analyze CV' })
   }
 })
 

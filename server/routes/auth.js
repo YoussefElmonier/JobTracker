@@ -300,10 +300,13 @@ router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
     const user = await User.findByIdAndUpdate(req.userId, { cvText }, { new: true })
     if (!user) return res.status(404).json({ message: 'User not found' })
 
-    // Clear cached cover letters for all jobs of this user
+    // Clear cached cover letters and CV analysis for all jobs of this user
     await Job.updateMany(
       { user: req.userId },
-      { $set: { aiCoverLetter: { free: '', premium: '' } } }
+      { $set: { 
+        aiCoverLetter: { free: '', premium: '' },
+        cvAnalysis: null
+      } }
     )
 
     res.json({ message: 'CV saved successfully!', length: cvText.length, cvText })

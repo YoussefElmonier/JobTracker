@@ -86,6 +86,10 @@ const JobSchema = new mongoose.Schema({
     type:    String,
     default: '',
   },
+  cvAnalysis: {
+    type: Object,
+    default: null
+  },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Job', JobSchema)

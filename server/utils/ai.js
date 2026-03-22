@@ -65,7 +65,7 @@ exports.generateSalaryInsights = async (description, isPremium, location = '') =
 // ─── Cover Letter ─────────────────────────────────────────────────────────────
 // Free:    max_tokens 600
 // Premium: max_tokens 800
-exports.generateCoverLetter = async ({ title, company, description, cvText }) => {
+exports.generateCoverLetter = async ({ title, company, description, cvText, analysis }) => {
   try {
     const trimmedCV = cvText ? cvText.substring(0, 2000) : ''
     const trimmedDesc = description ? description.substring(0, 1000) : ''
@@ -75,6 +75,12 @@ exports.generateCoverLetter = async ({ title, company, description, cvText }) =>
       prompt += `\n\nCandidate CV:\n${trimmedCV}`
     } else {
       prompt += `\n\n(No CV provided - generate based on job description only)`
+    }
+
+    if (analysis) {
+      prompt += `\n\nInsights to include:\n`
+      if (analysis.matchedSkills?.length) prompt += `- Focus on these matched skills: ${analysis.matchedSkills.join(', ')}\n`
+      if (analysis.highlights?.length) prompt += `- Emphasize these highlights: ${analysis.highlights.join('; ')}\n`
     }
 
     const systemPrompt = "Write a professional cover letter based on this CV and job description. 3 paragraphs. Match the candidate's real experience to the job requirements. Sound natural and specific. No generic phrases."
@@ -120,6 +126,32 @@ exports.generateInterviewQuestions = async ({ title, description }, isPremium) =
     return data
   } catch (err) {
     console.error('generateInterviewQuestions error:', err.message)
+    return null
+  }
+}
+// ─── Resume Analysis ──────────────────────────────────────────────────────────
+exports.analyzeResume = async (cvText, description) => {
+  if (!cvText || !description) return null
+  try {
+    const trimmedCV = cvText.substring(0, 2000)
+    const trimmedDesc = description.substring(0, 1000)
+    
+    const systemPrompt = "Analyze this CV against this job description. Return only JSON: {score: number 0-100, matchedSkills: string[], missingSkills: string[], highlights: string[], verdict: 'Strong Match'|'Good Match'|'Partial Match'|'Weak Match'}"
+    
+    const res = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Candidate CV:\n${trimmedCV}\n\nJob description:\n${trimmedDesc}` }
+      ],
+      model: 'llama-3.1-8b-instant',
+      max_tokens: 400,
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
+    })
+    
+    return JSON.parse(res.choices[0]?.message?.content || 'null')
+  } catch (err) {
+    console.error('analyzeResume error:', err.message)
     return null
   }
 }

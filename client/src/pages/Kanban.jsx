@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { format } from 'date-fns'
@@ -7,7 +8,7 @@ import {
   RiBriefcaseLine, RiTimeLine, RiFocus3Line, RiTrophyLine, RiCloseCircleLine,
   RiFileTextLine, RiMoneyDollarCircleLine, RiListCheck, RiArrowDownSLine, RiArrowUpSLine,
   RiLockLine, RiChat3Line, RiToolsLine, RiCommunityLine, RiFireLine, RiHandCoinLine,
-  RiLinkM
+  RiLinkM, RiCheckLine, RiCloseLine, RiInformationLine, RiRefreshLine, RiScan2Line
 } from 'react-icons/ri'
 import { useJobs } from '../hooks/useJobs'
 import { useAuth } from '../context/AuthContext'
@@ -58,11 +59,18 @@ function CompanyLogo({ logo, company }) {
   )
 }
 
-function JobCard({ job, index, user, isPremium, onEdit, onDelete, onGenerateLetter, onGenerateQuestions, onConfirmQuestion }) {
+function JobCard({ 
+  job, index, user, isPremium, onEdit, onDelete, 
+  onGenerateLetter, onGenerateQuestions, onConfirmQuestion,
+  onAnalyzeCV, onRefreshUser
+}) {
   const [showAI, setShowAI] = useState(false)
   const [showQuestions, setShowQuestions] = useState(false)
+  const [showAnalysis, setShowAnalysis] = useState(false)
   const [activeTab, setActiveTab] = useState('behavioral')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState('')
 
   const dateStr = job.dateApplied ? format(new Date(job.dateApplied), 'MMM d, yyyy') : ''
   const summary = Array.isArray(job.aiSummary) ? job.aiSummary : []
@@ -75,6 +83,28 @@ function JobCard({ job, index, user, isPremium, onEdit, onDelete, onGenerateLett
     e.stopPropagation()
     setIsGenerating(true)
     try { await onGenerateQuestions(job._id) } finally { setIsGenerating(false) }
+  }
+
+  const handleAnalyze = async (e, regenerate = false) => {
+    e.stopPropagation()
+    setError('')
+    if (!user?.cvText) {
+      setError('no_cv')
+      return
+    }
+    setIsAnalyzing(true)
+    try {
+      await onAnalyzeCV(job._id, regenerate)
+      if (onRefreshUser) onRefreshUser()
+    } catch (err) {
+      if (err.code === 'limit_reached') {
+        onGenerateLetter(null, 'limit') // show upgrade modal
+      } else {
+        setError(err.message)
+      }
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   const getGlobalIndex = (tab, localIdx) => {
@@ -210,6 +240,93 @@ function JobCard({ job, index, user, isPremium, onEdit, onDelete, onGenerateLett
               </div>
             )}
 
+            <div className="job-card__ai-toggle" onClick={() => setShowAnalysis(!showAnalysis)}>
+              <span>Resume Match</span>
+              {showAnalysis ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
+            </div>
+            {showAnalysis && (
+              <div className="job-card__analysis-content">
+                {!job.cvAnalysis ? (
+                  <div className="job-card__analysis-cta">
+                    {error === 'no_cv' ? (
+                      <div className="job-card__analysis-empty">
+                        <p>Upload your CV in your profile first</p>
+                        <Link to="/profile" className="btn btn-secondary btn-sm">Go to Profile</Link>
+                      </div>
+                    ) : (
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ width: '100%', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        onClick={(e) => handleAnalyze(e)}
+                        disabled={isAnalyzing}
+                      >
+                        {isAnalyzing ? (
+                          <>Analyzing your CV...</>
+                        ) : (
+                          <><RiScan2Line /> Analyze My CV</>
+                        )}
+                      </button>
+                    )}
+                    {error && error !== 'no_cv' && <p className="job-card__error" style={{ fontSize: '0.75rem', marginTop: '8px' }}>{error}</p>}
+                  </div>
+                ) : (
+                  <div className="job-card__analysis-results">
+                    <div className="analysis-results__score-row">
+                      <div className={`analysis-results__score-ring ${
+                        job.cvAnalysis.score >= 80 ? 'score-strong' :
+                        job.cvAnalysis.score >= 60 ? 'score-good' :
+                        job.cvAnalysis.score >= 40 ? 'score-partial' : 'score-weak'
+                      }`}>
+                        <span className="score-value">{job.cvAnalysis.score}</span>
+                        <span className="score-label">/ 100</span>
+                      </div>
+                      <div className="analysis-results__verdict">
+                        <span className={`badge verdict-badge verdict-${job.cvAnalysis.verdict?.toLowerCase().replace(' ', '-')}`}>
+                          {job.cvAnalysis.verdict}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="analysis-results__skills">
+                      <div className="skills-col">
+                        <h6>✅ Matched Sklls</h6>
+                        <div className="skills-list">
+                          {job.cvAnalysis.matchedSkills?.map(s => <span key={s} className="skill-badge skill-matched">{s}</span>)}
+                        </div>
+                      </div>
+                      <div className="skills-col">
+                        <h6>❌ Missing Skills</h6>
+                        <div className="skills-list">
+                          {job.cvAnalysis.missingSkills?.map(s => <span key={s} className="skill-badge skill-missing">{s}</span>)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="analysis-results__highlights">
+                      <h6>💡 Highlights to Emphasize</h6>
+                      <ul>
+                        {job.cvAnalysis.highlights?.map((h, i) => <li key={i}>{h}</li>)}
+                      </ul>
+                    </div>
+
+                    <div className="analysis-results__actions">
+                      <button 
+                        className="btn btn-secondary btn-sm" 
+                        onClick={(e) => handleAnalyze(e, true)}
+                        disabled={isAnalyzing}
+                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <RiRefreshLine /> {isAnalyzing ? '...' : 'Re-analyze'}
+                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => onGenerateLetter(job)}>
+                        Generate Cover Letter
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button className="btn btn-secondary job-card__btn-letter"
               onClick={e => { e.stopPropagation(); onGenerateLetter(job) }}>
               <RiFileTextLine /> Generate Cover Letter
@@ -227,7 +344,7 @@ function JobCard({ job, index, user, isPremium, onEdit, onDelete, onGenerateLett
 }
 
 export default function Kanban() {
-  const { jobs, loading, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion } = useJobs()
+  const { jobs, loading, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV } = useJobs()
   const { user, isPremium, refreshUser } = useAuth()
   const [showModal, setShowModal]           = useState(false)
   const [editJob, setEditJob]               = useState(null)
@@ -337,6 +454,8 @@ export default function Kanban() {
                             onDelete={handleDelete}
                             onConfirmQuestion={confirmQuestion}
                             onGenerateQuestions={generateQuestions}
+                            onAnalyzeCV={analyzeCV}
+                            onRefreshUser={refreshUser}
                             onGenerateLetter={(j, forcedReason) => {
                               if (forcedReason) { setUpgradeReason(forcedReason); setShowUpgrade(true); return }
                               setLetterJob(j)

@@ -87,5 +87,19 @@ export function useJobs() {
     }
   }, [])
 
-  return { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion }
+  const analyzeCV = useCallback(async (jobId, regenerate = false) => {
+    try {
+      const res = await api.post(`/jobs/${jobId}/analyze-cv`, { regenerate })
+      setJobs(prev => prev.map(j => j._id === jobId ? { ...j, cvAnalysis: res.data } : j))
+      return res.data
+    } catch (err) {
+      const code = err.response?.data?.error
+      const msg  = err.response?.data?.message || 'Failed to analyze CV'
+      const e    = new Error(msg)
+      e.code     = code
+      throw e
+    }
+  }, [])
+
+  return { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV }
 }

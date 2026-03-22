@@ -65,6 +65,10 @@ const UserSchema = new mongoose.Schema({
       date: { type: Date, default: Date.now }
     }
   ],
+  cvAnalysisCount: {
+    type: Number,
+    default: 0,
+  },
 }, { timestamps: true })
 
 // Hash password before saving
