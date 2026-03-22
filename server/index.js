@@ -9,7 +9,7 @@ const jobRoutes     = require('./routes/jobs')
 const logoRoutes    = require('./routes/logo')
 const paymentRoutes = require('./routes/payment')
 const notificationRoutes = require('./routes/notifications')
-const { startEmailScanner, scanUserEmails } = require('./services/emailScanner')
+const { scanUserEmails } = require('./services/emailScanner')
 const auth = require('./middleware/auth')
 
 const app  = express()
@@ -68,7 +68,8 @@ app.get('/api/test/scan-emails', auth, async (req, res) => {
 })
 
 // Start Cron Services
-startEmailScanner()
+// Removed for Vercel/serverless compatibility. 
+// Use /api/cron/scan-emails instead.
 
 // Health checks
 app.get('/health',     (_, res) => res.json({ status: 'ok' }))

@@ -1,4 +1,4 @@
-const cron = require('node-cron')
+// node-cron removed for serverless compatibility
 const { google } = require('googleapis')
 const User = require('../models/User')
 const Job = require('../models/Job')
@@ -189,15 +189,4 @@ async function scanUserEmails(user) {
   }
 }
 
-function startEmailScanner() {
-  cron.schedule('0 * * * *', async () => {
-    console.log('⏳ Running email scanner cron...')
-    const users = await User.find({ gmailConnected: true, autoTrackEmails: true })
-    for (const user of users) {
-      await scanUserEmails(user)
-    }
-    console.log('✅ Email scanner cron finished.')
-  })
-}
-
-module.exports = { startEmailScanner, scanUserEmails }
+module.exports = { scanUserEmails }
