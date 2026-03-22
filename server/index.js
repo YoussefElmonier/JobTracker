@@ -67,6 +67,31 @@ app.get('/api/test/scan-emails', auth, async (req, res) => {
   }
 })
 
+// VERCEL CRON: Unauthenticated endpoint to scan emails for users
+app.get('/api/cron/scan-emails', async (req, res) => {
+  try {
+    const User = require('./models/User')
+    // Find up to 3 users where gmailConnected: true (Vercel 10s timeout limit)
+    const users = await User.find({ gmailConnected: true }).limit(3)
+    
+    if (users.length === 0) {
+      return res.json({ success: true, scanned: 0, message: 'No users with Gmail connected' })
+    }
+
+    console.log(`[Cron] Scanning emails for ${users.length} users...`)
+    
+    for (const user of users) {
+      await scanUserEmails(user)
+    }
+
+    res.json({ success: true, scanned: users.length })
+  } catch (err) {
+    console.error('[Cron] Email scan error:', err)
+    // Return 200/JSON even on error so the monitoring service doesn't think the whole app is down
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
+
 // Start Cron Services
 // Removed for Vercel/serverless compatibility. 
 // Use /api/cron/scan-emails instead.
