@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import UpgradeModal from '../components/UpgradeModal'
 import api from '../api/axios'
 import './Profile.css'
 
@@ -10,12 +12,22 @@ export default function Profile() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [showUpgrade, setShowUpgrade] = useState(false)
+  
+  const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (user?.cvText) {
       setCvText(user.cvText)
     }
-  }, [user])
+    if (new URLSearchParams(location.search).get('gmail') === 'success') {
+      setMessage('✅ Gmail connected successfully!')
+      refreshUser()
+      // Clean url
+      navigate('/profile', { replace: true })
+    }
+  }, [user, location, navigate])
 
   const handleTextChange = (e) => {
     setCvText(e.target.value.slice(0, 2000))
@@ -52,6 +64,25 @@ export default function Profile() {
       setError(err.response?.data?.message || 'Failed to save CV')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleConnectGmail = () => {
+    if (!user?.isPremium) {
+      setShowUpgrade(true)
+      return
+    }
+    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    window.location.href = `${serverUrl}/api/auth/google/gmail`
+  }
+
+  const handleDisconnectGmail = async () => {
+    try {
+      await api.post('/auth/gmail/disconnect')
+      await refreshUser()
+      setMessage('Gmail disconnected.')
+    } catch (err) {
+      setError('Failed to disconnect Gmail')
     }
   }
 
@@ -107,7 +138,33 @@ export default function Profile() {
             </button>
           </form>
         </section>
+
+        <section className="profile__section profile__gmail-section" style={{ marginTop: '24px' }}>
+          <h2>Gmail Integration</h2>
+          {user?.gmailConnected ? (
+            <div style={{ marginTop: '16px' }}>
+              <p style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '16px' }}>✅ Gmail connected — we'll auto-update your job statuses.</p>
+              <button onClick={handleDisconnectGmail} className="btn" style={{ background: '#fce7f3', color: '#be185d', border: 'none' }}>
+                Disconnect Gmail
+              </button>
+            </div>
+          ) : (
+            <div style={{ marginTop: '16px' }}>
+              <p style={{ marginBottom: '16px', color: '#4b5563' }}>Connect your Gmail to allow TRKR to automatically read recruiter emails and update your job applications accordingly.</p>
+              <button onClick={handleConnectGmail} className="btn btn-primary">
+                Connect Gmail to auto-track recruiter emails
+              </button>
+              {!user?.isPremium && (
+                  <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: '#f59e0b' }}>⭐</span> Premium Feature
+                  </p>
+              )}
+            </div>
+          )}
+        </section>
       </div>
+
+      {showUpgrade && <UpgradeModal reason="premium" onClose={() => setShowUpgrade(false)} />}
     </div>
   )
 }
