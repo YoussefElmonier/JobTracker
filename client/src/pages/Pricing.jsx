@@ -117,9 +117,9 @@ export default function Pricing() {
             {FREE_FEATURES.map((f, i) => (
               <li key={i} className={`pricing-card__feature ${f.ok ? '' : 'pricing-card__feature--locked'}`}>
                 <span className={`pricing-card__feature-icon ${f.ok ? 'ok' : 'no'}`}>
-                  {f.ok ? <RiCheckLine /> : <RiCloseLine />}
+                  {f.ok ? f.icon : <RiLockLine size={12} />}
                 </span>
-                {f.text}
+                <span className="pricing-card__feature-text">{f.text}</span>
               </li>
             ))}
           </ul>
@@ -146,8 +146,8 @@ export default function Pricing() {
           <ul className="pricing-card__features">
             {PREMIUM_FEATURES.map((f, i) => (
               <li key={i} className="pricing-card__feature">
-                <span className="pricing-card__feature-icon ok"><RiCheckLine /></span>
-                {f.text}
+                <span className="pricing-card__feature-icon ok">{f.icon}</span>
+                <span className="pricing-card__feature-text">{f.text}</span>
               </li>
             ))}
           </ul>
