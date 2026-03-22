@@ -4,7 +4,20 @@ const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User     = require('../models/User')
 const auth     = require('../middleware/auth')
+const { google } = require('googleapis')
 const multer   = require('multer')
+
+// Client A — Basic login: used for all users — login only
+const loginClient = new google.auth.OAuth2(
+  process.env.GOOGLE_LOGIN_CLIENT_ID,
+  process.env.GOOGLE_LOGIN_CLIENT_SECRET
+);
+
+// Client B — Gmail scanning: used only for Gmail connected users
+const gmailClient = new google.auth.OAuth2(
+  process.env.GOOGLE_GMAIL_CLIENT_ID,
+  process.env.GOOGLE_GMAIL_CLIENT_SECRET
+);
 const upload   = multer({ storage: multer.memoryStorage() })
 const router   = express.Router()
 
@@ -12,59 +25,68 @@ const router   = express.Router()
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
-// Passport Google Strategy
-passport.use(new GoogleStrategy({
-    clientID:     process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+// Passport Google Strategy - SHARED CALLBACK
+const googleAuthCallback = async (accessToken, refreshToken, profile, done) => {
+  try {
+    console.log('🛡️ Google Strategy: Verifying user ->', profile.emails?.[0]?.value || 'No Email')
+    const email = profile.emails[0].value
+    console.log('🛡️ Google Strategy: Looking up user...')
+    let user    = await User.findOne({ 
+      $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
+    })
+    console.log('🛡️ Google Strategy: User found ->', !!user)
+
+    if (!user) {
+      console.log('🛡️ Google Strategy: Creating new user...')
+      user = await User.create({
+        name:     profile.displayName,
+        email:    email.toLowerCase(),
+        googleId: profile.id,
+      })
+      console.log('🛡️ Google Strategy: New user created.')
+    } else if (!user.googleId) {
+      console.log('🛡️ Google Strategy: Linking existing account to google...')
+      user.googleId = profile.id
+      console.log('🛡️ Google Strategy: Account linked.')
+    }
+
+    // Attach/Update Gmail tokens ALWAYS for now (if present)
+    console.log('🛡️ Google Strategy: Attaching Gmail tokens...')
+    user.gmailTokens = {
+      accessToken,
+      refreshToken: refreshToken || user.gmailTokens?.refreshToken
+    }
+    
+    await user.save()
+    console.log('🛡️ Google Strategy: Execution successful for', user.email)
+    return done(null, user)
+  } catch (err) {
+    console.error('❌ Google Strategy CRASH:', err.message)
+    return done(err, null)
+  }
+}
+
+// Client A - Basic Login Strategy
+passport.use('google', new GoogleStrategy({
+    clientID:     process.env.GOOGLE_LOGIN_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET,
     callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
     proxy:        true,
     accessType:   'offline',
     prompt:       'consent',
+    scope:        ['profile', 'email']
+  }, googleAuthCallback))
+
+// Client B - Gmail Connection Strategy
+passport.use('google-gmail', new GoogleStrategy({
+    clientID:     process.env.GOOGLE_GMAIL_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_GMAIL_CLIENT_SECRET,
+    callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/gmail/callback`,
+    proxy:        true,
+    accessType:   'offline',
+    prompt:       'consent',
     scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly']
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      console.log('🛡️ Google Strategy: Verifying user ->', profile.emails?.[0]?.value || 'No Email')
-      const email = profile.emails[0].value
-      console.log('🛡️ Google Strategy: Looking up user...')
-      let user    = await User.findOne({ 
-        $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
-      })
-      console.log('🛡️ Google Strategy: User found ->', !!user)
-
-      if (!user) {
-        console.log('🛡️ Google Strategy: Creating new user...')
-        user = await User.create({
-          name:     profile.displayName,
-          email:    email.toLowerCase(),
-          googleId: profile.id,
-          // password not needed for google users
-        })
-        console.log('🛡️ Google Strategy: New user created.')
-      } else if (!user.googleId) {
-        // Link existing email account to google
-        console.log('🛡️ Google Strategy: Linking existing account to google...')
-        user.googleId = profile.id
-        console.log('🛡️ Google Strategy: Account linked.')
-      }
-
-      // Attach Gmail tokens
-      console.log('🛡️ Google Strategy: Attaching Gmail tokens...')
-      user.gmailTokens = {
-        accessToken,
-        refreshToken: refreshToken || user.gmailTokens?.refreshToken // Fallback to old refresh token if not present
-      }
-      
-      await user.save()
-
-      console.log('🛡️ Google Strategy: Execution successful for', user.email)
-      return done(null, user)
-    } catch (err) {
-      console.error('❌ Google Strategy CRASH:', err.message)
-      return done(err, null)
-    }
-  }
-))
+  }, googleAuthCallback))
 
 // POST /api/auth/register
 router.post('/register', upload.single('cvFile'), async (req, res) => {
@@ -171,40 +193,40 @@ router.get('/me', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' })
   }
 })
-// GET /api/auth/google
+// GET /api/auth/google (Using Basic Login Client)
 router.get('/google', passport.authenticate('google', { 
+  scope: ['profile', 'email'],
+  accessType: 'offline',
+  prompt: 'consent'
+}))
+
+// GET /api/auth/google/gmail (Using Gmail Connected Client)
+router.get('/google/gmail', passport.authenticate('google-gmail', { 
   scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
   accessType: 'offline',
   prompt: 'consent'
 }))
 
-// GET /api/auth/google/gmail (From Profile page)
-router.get('/google/gmail', passport.authenticate('google', { 
-  scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
-  state: 'connect_gmail',
-  accessType: 'offline',
-  prompt: 'consent'
-}))
-
-// GET /api/auth/google/callback
+// GET /api/auth/google/callback (Basic Login)
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   async (req, res) => {
-    console.log('📬 Google Callback hit. User ->', req.user?.email || 'MISSING')
     if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_failed`)
     
-    // Check if flow was started from "Connect Gmail"
-    if (req.query.state === 'connect_gmail') {
-      req.user.gmailConnected = true
-      await req.user.save()
-      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
-    }
-
     const token = signToken(req.user._id)
-    // Redirect to frontend with token in URL
-    const target = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`
-    console.log('🚀 Redirecting to ->', target.substring(0, 50) + '...')
-    res.redirect(target)
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`)
+  }
+)
+
+// GET /api/auth/google/gmail/callback (Gmail Client)
+router.get('/google/gmail/callback', 
+  passport.authenticate('google-gmail', { session: false, failureRedirect: '/profile?error=gmail_failed' }),
+  async (req, res) => {
+    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=auth_failed`)
+    
+    req.user.gmailConnected = true
+    await req.user.save()
+    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
   }
 )
 

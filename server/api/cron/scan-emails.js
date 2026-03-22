@@ -12,9 +12,9 @@ const keywords = ['interview', 'schedule', 'offer', 'congratulations', 'unfortun
 
 async function checkTokens(user) {
   const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.SERVER_URL || 'https://trkr-job.vercel.app'}/api/auth/google/callback`
+    process.env.GOOGLE_GMAIL_CLIENT_ID,
+    process.env.GOOGLE_GMAIL_CLIENT_SECRET,
+    `${process.env.SERVER_URL || 'https://trkr-job.vercel.app'}/api/auth/google/gmail/callback`
   );
   if (!user.gmailTokens?.refreshToken) return null;
   oauth2Client.setCredentials({

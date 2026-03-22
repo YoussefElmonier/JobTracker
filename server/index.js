@@ -15,6 +15,19 @@ const auth = require('./middleware/auth')
 const app  = express()
 const PORT = process.env.PORT || 5000
 
+let cachedDb = null;
+
+async function connectDB() {
+  if (cachedDb) {
+    console.log('Using cached MongoDB connection');
+    return cachedDb;
+  }
+  const db = await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI);
+  cachedDb = db;
+  console.log('✅ MongoDB connected');
+  return cachedDb;
+}
+
 // CORS — allow configured client origins
 const allowedOrigins = [
   'http://localhost:5173',
@@ -24,9 +37,15 @@ const allowedOrigins = [
 ].filter(Boolean)
 
 // Middleware
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
-  next();
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('Database connection failed:', err.message);
+    res.status(500).json({ message: 'Internal server error (DB)' });
+  }
 });
 app.use(cors({
   origin: (origin, callback) => {
@@ -109,7 +128,9 @@ app.get('/api/test/scan-emails', auth, async (req, res) => {
 
 // Health checks
 app.get('/health',     (_, res) => res.json({ status: 'ok' }))
-app.get('/api/health', (_, res) => res.json({ status: 'ok', time: new Date() }))
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
 app.get('/', (_, res) => res.json({ message: 'TRKR API is online', health: '/api/health' }))
 
 // 404
@@ -121,28 +142,19 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ message: err.message || 'Internal server error' })
 })
 
-// Connect to MongoDB then start server
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('✅  MongoDB connected')
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀  Server running on port ${PORT}`)
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀  Server running on port ${PORT}`)
 
-      // Keep Render free tier awake with a self-ping every 10 minutes
-      if (process.env.RENDER_URL) {
-        const https = require('https')
-        setInterval(() => {
-          https.get(`${process.env.RENDER_URL}/health`, () => {})
-            .on('error', () => {}) // silently ignore ping errors
-        }, 10 * 60 * 1000)
-        console.log('🔄  Keep-alive ping enabled for Render')
-      }
-    })
-  })
-  .catch(err => {
-    console.error('❌  MongoDB connection error:', err.message)
-    process.exit(1)
-  })
+  // Keep Render free tier awake with a self-ping every 10 minutes
+  if (process.env.RENDER_URL) {
+    const https = require('https')
+    setInterval(() => {
+      https.get(`${process.env.RENDER_URL}/health`, () => {})
+        .on('error', () => {}) // silently ignore ping errors
+    }, 10 * 60 * 1000)
+    console.log('🔄  Keep-alive ping enabled for Render')
+  }
+})
 
 module.exports = app
