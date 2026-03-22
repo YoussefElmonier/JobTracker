@@ -14,7 +14,7 @@ export default function Terms() {
         <div className="legal-header">
           <div className="legal-badge">Legal</div>
           <h1>Terms of Service</h1>
-          <p className="legal-meta">Last updated: March 21, 2026</p>
+          <p className="legal-meta">Last updated: March 22, 2026</p>
         </div>
 
         <div className="legal-section">
@@ -59,28 +59,40 @@ export default function Terms() {
         <hr className="legal-divider" />
 
         <div className="legal-section">
-          <h2>6. Intellectual Property</h2>
+          <h2>6. Third-Party Integrations (Gmail & AI)</h2>
+          <p>If you choose to use the Gmail Integration feature:</p>
+          <ul>
+            <li>You grant TRKR restricted, read-only access to your Gmail account solely for the purpose of tracking job application updates.</li>
+            <li>TRKR utilizes third-party AI strictly for intent classification of recognized recruiter emails.</li>
+            <li>We do not guarantee 100% accuracy. The system may miss emails or misclassify statuses. You are ultimately responsible for verifying your job statuses.</li>
+          </ul>
+        </div>
+
+        <hr className="legal-divider" />
+
+        <div className="legal-section">
+          <h2>7. Intellectual Property</h2>
           <p>All content, features, and functionality of TRKR are owned by us and protected by copyright and other intellectual property laws.</p>
         </div>
 
         <hr className="legal-divider" />
 
         <div className="legal-section">
-          <h2>7. Limitation of Liability</h2>
+          <h2>8. Limitation of Liability</h2>
           <p>TRKR is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the Service.</p>
         </div>
 
         <hr className="legal-divider" />
 
         <div className="legal-section">
-          <h2>8. Changes to Terms</h2>
+          <h2>9. Changes to Terms</h2>
           <p>We reserve the right to modify these terms at any time. Continued use of the Service after changes constitutes acceptance of the new terms.</p>
         </div>
 
         <hr className="legal-divider" />
 
         <div className="legal-section">
-          <h2>9. Contact</h2>
+          <h2>10. Contact</h2>
           <p>For any questions about these terms, please contact us at <a href="mailto:support@trkr.app">support@trkr.app</a>.</p>
         </div>
       </div>
