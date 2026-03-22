@@ -7,20 +7,32 @@ const Groq = require('groq-sdk')
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-const interviewKeywords = [
-  'interview', 'schedule', 'invitation', 'invited',
-  'call', 'meeting', 'assessment', 'next steps'
-]
+const offerKeywordsArr = [
+  'offer', 'congratulations', 'pleased to inform', 'welcome to the team',
+  'happy to offer', 'excited to offer', 'would like to offer', 'job offer',
+  'employment offer', 'offer letter', 'we want you', 'you got the job',
+  'selected for the position', 'chosen for the role', 'hired'
+];
 
-const rejectionKeywords = [
-  'unfortunately', 'not moving forward', 'other candidates',
-  'not selected', 'position has been filled', 'regret'
-]
+const interviewKeywordsArr = [
+  'interview', 'schedule', 'invitation', 'invited', 'assessment',
+  'next steps', 'move forward', 'moving you forward', 'shortlisted',
+  'phone screen', 'video call', 'technical interview', 'hiring process',
+  'speak with you', 'chat with you', 'meet with you', 'zoom call',
+  'google meet', 'microsoft teams', 'we would like to connect',
+  'pleased to invite', 'advance to the next', 'next round',
+  'final round', 'panel interview', 'onsite interview'
+];
 
-const offerKeywords = [
-  'offer', 'congratulations', 'pleased to inform',
-  'job offer', 'welcome to the team'
-]
+const rejectionKeywordsArr = [
+  'unfortunately', 'not moving forward', 'not selected', 'regret',
+  'other candidates', 'position has been filled', 'not a match',
+  'decided to move forward with other', 'will not be moving',
+  'not successful', 'unable to offer', 'did not move forward',
+  'we have decided', 'after careful consideration', 'not the right fit',
+  'pursue other candidates', 'filled the position', 'no longer considering',
+  'wish you the best', 'future opportunities'
+];
 
 async function checkTokens(user) {
   const oauth2Client = new google.auth.OAuth2(
@@ -81,22 +93,43 @@ async function scanUserEmails(user) {
       })
     );
 
-    console.log('Full emails fetched:', emails.map(e => e.subject));
-
-    const offerKeywords = ['offer', 'congratulations', 'pleased', 'welcome to the team'];
-    const interviewKeywords = ['interview', 'schedule', 'invitation', 'assessment'];
-    const rejectionKeywordsArr = ['unfortunately', 'not moving forward', 'not selected', 'regret'];
-    const allKeywords = [...offerKeywords, ...interviewKeywords, ...rejectionKeywordsArr];
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    user.scannedEmailIds = (user.scannedEmailIds || []).filter(entry => entry.date > sevenDaysAgo);
 
     for (const email of emails) {
-      // if (user.scannedEmailIds?.includes(email.id)) continue;
+      if (user.scannedEmailIds.some(entry => entry.id === email.id)) continue;
 
       const textToCheck = (email.subject + ' ' + (email.snippet || '')).toLowerCase();
-      const matched = allKeywords.some(k => textToCheck.includes(k));
+      
+      const isOffer = offerKeywordsArr.some(k => textToCheck.includes(k));
+      const isInterview = interviewKeywordsArr.some(k => textToCheck.includes(k));
+      const isRejection = rejectionKeywordsArr.some(k => textToCheck.includes(k));
+
+      const matched = isOffer || isInterview || isRejection;
       console.log('Email subject:', email.subject, 'Keywords matched:', matched);
 
       if (!matched) {
-        // user.scannedEmailIds.push(email.id);
+        user.scannedEmailIds.push({ id: email.id, date: new Date() });
+        continue;
+      }
+
+      const detectedType = isOffer ? 'offer' : isInterview ? 'interview' : 'rejection';
+      const jobs = await Job.find({ user: user._id });
+      const matchedJob = jobs.find(j => textToCheck.includes(j.company.toLowerCase()));
+
+      if (matchedJob) {
+        console.log('Skipping Groq — type and company detected from keywords alone');
+        matchedJob.status = detectedType;
+        await matchedJob.save();
+        await Notification.create({
+          userId: user._id,
+          type: 'email_detected',
+          message: `${detectedType === 'offer' ? 'Offer' : detectedType === 'interview' ? 'Interview' : 'Update'} detected from ${matchedJob.company} — job card updated!`,
+          read: false,
+          jobId: matchedJob._id
+        });
+        console.log('Job card updated without Groq:', matchedJob.company, '→', detectedType);
+        user.scannedEmailIds.push({ id: email.id, date: new Date() });
         continue;
       }
 
@@ -105,10 +138,10 @@ async function scanUserEmails(user) {
       try {
         const groqResponse = await groq.chat.completions.create({
           model: 'llama-3.3-70b-versatile',
-          max_tokens: 150,
+          max_tokens: 80,
           messages: [
-            { role: 'system', content: 'Analyze this recruiter email. Return only JSON: {type: "interview"|"rejection"|"offer"|"unknown", company: string|null, date: string|null}. No explanation.' },
-            { role: 'user', content: `Subject: ${email.subject}\n\n${email.snippet}` }
+            { role: 'system', content: 'Return only JSON: {type:"interview"|"rejection"|"offer"|"unknown", company:string|null}. Analyze this recruiter email subject.' },
+            { role: 'user', content: `Subject: ${email.subject}` }
           ]
         });
 
@@ -120,18 +153,17 @@ async function scanUserEmails(user) {
           result = JSON.parse(raw);
         } catch {
           console.log('Failed to parse Groq response');
-          // user.scannedEmailIds.push(email.id);
+          user.scannedEmailIds.push({ id: email.id, date: new Date() });
           continue;
         }
 
         console.log('Groq result:', result);
 
         if (result.type === 'unknown' || !result.company) {
-          // user.scannedEmailIds.push(email.id);
+          user.scannedEmailIds.push({ id: email.id, date: new Date() });
           continue;
         }
 
-        // Align with schema: use 'user' instead of 'userId'
         const job = await Job.findOne({
           user: user._id,
           company: { $regex: new RegExp(result.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }
@@ -140,8 +172,6 @@ async function scanUserEmails(user) {
         console.log('Job found for company:', result.company, !!job);
 
         if (job) {
-          // Align with schema: use enum values ('offer', 'interview', 'rejected') 
-          // instead of display strings like 'Offer Received'
           const statusMap = {
             offer: 'offer',
             interview: 'interview',
@@ -163,7 +193,6 @@ async function scanUserEmails(user) {
             console.log('Notification created for:', result.company);
           }
         } else {
-          // No job found, but we still found a recruiter email
           await Notification.create({
             userId: user._id,
             type: 'email_detected',
@@ -175,7 +204,7 @@ async function scanUserEmails(user) {
         console.error('Email processing error:', err.message);
       }
 
-      // user.scannedEmailIds.push(email.id);
+      user.scannedEmailIds.push({ id: email.id, date: new Date() });
     }
 
     if (user.scannedEmailIds.length > 1000) {

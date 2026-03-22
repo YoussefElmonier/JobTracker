@@ -60,7 +60,10 @@ const UserSchema = new mongoose.Schema({
     default: true,
   },
   scannedEmailIds: {
-    type: [String],
+    type: [{
+      id:   String,
+      date: Date
+    }],
     default: [],
   },
 }, { timestamps: true })
