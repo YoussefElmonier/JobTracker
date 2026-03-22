@@ -172,7 +172,7 @@ router.get('/me', auth, async (req, res) => {
 })
 // GET /api/auth/google
 router.get('/google', passport.authenticate('google', { 
-  scope: ['profile', 'email'],
+  scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
   accessType: 'offline',
   prompt: 'consent'
 }))
