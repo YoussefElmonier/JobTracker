@@ -9,7 +9,7 @@ export default function Register() {
   const { register, user } = useAuth()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', cvText: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -38,7 +38,7 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      await register(form.name, form.email, form.password)
+      await register(form.name, form.email, form.password, form.cvText)
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed.')
@@ -160,6 +160,25 @@ export default function Register() {
               onChange={handleChange}
               required
             />
+          </div>
+
+          <div className="form-group" style={{ marginTop: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Your CV (Optional)</label>
+              <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{form.cvText.length}/2000</span>
+            </div>
+            <textarea
+              name="cvText"
+              className="form-input"
+              style={{ minHeight: '100px', resize: 'vertical', fontSize: '0.9rem' }}
+              placeholder="Paste your CV text here..."
+              value={form.cvText}
+              onChange={handleChange}
+              maxLength={2000}
+            />
+            <p style={{ marginTop: '8px', fontSize: '0.8rem', color: '#6b7280', lineHeight: 1.4 }}>
+              💡 <strong>Hint:</strong> Add your CV now to get <strong>personalized</strong> interview prep and tailored cover letters automatically based on your background.
+            </p>
           </div>
 
           <button

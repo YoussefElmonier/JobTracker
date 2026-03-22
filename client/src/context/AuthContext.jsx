@@ -54,8 +54,8 @@ export function AuthProvider({ children }) {
     return u
   }, [])
 
-  const register = useCallback(async (name, email, password) => {
-    const res = await api.post('/auth/register', { name, email, password })
+  const register = useCallback(async (name, email, password, cvText = '') => {
+    const res = await api.post('/auth/register', { name, email, password, cvText })
     const { token: tk, user: u } = res.data
     localStorage.setItem('jt_token', tk)
     setToken(tk)
