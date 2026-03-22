@@ -53,6 +53,7 @@
   flex-direction: column;
   position: relative;
   border: 1px solid var(--border);
+  padding: 12px 12px 12px 12px;
 }
 
 .pricing-card--premium {
