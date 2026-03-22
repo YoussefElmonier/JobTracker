@@ -36,6 +36,17 @@ async function checkTokens(user) {
     refresh_token: user.gmailTokens.refreshToken
   })
 
+  try {
+    const { token } = await oauth2Client.getAccessToken()
+    if (token && token !== user.gmailTokens.accessToken) {
+       user.gmailTokens.accessToken = token
+       await user.save()
+    }
+  } catch (err) {
+    console.error('Failed to refresh Gmail token for', user.email, err.message)
+    return null
+  }
+
   return oauth2Client
 }
 
@@ -47,6 +58,7 @@ async function scanUserEmails(user) {
     const gmail = google.gmail({ version: 'v1', auth })
     const query = 'is:unread after:yesterday'
 
+    console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: query,

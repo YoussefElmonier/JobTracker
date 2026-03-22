@@ -82,7 +82,12 @@ app.get('/api/cron/scan-emails', async (req, res) => {
     console.log(`[Cron] Scanning emails for ${users.length} users...`)
     
     for (const user of users) {
-      await scanUserEmails(user)
+      console.log('Processing user:', user.email, 'Gmail token exists:', !!user.gmailTokens?.accessToken, 'Refresh token exists:', !!user.gmailTokens?.refreshToken)
+      try {
+        await scanUserEmails(user)
+      } catch (err) {
+        console.error('Error scanning user:', user.email, err.message, err.stack)
+      }
     }
 
     res.json({ success: true, scanned: users.length })
