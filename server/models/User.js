@@ -59,13 +59,12 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  scannedEmailIds: {
-    type: [{
-      id:   String,
-      date: Date
-    }],
-    default: [],
-  },
+  scannedEmailIds: [
+    {
+      id: { type: String },
+      date: { type: Date, default: Date.now }
+    }
+  ],
 }, { timestamps: true })
 
 // Hash password before saving
