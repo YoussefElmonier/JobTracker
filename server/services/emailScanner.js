@@ -25,23 +25,22 @@ const offerKeywords = [
 async function checkTokens(user) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`
+    process.env.GOOGLE_CLIENT_SECRET
   )
   
   if (!user.gmailTokens?.refreshToken) return null
   
   oauth2Client.setCredentials({
-    access_token: user.gmailTokens.accessToken,
     refresh_token: user.gmailTokens.refreshToken
   })
 
   try {
-    const { token } = await oauth2Client.getAccessToken()
-    if (token && token !== user.gmailTokens.accessToken) {
-       user.gmailTokens.accessToken = token
-       await user.save()
-    }
+    const { credentials } = await oauth2Client.refreshAccessToken()
+    oauth2Client.setCredentials(credentials)
+    
+    // Save new access token to MongoDB
+    user.gmailTokens.accessToken = credentials.access_token
+    await user.save()
   } catch (err) {
     console.error('Failed to refresh Gmail token for', user.email, err.message)
     return null

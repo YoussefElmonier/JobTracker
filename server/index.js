@@ -43,32 +43,12 @@ app.use(express.json())
 app.use(passport.initialize())
 
 // Routes
-app.use('/api/auth',    authRoutes)
-app.use('/api/jobs',    jobRoutes)
-app.use('/api/logo',    logoRoutes)
-app.use('/api/payment', paymentRoutes)
-app.use('/api/notifications', notificationRoutes)
-
-// TEMPORARY: Test route to manually scan emails
-app.get('/api/test/scan-emails', auth, async (req, res) => {
-  try {
-    const User = require('./models/User')
-    const user = await User.findById(req.user.id)
-    if (!user) return res.status(404).json({ message: 'User not found' })
-    if (!user.gmailConnected) return res.status(400).json({ message: 'Gmail not connected' })
-
-    console.log(`Manual scan requested for ${user.email}`)
-    await scanUserEmails(user)
-    
-    res.json({ message: 'Email scan triggered successfully. Check your notifications for updates.' })
-  } catch (err) {
-    console.error('Manual scan error:', err)
-    res.status(500).json({ message: 'Failed to scan emails', error: err.message })
-  }
-})
-
 // VERCEL CRON: Unauthenticated endpoint to scan emails for users
 app.get('/api/cron/scan-emails', async (req, res) => {
+  if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+    console.log('No cron secret provided — allowing for testing');
+  }
+
   try {
     const User = require('./models/User')
     // Find up to 3 users where gmailConnected: true (Vercel 10s timeout limit)
@@ -97,6 +77,31 @@ app.get('/api/cron/scan-emails', async (req, res) => {
     res.status(500).json({ success: false, error: err.message })
   }
 })
+
+app.use('/api/auth',    authRoutes)
+app.use('/api/jobs',    jobRoutes)
+app.use('/api/logo',    logoRoutes)
+app.use('/api/payment', paymentRoutes)
+app.use('/api/notifications', notificationRoutes)
+
+// TEMPORARY: Test route to manually scan emails
+app.get('/api/test/scan-emails', auth, async (req, res) => {
+  try {
+    const User = require('./models/User')
+    const user = await User.findById(req.user.id)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    if (!user.gmailConnected) return res.status(400).json({ message: 'Gmail not connected' })
+
+    console.log(`Manual scan requested for ${user.email}`)
+    await scanUserEmails(user)
+    
+    res.json({ message: 'Email scan triggered successfully. Check your notifications for updates.' })
+  } catch (err) {
+    console.error('Manual scan error:', err)
+    res.status(500).json({ message: 'Failed to scan emails', error: err.message })
+  }
+})
+
 
 // Start Cron Services
 // Removed for Vercel/serverless compatibility. 
