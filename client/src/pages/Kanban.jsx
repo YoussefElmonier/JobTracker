@@ -278,8 +278,8 @@ function JobCard({
                       </div>
                     ) : (
                       <button 
-                        className="btn btn-primary" 
-                        style={{ width: '100%', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        className="btn btn-primary btn-sm" 
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                         onClick={(e) => handleAnalyze(e)}
                         disabled={isAnalyzing}
                       >
@@ -332,17 +332,14 @@ function JobCard({
                       </ul>
                     </div>
 
-                    <div className="analysis-results__actions">
+                    <div className="analysis-results__actions" style={{ marginTop: '16px' }}>
                       <button 
-                        className="btn btn-secondary btn-sm" 
+                        className="salary-refresh-btn" 
                         onClick={(e) => handleAnalyze(e, true)}
                         disabled={isAnalyzing}
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '0', fontSize: '0.75rem' }}
                       >
-                        <RiRefreshLine /> {isAnalyzing ? '...' : 'Re-analyze'}
-                      </button>
-                      <button className="btn btn-primary btn-sm" onClick={() => onGenerateLetter(job)}>
-                        Generate Cover Letter
+                        <RiRefreshLine /> {isAnalyzing ? 'Updating...' : 'Re-analyze Resume'}
                       </button>
                     </div>
                   </div>
