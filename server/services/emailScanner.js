@@ -121,6 +121,7 @@ async function scanUserEmails(user) {
         const contentToSend = `Subject: ${subject}\n\nBody: ${body.slice(0, 500)}`
         
         try {
+          console.log('Calling Groq with model:', 'llama-3.3-70b-versatile');
           const aiRes = await groq.chat.completions.create({
             messages: [
               {
