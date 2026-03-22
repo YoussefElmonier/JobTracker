@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
+import Footer from './components/Footer'
 
 // Pages
 import Landing   from './pages/Landing'
@@ -25,6 +26,18 @@ function AuthenticatedLayout({ children }) {
       <main className="main-content">
         {children}
       </main>
+      <Footer />
+    </div>
+  )
+}
+
+function PublicLayout({ children }) {
+  return (
+    <div className="public-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <main style={{ flex: 1 }}>
+        {children}
+      </main>
+      <Footer />
     </div>
   )
 }
@@ -37,11 +50,11 @@ export default function App() {
           <Routes>
           {/* Public */}
           <Route path="/"         element={<Landing />} />
-          <Route path="/login"    element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/terms"    element={<Terms />} />
-          <Route path="/privacy"  element={<Privacy />} />
-          <Route path="/refund"   element={<Refund />} />
+          <Route path="/login"    element={<PublicLayout><Login /></PublicLayout>} />
+          <Route path="/register" element={<PublicLayout><Register /></PublicLayout>} />
+          <Route path="/terms"    element={<PublicLayout><Terms /></PublicLayout>} />
+          <Route path="/privacy"  element={<PublicLayout><Privacy /></PublicLayout>} />
+          <Route path="/refund"   element={<PublicLayout><Refund /></PublicLayout>} />
 
           {/* Protected */}
           <Route path="/dashboard" element={

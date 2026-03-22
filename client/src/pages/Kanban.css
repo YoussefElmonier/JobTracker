@@ -358,6 +358,22 @@
   }
 }
 
+@media (min-width: 768px) {
+  .kanban-page.page-container {
+    max-width: none;
+    padding-left: 60px;
+    padding-right: 60px;
+  }
+  
+  .kanban__board {
+    padding: 32px 0;
+  }
+  
+  .kanban__col {
+    flex: 0 0 340px;
+  }
+}
+
 @media (max-width: 480px) {
   .kanban__board {
     padding: 12px;

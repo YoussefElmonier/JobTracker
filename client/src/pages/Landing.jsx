@@ -6,6 +6,7 @@ import {
   RiArrowRightLine, RiCheckLine, RiStarLine, RiMoonLine, RiSunLine
 } from 'react-icons/ri'
 import { useTheme } from '../context/ThemeContext'
+import Footer from '../components/Footer'
 import logoLight from '../assets/logo-light.png'
 import logoDark from '../assets/logo-dark.png'
 import './Landing.css'
@@ -195,13 +196,7 @@ export default function Landing() {
         </Link>
       </section>
 
-      {/* Footer */}
-      <footer className="landing__footer">
-        <div className="landing__footer-logo">
-          <img src={theme === 'light' ? logoLight : logoDark} alt="trkr" className="landing__logo-img" style={{ height: '32px' }} />
-        </div>
-        <p className="landing__footer-copy">© {new Date().getFullYear()} trkr. Precision job tracking.</p>
-      </footer>
+      <Footer />
     </div>
   )
 }
