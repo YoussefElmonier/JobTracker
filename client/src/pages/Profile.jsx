@@ -37,9 +37,7 @@ export default function Profile() {
       if (file) {
         const formData = new FormData()
         formData.append('cvFile', file)
-        const res = await api.put('/auth/profile/cv', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        const res = await api.put('/auth/profile/cv', formData)
         setMessage(res.data.message)
         setCvText(res.data.cvText || '')
         setFile(null)
@@ -58,9 +56,9 @@ export default function Profile() {
   }
 
   return (
-    <div className="profile-page animate-fade-in">
-      <div className="profile__header">
-        <h1 className="profile__title">My Profile</h1>
+    <div className="page-container animate-fade">
+      <div className="profile__header" style={{ marginBottom: '24px' }}>
+        <h1 className="page-title">My Profile</h1>
       </div>
 
       <div className="profile__content">

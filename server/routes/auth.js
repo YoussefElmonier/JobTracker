@@ -4,13 +4,6 @@ const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User     = require('../models/User')
 const auth     = require('../middleware/auth')
-const multer   = require('multer')
-const pdfParse = require('pdf-parse')
-const Job      = require('../models/Job')
-
-const upload = multer({ storage: multer.memoryStorage() })
-
-
 const router = express.Router()
 
 // Helper: sign token
@@ -26,26 +19,35 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
+      console.log('🛡️ Google Strategy: Verifying user ->', profile.emails?.[0]?.value || 'No Email')
       const email = profile.emails[0].value
+      console.log('🛡️ Google Strategy: Looking up user...')
       let user    = await User.findOne({ 
         $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
       })
+      console.log('🛡️ Google Strategy: User found ->', !!user)
 
       if (!user) {
+        console.log('🛡️ Google Strategy: Creating new user...')
         user = await User.create({
           name:     profile.displayName,
           email:    email.toLowerCase(),
           googleId: profile.id,
           // password not needed for google users
         })
+        console.log('🛡️ Google Strategy: New user created.')
       } else if (!user.googleId) {
         // Link existing email account to google
+        console.log('🛡️ Google Strategy: Linking existing account to google...')
         user.googleId = profile.id
         await user.save()
+        console.log('🛡️ Google Strategy: Account linked.')
       }
 
+      console.log('🛡️ Google Strategy: Execution successful for', user.email)
       return done(null, user)
     } catch (err) {
+      console.error('❌ Google Strategy CRASH:', err.message)
       return done(err, null)
     }
   }
@@ -76,7 +78,8 @@ router.post('/register', async (req, res) => {
         name: user.name, 
         email: user.email,
         isPremium: !!user.isPremium,
-        coverLettersGenerated: user.coverLettersGenerated || 0
+        coverLettersGenerated: user.coverLettersGenerated || 0,
+        cvText: user.cvText || ''
       },
     })
   } catch (err) {
@@ -118,7 +121,8 @@ router.post('/login', async (req, res) => {
         name: user.name, 
         email: user.email,
         isPremium: !!user.isPremium,
-        coverLettersGenerated: user.coverLettersGenerated || 0
+        coverLettersGenerated: user.coverLettersGenerated || 0,
+        cvText: user.cvText || ''
       },
     })
   } catch (err) {
@@ -144,21 +148,31 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req, res) => {
+    console.log('📬 Google Callback hit. User ->', req.user?.email || 'MISSING')
+    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_failed`)
     const token = signToken(req.user._id)
     // Redirect to frontend with token in URL
-    res.redirect(`${process.env.CLIENT_URL}/login?token=${token}`)
+    const target = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`
+    console.log('🚀 Redirecting to ->', target.substring(0, 50) + '...')
+    res.redirect(target)
   }
 )
 
 // PUT /api/auth/profile/cv
-router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
+router.put('/profile/cv', auth, (req, res, next) => {
+  const multer = require('multer')
+  const upload = multer({ storage: multer.memoryStorage() }).single('cvFile')
+  upload(req, res, next)
+}, async (req, res) => {
   try {
-    let cvText = ''
+    const Job = require('../models/Job')
+    console.log('📁 CV Upload route hit user=', req.userId)
 
     if (req.file) {
       if (req.file.mimetype !== 'application/pdf') {
         return res.status(400).json({ message: 'Only PDF files are supported' })
       }
+      const pdfParse = require('pdf-parse-fork')
       const pdfData = await pdfParse(req.file.buffer)
       cvText = pdfData.text
     } else if (req.body.cvText) {
