@@ -103,7 +103,7 @@ module.exports = async (req, res) => {
 
   try {
     // Limits to 3 users per execution (Vercel timeout prevention)
-    const users = await User.find({ gmailConnected: true }).limit(3);
+    const users = await User.find({ gmailConnected: true, isPremium: true }).limit(3);
     
     for (const user of users) {
       await scanUserEmails(user);

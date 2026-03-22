@@ -151,7 +151,14 @@ export default function Profile() {
         </section>
 
         <section className="profile__section profile__gmail-section" style={{ marginTop: '24px' }}>
-          <h2>Gmail Integration</h2>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Gmail Integration
+            {!user?.isPremium && (
+              <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '4px', textTransform: 'uppercase' }}>
+                👑 Premium
+              </span>
+            )}
+          </h2>
           {user?.gmailConnected ? (
             <div style={{ marginTop: '16px' }}>
               <p style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '16px' }}>
@@ -189,14 +196,36 @@ export default function Profile() {
             </div>
           ) : (
             <div style={{ marginTop: '16px' }}>
-              <p style={{ marginBottom: '16px', color: '#4b5563' }}>Connect your Gmail to allow TRKR to automatically read recruiter emails and update your job applications accordingly.</p>
-              <button onClick={handleConnectGmail} className="btn btn-primary">
+              <p style={{ marginBottom: '16px', color: '#4b5563', fontSize: '15px' }}>
+                Connect your Gmail to allow TRKR to automatically read recruiter emails and update your job applications accordingly.
+              </p>
+              
+              <button 
+                onClick={handleConnectGmail} 
+                className="btn" 
+                style={{ 
+                  background: !user?.isPremium ? '#f3f4f6' : 'var(--accent)',
+                  color: !user?.isPremium ? '#9ca3af' : '#fff',
+                  border: !user?.isPremium ? '1px solid #e5e7eb' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  width: 'fit-content'
+                }}
+              >
+                {!user?.isPremium && <span style={{ fontSize: '1.1rem' }}>👑</span>}
                 Connect Gmail to auto-track recruiter emails
               </button>
-              {!user?.isPremium && (
-                  <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ color: '#f59e0b' }}>⭐</span> Premium Feature
-                  </p>
+
+              {!user?.isPremium ? (
+                <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
+                  Auto-detect interviews, offers and rejections from your inbox — Premium feature
+                </p>
+              ) : (
+                 <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
+                    ✅ Ready to connect
+                 </p>
               )}
             </div>
           )}

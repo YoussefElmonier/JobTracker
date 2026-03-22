@@ -210,7 +210,13 @@ router.get('/google', passport.authenticate('google', {
 }))
 
 // GET /api/auth/google/gmail (Using Gmail Connected Client)
-router.get('/google/gmail', passport.authenticate('google-gmail', { 
+router.get('/google/gmail', auth, async (req, res, next) => {
+  const user = await User.findById(req.userId)
+  if (!user?.isPremium) {
+     return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/pricing?reason=gmail`)
+  }
+  next()
+}, passport.authenticate('google-gmail', { 
   scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
   accessType: 'offline',
   prompt: 'consent'
