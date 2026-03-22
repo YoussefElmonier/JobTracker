@@ -4,26 +4,29 @@ import { initializePaddle } from '@paddle/paddle-js'
 import {
   RiCheckLine, RiCloseLine, RiShieldFlashLine,
   RiInfinityLine, RiBriefcaseLine, RiRobot2Line,
-  RiLockLine, RiVipCrownFill
+  RiLockLine, RiVipCrownFill, RiMailLine,
+  RiScan2Line, RiListCheck, RiMoneyDollarCircleLine
 } from 'react-icons/ri'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
 import './Pricing.css'
 
 const FREE_FEATURES = [
-  { icon: <RiBriefcaseLine />, text: 'Up to 10 job applications', ok: true },
-  { icon: <RiCheckLine />,     text: 'Kanban board & reminders',  ok: true },
-  { icon: <RiCheckLine />,     text: 'LinkedIn / Indeed Clipper', ok: true },
-  { icon: <RiLockLine />,      text: 'AI Cover Letter Generator', ok: false },
-  { icon: <RiLockLine />,      text: 'Unlimited applications',    ok: false },
+  { icon: <RiBriefcaseLine />, text: 'Track up to 10 active jobs', ok: true },
+  { icon: <RiCheckLine />,     text: 'Kanban board & organization',  ok: true },
+  { icon: <RiRobot2Line />,    text: 'Basic AI Cover Letters', ok: true },
+  { icon: <RiLockLine />,      text: 'Gmail Scanner (Auto-track)',    ok: false },
+  { icon: <RiLockLine />,      text: 'Detailed Resume Match Score',    ok: false },
+  { icon: <RiLockLine />,      text: 'Advanced Interview Prep',    ok: false },
 ]
 
 const PREMIUM_FEATURES = [
   { icon: <RiInfinityLine />, text: 'Unlimited job applications',   ok: true },
-  { icon: <RiCheckLine />,    text: 'Kanban board & reminders',     ok: true },
-  { icon: <RiCheckLine />,    text: 'LinkedIn / Indeed Clipper',    ok: true },
-  { icon: <RiRobot2Line />,   text: 'AI Cover Letter Generator',    ok: true },
-  { icon: <RiShieldFlashLine />, text: 'Priority support forever',  ok: true },
+  { icon: <RiMailLine />,     text: 'Gmail Email Scanner (Auto-track)', ok: true },
+  { icon: <RiScan2Line />,    text: 'Resume Match Analysis (0-100%)',   ok: true },
+  { icon: <RiRobot2Line />,   text: 'Unlimited AI Cover Letters',    ok: true },
+  { icon: <RiListCheck />,    text: 'Tailored Interview Questions',    ok: true },
+  { icon: <RiMoneyDollarCircleLine />, text: 'Premium Salary Insights', ok: true },
 ]
 
 export default function Pricing() {
