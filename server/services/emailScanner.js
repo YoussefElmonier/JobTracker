@@ -55,20 +55,20 @@ async function scanUserEmails(user) {
     if (!auth) return
 
     const gmail = google.gmail({ version: 'v1', auth })
-    const query = 'is:unread'
+    const query = 'is:unread subject:(offer OR interview OR congratulations OR rejection OR hired)'
 
     console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: query,
-      maxResults: 50
+      maxResults: 10
     })
 
     const messages = res.data.messages || []
     console.log('Emails fetched for user:', user.email, 'count:', messages.length)
 
-    for (const msg of messages) {
-      if (user.scannedEmailIds?.includes(msg.id)) continue
+    await Promise.all(messages.map(async (msg) => {
+      if (user.scannedEmailIds?.includes(msg.id)) return
 
       let msgData
       try {
@@ -79,7 +79,7 @@ async function scanUserEmails(user) {
         })
       } catch (err) {
         console.error('Failed to get message', msg.id, err.message)
-        continue
+        return
       }
 
       const payload = msgData.data.payload
@@ -169,7 +169,6 @@ async function scanUserEmails(user) {
              }
 
              if (job && updateStatus) {
-                // don't revert an offer if they send an interview later?? just blindly update as requested
                 job.status = updateStatus
                 await job.save()
                 console.log('Job card updated:', job._id, 'new status:', updateStatus)
@@ -194,11 +193,12 @@ async function scanUserEmails(user) {
       }
 
       user.scannedEmailIds.push(msg.id)
-      if (user.scannedEmailIds.length > 1000) {
-         user.scannedEmailIds = user.scannedEmailIds.slice(-1000)
-      }
-      await user.save()
+    }))
+
+    if (user.scannedEmailIds.length > 1000) {
+        user.scannedEmailIds = user.scannedEmailIds.slice(-1000)
     }
+    await user.save()
   } catch (err) {
     if (err.message?.includes('invalid_grant')) {
       user.gmailConnected = false
