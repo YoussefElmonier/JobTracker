@@ -8,6 +8,8 @@ const authRoutes    = require('./routes/auth')
 const jobRoutes     = require('./routes/jobs')
 const logoRoutes    = require('./routes/logo')
 const paymentRoutes = require('./routes/payment')
+const notificationRoutes = require('./routes/notifications')
+const { startEmailScanner } = require('./services/emailScanner')
 
 const app  = express()
 const PORT = process.env.PORT || 5000
@@ -44,6 +46,10 @@ app.use('/api/auth',    authRoutes)
 app.use('/api/jobs',    jobRoutes)
 app.use('/api/logo',    logoRoutes)
 app.use('/api/payment', paymentRoutes)
+app.use('/api/notifications', notificationRoutes)
+
+// Start Cron Services
+startEmailScanner()
 
 // Health checks
 app.get('/health',     (_, res) => res.json({ status: 'ok' }))

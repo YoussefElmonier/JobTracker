@@ -51,6 +51,14 @@ const UserSchema = new mongoose.Schema({
     accessToken:  String,
     refreshToken: String,
   },
+  gmailConnected: {
+    type: Boolean,
+    default: false,
+  },
+  scannedEmailIds: {
+    type: [String],
+    default: [],
+  },
 }, { timestamps: true })
 
 // Hash password before saving

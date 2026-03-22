@@ -106,7 +106,8 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
         email: user.email,
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
-        cvText: user.cvText || ''
+        cvText: user.cvText || '',
+        gmailConnected: !!user.gmailConnected
       },
     })
   } catch (err) {
@@ -149,7 +150,8 @@ router.post('/login', async (req, res) => {
         email: user.email,
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
-        cvText: user.cvText || ''
+        cvText: user.cvText || '',
+        gmailConnected: !!user.gmailConnected
       },
     })
   } catch (err) {
@@ -171,12 +173,26 @@ router.get('/me', auth, async (req, res) => {
 // GET /api/auth/google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
 
+// GET /api/auth/google/gmail (From Profile page)
+router.get('/google/gmail', passport.authenticate('google', { 
+  scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
+  state: 'connect_gmail'
+}))
+
 // GET /api/auth/google/callback
 router.get('/google/callback', 
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  (req, res) => {
+  async (req, res) => {
     console.log('📬 Google Callback hit. User ->', req.user?.email || 'MISSING')
     if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_failed`)
+    
+    // Check if flow was started from "Connect Gmail"
+    if (req.query.state === 'connect_gmail') {
+      req.user.gmailConnected = true
+      await req.user.save()
+      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
+    }
+
     const token = signToken(req.user._id)
     // Redirect to frontend with token in URL
     const target = `${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`
@@ -184,6 +200,22 @@ router.get('/google/callback',
     res.redirect(target)
   }
 )
+
+// POST /api/auth/gmail/disconnect
+router.post('/gmail/disconnect', auth, async (req, res) => {
+  try {
+     const user = await User.findById(req.userId)
+     if (!user) return res.status(404).json({ message: 'User not found' })
+     
+     user.gmailConnected = false
+     user.gmailTokens = { accessToken: null, refreshToken: null }
+     await user.save()
+     
+     res.json({ success: true, message: 'Gmail disconnected' })
+  } catch(e) {
+     res.status(500).json({ message: 'Failed to disconnect Gmail' })
+  }
+})
 
 // PUT /api/auth/profile/cv
 router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
