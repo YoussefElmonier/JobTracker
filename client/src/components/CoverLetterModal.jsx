@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { RiCloseLine, RiDownloadLine, RiFileCopyLine } from 'react-icons/ri'
+import { RiCloseLine, RiDownloadLine, RiFileCopyLine, RiRefreshLine } from 'react-icons/ri'
 import jsPDF from 'jspdf'
+import UpgradeModal from './UpgradeModal'
 import './AddJobModal.css'
 
 export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }) {
@@ -11,6 +12,8 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
     return cl?.premium || cl?.free || ''
   })
   const [error, setError] = useState('')
+  const [warning, setWarning] = useState('')
+  const [showUpgrade, setShowUpgrade] = useState(false)
   const generatingRef = useRef(false)  // prevent StrictMode double-fire
 
   useEffect(() => {
@@ -19,18 +22,21 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const generateLetter = async () => {
+  const generateLetter = async (regenerate = false) => {
     if (generatingRef.current) return
     generatingRef.current = true
     setLoading(true)
     setError('')
+    setWarning('')
     try {
-      const data = await onGenerate(job._id) // { coverLetter: string }
+      const data = await onGenerate(job._id, regenerate) // { coverLetter: string, warning?: string }
       setContent(data.coverLetter)
+      if (data.warning) setWarning(data.warning)
       if (onSuccess) onSuccess()
     } catch (err) {
       if (err.code === 'limit_reached') {
-        setError("Free limit reached \u2014 you've already used your 1 free cover letter. Upgrade for unlimited.")
+        setShowUpgrade(true)
+        setError("Free limit reached. Upgrade for unlimited.")
       } else {
         setError(err.message || 'Failed to generate cover letter. Please try again.')
       }
@@ -62,6 +68,7 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
 
         <div className="modal__form" style={{ gap: '16px' }}>
           {error && <div className="auth-error">{error}</div>}
+          {warning && <div className="auth-error" style={{ color: '#d97706', backgroundColor: '#fef3c7', padding: '10px', borderRadius: '4px', marginBottom: '10px', fontSize: '0.9rem' }}>{warning}</div>}
 
           {loading ? (
             <div style={{ display: 'flex', padding: '40px', justifyContent: 'center' }}>
@@ -77,6 +84,9 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
           )}
 
           <div className="modal__footer">
+            <button type="button" className="btn btn-secondary" onClick={() => generateLetter(true)} disabled={loading}>
+              <RiRefreshLine /> Regenerate
+            </button>
             <button type="button" className="btn btn-secondary" onClick={handleCopy} disabled={!content || loading}>
               <RiFileCopyLine /> Copy
             </button>
@@ -86,6 +96,9 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
           </div>
         </div>
       </div>
+      {showUpgrade && (
+        <UpgradeModal reason="limit" onClose={() => setShowUpgrade(false)} />
+      )}
     </div>
   )
 }

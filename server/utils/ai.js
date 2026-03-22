@@ -65,13 +65,27 @@ exports.generateSalaryInsights = async (description, isPremium, location = '') =
 // ─── Cover Letter ─────────────────────────────────────────────────────────────
 // Free:    max_tokens 600
 // Premium: max_tokens 800
-exports.generateCoverLetter = async ({ title, company, description }, isPremium) => {
+exports.generateCoverLetter = async ({ title, company, description, cvText }) => {
   try {
-    const prompt = `Write a concise 3 paragraph professional cover letter for a ${title} at ${company}. Use the job description. Be specific and natural.\n\nJob Description:\n${description}`
+    const trimmedCV = cvText ? cvText.substring(0, 2000) : ''
+    const trimmedDesc = description ? description.substring(0, 1000) : ''
+    
+    let prompt = `Job Title: ${title}\nCompany: ${company}\n\nJob Description:\n${trimmedDesc}`
+    if (trimmedCV) {
+      prompt += `\n\nCandidate CV:\n${trimmedCV}`
+    } else {
+      prompt += `\n\n(No CV provided - generate based on job description only)`
+    }
+
+    const systemPrompt = "Write a professional cover letter based on this CV and job description. 3 paragraphs. Match the candidate's real experience to the job requirements. Sound natural and specific. No generic phrases."
+
     const res = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
       model: 'llama-3.3-70b-versatile',
-      max_tokens: isPremium ? 800 : 600,
+      max_tokens: 800,
       temperature: 0.7
     })
     return res.choices[0]?.message?.content || 'Error generating cover letter.'
@@ -80,6 +94,7 @@ exports.generateCoverLetter = async ({ title, company, description }, isPremium)
     return 'Error generating cover letter.'
   }
 }
+
 
 // ─── Interview Questions ──────────────────────────────────────────────────────
 // Free:    3 questions (1/1/1), max_tokens 150

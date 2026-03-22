@@ -229,6 +229,7 @@ router.post('/:id/cover-letter', async (req, res) => {
 
     console.log(`[cover-letter] user=${req.userId} isPremium=${isPremium} tier=${tier} coverLettersGenerated=${user?.coverLettersGenerated}`)
 
+    const regenerate = req.body?.regenerate === true
     const job = await Job.findOne({ _id: req.params.id, user: req.userId })
     if (!job) return res.status(404).json({ message: 'Job not found' })
 
@@ -239,7 +240,8 @@ router.post('/:id/cover-letter', async (req, res) => {
     const cached = typeof clObj === 'string' && clObj
       ? clObj
       : (clObj && typeof clObj === 'object' ? clObj[tier] : null)
-    if (cached) {
+    
+    if (cached && !regenerate) {
       console.log('[cover-letter] cache hit, returning cached')
       return res.json({ coverLetter: cached })
     }
@@ -256,8 +258,8 @@ router.post('/:id/cover-letter', async (req, res) => {
 
     console.log('[cover-letter] calling Groq...')
     const coverLetter = await ai.generateCoverLetter({
-      title: job.title, company: job.company, description: job.description
-    }, isPremium)
+      title: job.title, company: job.company, description: job.description, cvText: user.cvText
+    })
     console.log('[cover-letter] Groq returned length:', coverLetter?.length)
 
     // Save using $set to avoid schema validation issues with mixed legacy format
@@ -269,8 +271,10 @@ router.post('/:id/cover-letter', async (req, res) => {
       await user.save()
     }
 
+    const warning = !user.cvText ? "Add your CV in your profile for a more personalized cover letter" : undefined
+
     console.log('[cover-letter] saved, returning to client')
-    res.json({ coverLetter })
+    res.json({ coverLetter, warning })
   } catch (err) {
     console.error('POST /jobs/:id/cover-letter error:', err)
     res.status(500).json({ message: 'Failed to generate cover letter' })

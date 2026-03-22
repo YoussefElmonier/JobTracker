@@ -4,6 +4,12 @@ const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const User     = require('../models/User')
 const auth     = require('../middleware/auth')
+const multer   = require('multer')
+const pdfParse = require('pdf-parse')
+const Job      = require('../models/Job')
+
+const upload = multer({ storage: multer.memoryStorage() })
+
 
 const router = express.Router()
 
@@ -143,5 +149,40 @@ router.get('/google/callback',
     res.redirect(`${process.env.CLIENT_URL}/login?token=${token}`)
   }
 )
+
+// PUT /api/auth/profile/cv
+router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
+  try {
+    let cvText = ''
+
+    if (req.file) {
+      if (req.file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ message: 'Only PDF files are supported' })
+      }
+      const pdfData = await pdfParse(req.file.buffer)
+      cvText = pdfData.text
+    } else if (req.body.cvText) {
+      cvText = req.body.cvText
+    } else {
+      return res.status(400).json({ message: 'Please provide either a PDF file or text.' })
+    }
+
+    cvText = cvText.trim().slice(0, 2000)
+
+    const user = await User.findByIdAndUpdate(req.userId, { cvText }, { new: true })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // Clear cached cover letters for all jobs of this user
+    await Job.updateMany(
+      { user: req.userId },
+      { $set: { aiCoverLetter: { free: '', premium: '' } } }
+    )
+
+    res.json({ message: 'CV saved successfully!', length: cvText.length, cvText })
+  } catch (err) {
+    console.error('CV upload error:', err)
+    res.status(500).json({ message: 'Failed to process CV' })
+  }
+})
 
 module.exports = router

@@ -62,10 +62,10 @@ export function useJobs() {
     }
   }, [])
 
-  // Returns { coverLetter: string }
-  const generateCoverLetter = useCallback(async (id) => {
+  // Returns { coverLetter: string, warning: string? }
+  const generateCoverLetter = useCallback(async (id, regenerate = false) => {
     try {
-      const res = await api.post(`/jobs/${id}/cover-letter`)
+      const res = await api.post(`/jobs/${id}/cover-letter`, { regenerate })
       setJobs(prev => prev.map(j => j._id === id ? { ...j, aiCoverLetter: res.data.coverLetter } : j))
       return res.data
     } catch (err) {

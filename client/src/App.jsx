@@ -12,6 +12,7 @@ import Register  from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Kanban    from './pages/Kanban'
 import Reminders from './pages/Reminders'
+import Profile   from './pages/Profile'
 import Pricing   from './pages/Pricing'
 import Terms     from './pages/Terms'
 import Privacy   from './pages/Privacy'
@@ -61,6 +62,13 @@ export default function App() {
             <ProtectedRoute>
               <AuthenticatedLayout>
                 <Reminders />
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <Profile />
               </AuthenticatedLayout>
             </ProtectedRoute>
           } />

@@ -43,6 +43,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  cvText: {
+    type: String,
+    maxLength: 3000,
+  },
 }, { timestamps: true })
 
 // Hash password before saving

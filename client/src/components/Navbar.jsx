@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
-  RiLogoutBoxLine, RiVipCrownFill, RiMoonLine, RiSunLine,
+  RiLogoutBoxLine, RiVipCrownFill, RiMoonLine, RiSunLine, RiUserLine,
   RiDashboardLine, RiKanbanView2, RiBellLine, RiPriceTag2Line
 } from 'react-icons/ri'
 import { useTheme } from '../context/ThemeContext'
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: <RiDashboardLine /> },
   { to: '/kanban',    label: 'Kanban',    icon: <RiKanbanView2 /> },
   { to: '/reminders', label: 'Reminders', icon: <RiBellLine /> },
+  { to: '/profile',   label: 'Profile',   icon: <RiUserLine /> },
   { to: '/pricing',   label: 'Pricing',   icon: <RiPriceTag2Line /> },
 ]
 
