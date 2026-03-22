@@ -15,19 +15,19 @@ import './Pricing.css'
 
 const FREE_FEATURES = [
   { icon: <RiBriefcaseLine />, text: 'Track up to 10 active jobs', ok: true },
-  { icon: <RiCheckLine />,     text: 'Kanban board & organization',  ok: true },
-  { icon: <RiRobot2Line />,    text: 'Basic AI Cover Letters', ok: true },
-  { icon: <RiLockLine />,      text: 'Gmail Scanner (Auto-track)',    ok: false },
-  { icon: <RiLockLine />,      text: 'Detailed Resume Match Score',    ok: false },
-  { icon: <RiLockLine />,      text: 'Advanced Interview Prep',    ok: false },
+  { icon: <RiCheckLine />, text: 'Kanban board & organization', ok: true },
+  { icon: <RiRobot2Line />, text: 'Basic AI Cover Letters', ok: true },
+  { icon: <RiLockLine />, text: 'Gmail Scanner (Auto-track)', ok: false },
+  { icon: <RiLockLine />, text: 'Detailed Resume Match Score', ok: false },
+  { icon: <RiLockLine />, text: 'Advanced Interview Prep', ok: false },
 ]
 
 const PREMIUM_FEATURES = [
-  { icon: <RiInfinityLine />, text: 'Unlimited job applications',   ok: true },
-  { icon: <RiMailLine />,     text: 'Gmail Email Scanner (Auto-track)', ok: true },
-  { icon: <RiScan2Line />,    text: 'Resume Match Analysis (0-100%)',   ok: true },
-  { icon: <RiRobot2Line />,   text: 'Unlimited AI Cover Letters',    ok: true },
-  { icon: <RiListCheck />,    text: 'Tailored Interview Questions',    ok: true },
+  { icon: <RiInfinityLine />, text: 'Unlimited job applications', ok: true },
+  { icon: <RiMailLine />, text: 'Gmail Email Scanner (Auto-track)', ok: true },
+  { icon: <RiScan2Line />, text: 'Resume Match Analysis (0-100%)', ok: true },
+  { icon: <RiRobot2Line />, text: 'Unlimited AI Cover Letters', ok: true },
+  { icon: <RiListCheck />, text: 'Tailored Interview Questions', ok: true },
   { icon: <RiMoneyDollarCircleLine />, text: 'Premium Salary Insights', ok: true },
 ]
 
@@ -48,7 +48,7 @@ export default function Pricing() {
         try {
           await api.post('/payment/verify-payment')
           await refreshUser()
-          setToast({ type: 'success', msg: '🎉 Welcome to Premium! You now have unlimited access.' })
+          // toast removed per user request
           setShowSuccess(true)
           setTimeout(() => setShowPremiumModal(true), 1500)
           navigate('/pricing', { replace: true })
@@ -163,7 +163,7 @@ export default function Pricing() {
 
           {isPremium ? (
             <button className="pricing-card__btn pricing-card__btn--owned" disabled>
-              <RiVipCrownFill /> You're Premium! 
+              <RiVipCrownFill /> You're Premium!
             </button>
           ) : (
             <button

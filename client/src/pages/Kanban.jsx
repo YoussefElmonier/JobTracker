@@ -382,7 +382,11 @@ function JobCard({
 }
 
 export default function Kanban() {
-  const { jobs, loading, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights } = useJobs()
+  const { 
+    jobs, loading, setJobs, createJob, updateJob, deleteJob, 
+    generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights 
+  } = useJobs()
+
   const { user, isPremium, refreshUser } = useAuth()
   const [showModal, setShowModal]           = useState(false)
   const [editJob, setEditJob]               = useState(null)
@@ -406,7 +410,22 @@ export default function Kanban() {
     setIsDragging(false)
     const { destination, source, draggableId } = result
     if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return
-    try { await updateJob(draggableId, { status: destination.droppableId }) } catch (err) { console.error(err) }
+
+    // Optimistic Update
+    const oldJobs = [...jobs]
+    setJobs(prev => prev.map(job => 
+      job._id === draggableId 
+        ? { ...job, status: destination.droppableId, dateApplied: new Date().toISOString() } // Force to top of destination
+        : job
+    ))
+
+    try { 
+      await updateJob(draggableId, { status: destination.droppableId }) 
+    } catch (err) { 
+      console.error(err)
+      // Optional: Rollback on fail
+      setJobs(oldJobs)
+    }
   }
 
   const handleAddForColumn = (status) => {

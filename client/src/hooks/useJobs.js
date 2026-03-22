@@ -111,5 +111,10 @@ export function useJobs() {
     }
   }, [])
 
-  return { jobs, loading, error, fetchJobs, createJob, updateJob, deleteJob, generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights }
+  return { 
+    jobs, loading, error, 
+    setJobs, // Exported for optimistic updates
+    fetchJobs, createJob, updateJob, deleteJob, 
+    generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights 
+  }
 }
