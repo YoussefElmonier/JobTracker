@@ -7,13 +7,14 @@ import {
 import { format, subDays, startOfDay, isSameDay } from 'date-fns'
 import {
   RiBriefcaseLine, RiArrowRightUpLine, RiFocus3Line,
-  RiTrophyLine, RiTimeLine, RiAddLine, RiChromeLine
+  RiTrophyLine, RiTimeLine, RiAddLine, RiChromeLine, RiLinkM
 } from 'react-icons/ri'
 import { useJobs } from '../hooks/useJobs'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import AddJobModal from '../components/AddJobModal'
 import UpgradeModal from '../components/UpgradeModal'
+import ImportFromURLModal from '../components/ImportFromURLModal'
 import './Dashboard.css'
 
 function CompanyLogo({ logo, company }) {
@@ -92,6 +93,8 @@ export default function Dashboard() {
   const { jobs, loading, createJob } = useJobs()
   const [showModal, setShowModal] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [importPrefill, setImportPrefill] = useState(null)
   const WEEKLY_GOAL = 5
   const stats = useMemo(() => {
     const total = jobs.length
@@ -129,9 +132,18 @@ export default function Dashboard() {
           </h1>
           <p className="page-subtitle">Here's your job search overview</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          <RiAddLine /> Add Application 
-        </button>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button 
+            className="btn btn-import-url" 
+            onClick={() => setShowImportModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <RiLinkM /> Import from URL
+          </button>
+          <button className="btn btn-primary" onClick={() => { setImportPrefill(null); setShowModal(true) }}>
+            <RiAddLine /> Add Application 
+          </button>
+        </div>
       </div>
 
       {/* Extension Installation Prompt - desktop only */}
@@ -301,11 +313,14 @@ export default function Dashboard() {
 
       {showModal && (
         <AddJobModal
-          onClose={() => setShowModal(false)}
+          onClose={() => { setShowModal(false); setImportPrefill(null) }}
           onLimitReached={() => setShowUpgrade(true)}
+          initial={importPrefill || { status: 'applied' }}
+          isEdit={false}
           onSave={async (data) => {
             await createJob(data)
             setShowModal(false)
+            setImportPrefill(null)
           }}
         />
       )}
@@ -314,6 +329,16 @@ export default function Dashboard() {
         <UpgradeModal
           reason="limit"
           onClose={() => setShowUpgrade(false)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportFromURLModal
+          onClose={() => setShowImportModal(false)}
+          onExtracted={(prefilled) => {
+            setImportPrefill({ ...prefilled, status: 'applied' })
+            setShowModal(true)
+          }}
         />
       )}
     </div>
