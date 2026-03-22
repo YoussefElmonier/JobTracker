@@ -66,8 +66,9 @@ async function scanUserEmails(user) {
 
     const messages = res.data.messages || []
     console.log('Emails fetched for user:', user.email, 'count:', messages.length)
+    console.log('Starting to process emails...');
 
-    await Promise.all(messages.map(async (msg) => {
+    await Promise.all(messages.map(async (msg, index) => {
       if (user.scannedEmailIds?.includes(msg.id)) return
 
       let msgData
@@ -86,6 +87,8 @@ async function scanUserEmails(user) {
       const headers = payload.headers || []
       const subjectHeader = headers.find(h => h.name.toLowerCase() === 'subject')
       const subject = subjectHeader ? subjectHeader.value : ''
+
+      console.log(`Email ${index + 1}:`, subject || 'No subject found');
 
       let base64Body = ''
       if (payload.parts) {
