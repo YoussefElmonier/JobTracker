@@ -67,7 +67,7 @@ async function scanUserEmails(user) {
     if (!auth) return
 
     const gmail = google.gmail({ version: 'v1', auth })
-    const query = 'is:unread from:youssifelmonier66@gmail.com'
+    const query = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)'
 
     console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
@@ -106,7 +106,7 @@ async function scanUserEmails(user) {
       const isRejection = rejectionKeywordsArr.some(k => textToCheck.includes(k));
 
       const matched = isOffer || isInterview || isRejection;
-      console.log('Email subject:', email.subject, 'Keywords matched:', matched);
+      console.log('Email processing: Keywords matched:', matched);
 
       if (!matched) {
         user.scannedEmailIds.push({ id: email.id, date: new Date() });

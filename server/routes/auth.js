@@ -26,51 +26,44 @@ const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
 // Passport Google Strategy - SHARED CALLBACK
-const googleAuthCallback = async (accessToken, refreshToken, profile, done) => {
+const googleAuthCallback = async (req, accessToken, refreshToken, profile, done) => {
   try {
-    console.log('🛡️ Google Strategy: Verifying user ->', profile.emails?.[0]?.value || 'No Email')
     const email = profile.emails[0].value
-    console.log('🛡️ Google Strategy: Looking up user...')
-    let user    = await User.findOne({ 
+    let user = await User.findOne({ 
       $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
     })
-    console.log('🛡️ Google Strategy: User found ->', !!user)
+
+    // CRITICAL FIX 2: Gmail Account Linkage Takeover Protection
+    // If the user is already logged in (Gmail connection flow), 
+    // ensure the Gmail account being connected is theirs.
+    if (req.userId && user && user._id.toString() !== req.userId) {
+      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
+    }
 
     if (!user) {
-      console.log('🛡️ Google Strategy: Creating new user...')
       user = await User.create({
         name:     profile.displayName,
         email:    email.toLowerCase(),
         googleId: profile.id,
       })
-      console.log('🛡️ Google Strategy: New user created.')
     } else if (!user.googleId) {
-      console.log('🛡️ Google Strategy: Linking existing account to google...')
       user.googleId = profile.id
-      console.log('🛡️ Google Strategy: Account linked.')
     }
 
-    // Attach/Update Gmail tokens ALWAYS for now (if present)
-    console.log('🛡️ Google Strategy: Attaching Gmail tokens...')
+    // Attach/Update Gmail tokens
     user.gmailTokens = {
       accessToken,
       refreshToken: refreshToken || user.gmailTokens?.refreshToken
     }
     
-    // Migrate scannedEmailIds from old string format to new object format
-    if (user.scannedEmailIds && user.scannedEmailIds.length > 0) {
-      const isOldFormat = typeof user.scannedEmailIds[0] === 'string';
-      if (isOldFormat) {
-        console.log('Migrating scannedEmailIds to new format...');
+    // Migrate scannedEmailIds
+    if (user.scannedEmailIds && user.scannedEmailIds.length > 0 && typeof user.scannedEmailIds[0] === 'string') {
         user.scannedEmailIds = [];
-      }
     }
     
     await user.save()
-    console.log('🛡️ Google Strategy: Execution successful for', user.email)
     return done(null, user)
   } catch (err) {
-    console.error('❌ Google Strategy CRASH:', err.message)
     return done(err, null)
   }
 }
@@ -83,7 +76,8 @@ passport.use('google', new GoogleStrategy({
     proxy:        true,
     accessType:   'offline',
     prompt:       'consent',
-    scope:        ['profile', 'email']
+    scope:        ['profile', 'email'],
+    passReqToCallback: true
   }, googleAuthCallback))
 
 // Client B - Gmail Connection Strategy
@@ -94,7 +88,8 @@ passport.use('google-gmail', new GoogleStrategy({
     proxy:        true,
     accessType:   'offline',
     prompt:       'consent',
-    scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly']
+    scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
+    passReqToCallback: true
   }, googleAuthCallback))
 
 // POST /api/auth/register

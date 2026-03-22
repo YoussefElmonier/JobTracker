@@ -11,6 +11,13 @@ const paymentRoutes = require('./routes/payment')
 const notificationRoutes = require('./routes/notifications')
 const { scanUserEmails } = require('./services/emailScanner')
 const auth = require('./middleware/auth')
+const rateLimit = require('express-rate-limit')
+
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 20, 
+  message: { error: 'Too many requests — please try again later' }
+});
 
 const app  = express()
 const PORT = process.env.PORT || 5000
@@ -62,42 +69,48 @@ app.use(express.json())
 app.use(passport.initialize())
 
 // Routes
-// VERCEL CRON: Unauthenticated endpoint to scan emails for users
+// VERCEL CRON: Authenticated endpoint to scan emails for users
 app.get('/api/cron/scan-emails', async (req, res) => {
+  // CRITICAL FIX 1 & HIGH FIX 2
   if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
-    console.log('No cron secret provided — allowing for testing');
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
     const User = require('./models/User')
-    // Find up to 3 users where gmailConnected: true (Vercel 10s timeout limit)
-    const users = await User.find({ gmailConnected: true }).limit(3)
-    console.log('Users found:', users.length, users.map(u => u.email))
+    // Find up to 3 users who are premium and have Gmail connected
+    const users = await User.find({ gmailConnected: true, isPremium: true }).limit(3)
     
     if (users.length === 0) {
-      return res.json({ success: true, scanned: 0, message: 'No users with Gmail connected' })
+      return res.json({ success: true, scanned: 0, message: 'No premium users with Gmail connected' })
     }
 
-    console.log(`[Cron] Scanning emails for ${users.length} users...`)
+    console.log(`[Cron] Scanning emails for ${users.length} premium users...`)
     
     for (const user of users) {
-      console.log('Processing user:', user.email, 'Gmail token exists:', !!user.gmailTokens?.accessToken, 'Refresh token exists:', !!user.gmailTokens?.refreshToken)
       try {
         await scanUserEmails(user)
       } catch (err) {
-        console.error('Error scanning user:', user.email, err.message, err.stack)
+        console.error('Error scanning user:', user.email, err.message)
       }
     }
 
     res.json({ success: true, scanned: users.length })
   } catch (err) {
     console.error('[Cron] Email scan error:', err)
-    // Return 200/JSON even on error so the monitoring service doesn't think the whole app is down
     res.status(500).json({ success: false, error: err.message })
   }
 })
 
 app.use('/api/auth',    authRoutes)
+
+// ORPHANED PROTECTIONS (MEDIUM FIX 1)
+app.use('/api/jobs/:id/analyze-cv', aiLimiter);
+app.use('/api/jobs/:id/cover-letter', aiLimiter);
+app.use('/api/jobs/fetch-from-url', aiLimiter);
+app.use('/api/jobs/:id/salary-insights', aiLimiter);
+app.use('/api/jobs/:id/interview-questions', aiLimiter);
+
 app.use('/api/jobs',    jobRoutes)
 app.use('/api/logo',    logoRoutes)
 app.use('/api/payment', paymentRoutes)

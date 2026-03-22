@@ -234,8 +234,6 @@ router.post('/:id/cover-letter', async (req, res) => {
     const job = await Job.findOne({ _id: req.params.id, user: req.userId })
     if (!job) return res.status(404).json({ message: 'Job not found' })
 
-    console.log(`[cover-letter] job found, aiCoverLetter type=${typeof job.aiCoverLetter}, value=`, JSON.stringify(job.aiCoverLetter)?.slice(0,100))
-
     // Check cache FIRST — if we already have a letter for this tier, return it regardless of count
     const clObj = job.aiCoverLetter
     const cached = typeof clObj === 'string' && clObj
@@ -383,6 +381,11 @@ router.post('/:id/interview-questions/:questionIndex/confirm', async (req, res) 
 // ═══════════════════════════════════════════════════════════════════════════════
 router.post('/:id/salary-insights', async (req, res) => {
   try {
+    const user = await User.findById(req.userId)
+    if (!user?.isPremium) {
+      return res.status(403).json({ error: 'premium_required', message: 'Premium feature.' })
+    }
+
     const job = await Job.findOne({ _id: req.params.id, user: req.userId })
     if (!job) return res.status(404).json({ message: 'Job not found' })
 
