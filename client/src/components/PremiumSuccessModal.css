@@ -1,0 +1,144 @@
+.premium-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.premium-success-modal {
+  width: 100%;
+  max-width: 450px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.premium-success-modal__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.premium-success-modal__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.premium-success-modal__crown {
+  font-size: 5rem;
+  color: #fbbf24;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.6));
+  animation: crown-pulse 2s infinite ease-in-out;
+}
+
+@keyframes crown-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.6)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 30px rgba(251, 191, 36, 0.9)); }
+}
+
+.premium-success-modal__title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.premium-success-modal__subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.premium-success-modal__features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.premium-success-modal__feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.4s ease;
+}
+
+.premium-success-modal__feature.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.premium-success-modal__check {
+  width: 24px;
+  height: 24px;
+  background: #22c55e;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.shimmer-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  font-weight: 700;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.shimmer-btn:hover {
+  transform: translateY(-2px);
+}
+
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: rotate(45deg);
+  animation: shimmer-effect 2s infinite;
+}
+
+@keyframes shimmer-effect {
+  0% { transform: translate(-100%, -100%) rotate(45deg); }
+  100% { transform: translate(100%, 100%) rotate(45deg); }
+}

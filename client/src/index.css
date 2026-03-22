@@ -246,11 +246,21 @@ button {
 /* --- Common Components Styles --- */
 .card {
   background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
   padding: 24px;
   transition: var(--transition);
   border: 1px solid var(--border);
+}
+
+.glass-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
 }
 
 .card:hover {

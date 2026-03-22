@@ -7,8 +7,8 @@
   display: flex;
   align-items: center;
   background: var(--bg-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(35px);
+  -webkit-backdrop-filter: blur(35px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -20,6 +20,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.navbar__logo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-right: 40px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.navbar__logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
 }
 
 .navbar__nav-pill {
@@ -83,6 +98,63 @@
   align-items: center;
   justify-content: center;
   transform: translate(25%, -25%);
+}
+
+.navbar__right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.navbar__avatar {
+  width: 38px;
+  height: 38px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 2px solid var(--accent-light);
+  position: relative;
+  transition: var(--transition);
+}
+
+.navbar__avatar:hover {
+  transform: scale(1.05);
+}
+
+.navbar__avatar-crown {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 1.2rem;
+  color: #fbbf24;
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.8));
+}
+
+.navbar__toggle,
+.navbar__logout {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.navbar__toggle:hover,
+.navbar__logout:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .navbar__dropdown {
@@ -162,6 +234,13 @@
   z-index: 1000;
   padding: 0 10px;
   border: 1px solid var(--glass-border);
+  backdrop-filter: blur(35px);
+  -webkit-backdrop-filter: blur(35px);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='dark'] .mobile-bottom-nav {
+  background: rgba(15, 23, 42, 0.45);
 }
 
 @media (max-width: 768px) {

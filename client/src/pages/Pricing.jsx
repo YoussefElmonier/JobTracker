@@ -9,6 +9,8 @@ import {
 } from 'react-icons/ri'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
+import PremiumConfetti from '../components/PremiumConfetti'
+import PremiumSuccessModal from '../components/PremiumSuccessModal'
 import './Pricing.css'
 
 const FREE_FEATURES = [
@@ -35,6 +37,8 @@ export default function Pricing() {
   const [paddle, setPaddle] = useState(null)
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showPremiumModal, setShowPremiumModal] = useState(false)
 
   useEffect(() => {
     // Check for success redirect from Paddle
@@ -45,6 +49,8 @@ export default function Pricing() {
           await api.post('/payment/verify-payment')
           await refreshUser()
           setToast({ type: 'success', msg: '🎉 Welcome to Premium! You now have unlimited access.' })
+          setShowSuccess(true)
+          setTimeout(() => setShowPremiumModal(true), 1500)
           navigate('/pricing', { replace: true })
         } catch (err) {
           console.error('Manual verification failed:', err)
@@ -174,6 +180,11 @@ export default function Pricing() {
           </p>
         </div>
       </div>
+
+      <PremiumConfetti trigger={showSuccess} />
+      {showPremiumModal && (
+        <PremiumSuccessModal onClose={() => setShowPremiumModal(false)} />
+      )}
     </div>
   )
 }
