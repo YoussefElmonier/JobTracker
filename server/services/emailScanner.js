@@ -55,7 +55,7 @@ async function scanUserEmails(user) {
     if (!auth) return
 
     const gmail = google.gmail({ version: 'v1', auth })
-    const query = 'is:unread after:yesterday'
+    const query = 'is:unread'
 
     console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
