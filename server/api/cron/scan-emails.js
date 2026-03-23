@@ -16,10 +16,10 @@ async function checkTokens(user) {
     process.env.GOOGLE_GMAIL_CLIENT_SECRET,
     `${process.env.SERVER_URL || 'https://trkr-job.vercel.app'}/api/auth/google/gmail/callback`
   );
-  if (!user.gmailTokens?.refreshToken) return null;
+  if (!user.gmailIntegration?.refreshToken) return null;
   oauth2Client.setCredentials({
-    access_token: user.gmailTokens.accessToken,
-    refresh_token: user.gmailTokens.refreshToken
+    access_token: user.gmailIntegration.accessToken,
+    refresh_token: user.gmailIntegration.refreshToken
   });
   return oauth2Client;
 }

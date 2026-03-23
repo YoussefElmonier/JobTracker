@@ -25,20 +25,13 @@ const router   = express.Router()
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
-// Passport Google Strategy - SHARED CALLBACK
+// Client A — Login Callback
 const googleAuthCallback = async (req, accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value
     let user = await User.findOne({ 
       $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
     })
-
-    // CRITICAL FIX 2: Gmail Account Linkage Takeover Protection
-    // If the user is already logged in (Gmail connection flow), 
-    // ensure the Gmail account being connected is theirs.
-    if (req.userId && user && user._id.toString() !== req.userId) {
-      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
-    }
 
     if (!user) {
       user = await User.create({
@@ -48,18 +41,50 @@ const googleAuthCallback = async (req, accessToken, refreshToken, profile, done)
       })
     } else if (!user.googleId) {
       user.googleId = profile.id
+      await user.save()
     }
 
-    // Attach/Update Gmail tokens
-    user.gmailTokens = {
-      accessToken,
-      refreshToken: refreshToken || user.gmailTokens?.refreshToken
-    }
+    return done(null, user)
+  } catch (err) {
+    return done(err, null)
+  }
+}
+
+// Client B — Gmail Callback
+const googleGmailCallback = async (req, accessToken, refreshToken, profile, done) => {
+  try {
+    const email = profile.emails[0].value
+    const userId = req.session?.gmailUserId || req.userId;
     
-    // Migrate scannedEmailIds
+    // 1. Protection: If we're logged in, make sure we aren't linking someone else's account
+    // first see if this Google ID belongs to SOMEONE ELSE
+    let existingUserWithThisGoogleId = await User.findOne({ googleId: profile.id });
+    if (userId && existingUserWithThisGoogleId && existingUserWithThisGoogleId._id.toString() !== userId) {
+      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
+    }
+
+    let user = await User.findById(userId);
+    if (!user) {
+      user = await User.findOne({ 
+        $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
+      })
+    }
+
+    if (!user) {
+      return done(new Error('User not found. Please log in first.'), null);
+    }
+
+    // 2. Migration: Reset scannedEmailIds if they are in legacy (string array) format
     if (user.scannedEmailIds && user.scannedEmailIds.length > 0 && typeof user.scannedEmailIds[0] === 'string') {
         user.scannedEmailIds = [];
     }
+
+    // 3. Capture and save refresh token
+    user.gmailIntegration = {
+      accessToken,
+      refreshToken: refreshToken || user.gmailIntegration?.refreshToken
+    }
+    user.gmailConnected = true;
     
     await user.save()
     return done(null, user)
@@ -68,19 +93,19 @@ const googleAuthCallback = async (req, accessToken, refreshToken, profile, done)
   }
 }
 
-// Client A - Basic Login Strategy
+// Client A - Basic Login Strategy (Passport 'google')
 passport.use('google', new GoogleStrategy({
     clientID:     process.env.GOOGLE_LOGIN_CLIENT_ID,
     clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET,
     callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
     proxy:        true,
     accessType:   'offline',
-    prompt:       'consent',
+    prompt:       'consent', // Leaving as is since user said DO NOT MODIFY standard route
     scope:        ['profile', 'email'],
     passReqToCallback: true
   }, googleAuthCallback))
 
-// Client B - Gmail Connection Strategy
+// Client B - Gmail Connection Strategy (Passport 'google-gmail')
 passport.use('google-gmail', new GoogleStrategy({
     clientID:     process.env.GOOGLE_GMAIL_CLIENT_ID,
     clientSecret: process.env.GOOGLE_GMAIL_CLIENT_SECRET,
@@ -90,7 +115,7 @@ passport.use('google-gmail', new GoogleStrategy({
     prompt:       'consent',
     scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
     passReqToCallback: true
-  }, googleAuthCallback))
+  }, googleGmailCallback))
 
 // POST /api/auth/register
 router.post('/register', upload.single('cvFile'), async (req, res) => {
@@ -274,7 +299,7 @@ router.post('/gmail/disconnect', auth, async (req, res) => {
      
      user.gmailConnected = false
      user.autoTrackEmails = false
-     user.gmailTokens = { accessToken: null, refreshToken: null }
+     user.gmailIntegration = { accessToken: null, refreshToken: null }
      await user.save()
      
      res.json({ success: true, message: 'Gmail disconnected' })

@@ -40,10 +40,10 @@ async function checkTokens(user) {
     process.env.GOOGLE_GMAIL_CLIENT_SECRET
   )
   
-  if (!user.gmailTokens?.refreshToken) return null
+  if (!user.gmailIntegration?.refreshToken) return null
   
   oauth2Client.setCredentials({
-    refresh_token: user.gmailTokens.refreshToken
+    refresh_token: user.gmailIntegration.refreshToken
   })
 
   try {
@@ -51,7 +51,7 @@ async function checkTokens(user) {
     oauth2Client.setCredentials(credentials)
     
     // Save new access token to MongoDB
-    user.gmailTokens.accessToken = credentials.access_token
+    user.gmailIntegration.accessToken = credentials.access_token
     await user.save()
   } catch (err) {
     console.error('Failed to refresh Gmail token for', user.email, err.message)
