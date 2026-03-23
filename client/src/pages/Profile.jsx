@@ -70,15 +70,25 @@ export default function Profile() {
   }
 
   const handleConnectGmail = () => {
-    const token = localStorage.getItem('jt_token');
+    // Check for premium status first (existing logic preserved)
+    if (!user?.isPremium) {
+      setShowUpgrade(true);
+      return;
+    }
+
+    const token = localStorage.getItem('jt_token') ||
+                  localStorage.getItem('token') ||
+                  localStorage.getItem('jwt') ||
+                  localStorage.getItem('authToken') ||
+                  sessionStorage.getItem('token');
 
     if (!token) {
+      console.error('No token found in storage');
       alert('Please log in again before connecting Gmail');
       return;
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    window.location.href = `${apiUrl}/api/auth/google/gmail?token=${token}`;
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google/gmail?token=${token}`;
   };
 
   const handleDisconnectGmail = async () => {
