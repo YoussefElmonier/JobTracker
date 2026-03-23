@@ -8,7 +8,7 @@ import PageWrapper from '../components/PageWrapper'
 import './Profile.css'
 
 export default function Profile() {
-  const { user, token, refreshUser } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [cvText, setCvText] = useState('')
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -75,8 +75,7 @@ export default function Profile() {
       return
     }
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-    // Pass token as query param because window.location.href redirects can't send headers
-    window.location.href = `${serverUrl}/api/auth/google/gmail?token=${token}`
+    window.location.href = `${serverUrl}/api/auth/google/gmail`
   }
 
   const handleDisconnectGmail = async () => {

@@ -3,21 +3,14 @@ const User = require('../models/User')
 
 module.exports = async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization
-  const queryToken = req.query.token // Fallback for redirects
-  
-  if (!authHeader && !queryToken) {
-    console.warn('🛡️ Auth Middleware: Missing credentials')
+  console.log('🛡️ Auth Middleware: Header ->', authHeader ? 'Present' : 'Missing')
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.warn('🛡️ Auth Middleware: Malformed header')
     return res.status(401).json({ message: 'No token provided' })
   }
 
-  let token;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1]
-  } else if (queryToken) {
-    token = queryToken
-  } else {
-    return res.status(401).json({ message: 'No token provided' })
-  }
+  const token = authHeader.split(' ')[1]
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
