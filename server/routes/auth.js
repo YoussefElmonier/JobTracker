@@ -54,23 +54,32 @@ const googleAuthCallbackLogin = async (req, accessToken, refreshToken, profile, 
 const googleAuthCallbackGmail = async (req, accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value
+    
+    // Retrieve userId from state (passed in the initial redirect)
+    const currentUserId = req.userId || req.query.state
+    
     let user = await User.findOne({ 
       $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
     })
 
-    // Ensure account linkage security
-    if (req.userId && user && user._id.toString() !== req.userId) {
-      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
+    // If we have a currentUserId, we MUST link it to that user instead of finding by email
+    if (currentUserId) {
+      const existingUser = await User.findById(currentUserId)
+      if (existingUser) {
+        user = existingUser
+      }
     }
 
     if (!user) {
-      // In Gmail flow, user should ideally exist, but we handle creation just in case
       user = await User.create({
         name:     profile.displayName,
         email:    email.toLowerCase(),
         googleId: profile.id,
       })
     }
+    
+    // Attach googleId if missing
+    if (!user.googleId) user.googleId = profile.id
 
     // Attach/Update Gmail tokens specifically
     user.gmailTokens = {
@@ -226,12 +235,15 @@ router.get('/google/gmail', auth, async (req, res, next) => {
   if (!user?.isPremium) {
      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/pricing?reason=gmail`)
   }
-  next()
-}, passport.authenticate('google-gmail', { 
-  scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
-  accessType: 'offline',
-  prompt: 'consent'
-}))
+  
+  // Pass the user ID as state to identify the user in the callback
+  passport.authenticate('google-gmail', { 
+    scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
+    accessType: 'offline',
+    prompt: 'consent',
+    state: req.userId.toString()
+  })(req, res, next)
+})
 
 // GET /api/auth/google/callback (Basic Login)
 router.get('/google/callback', 
