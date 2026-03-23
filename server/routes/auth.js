@@ -99,7 +99,7 @@ const googleAuthCallbackGmail = async (req, accessToken, refreshToken, profile, 
 passport.use('google', new GoogleStrategy({
     clientID:     process.env.GOOGLE_LOGIN_CLIENT_ID,
     clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET,
-    callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
+    callbackURL:  `${process.env.SERVER_URL || 'https://trkr-job.vercel.app'}/api/auth/google/callback`,
     proxy:        true,
     scope:        ['profile', 'email'],
     passReqToCallback: true
@@ -109,7 +109,7 @@ passport.use('google', new GoogleStrategy({
 passport.use('google-gmail', new GoogleStrategy({
     clientID:     process.env.GOOGLE_GMAIL_CLIENT_ID,
     clientSecret: process.env.GOOGLE_GMAIL_CLIENT_SECRET,
-    callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/gmail/callback`,
+    callbackURL:  `${process.env.SERVER_URL || 'https://trkr-job.vercel.app'}/api/auth/google/gmail/callback`,
     proxy:        true,
     accessType:   'offline',
     prompt:       'consent',
@@ -223,11 +223,15 @@ router.get('/me', auth, async (req, res) => {
   }
 })
 // GET /api/auth/google (Using Basic Login Client)
-router.get('/google', passport.authenticate('google', { 
-  scope: ['profile', 'email'],
-  accessType: 'offline',
-  prompt: 'consent'
-}))
+router.get('/google', (req, res, next) => {
+  const callbackURL = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+  passport.authenticate('google', { 
+    callbackURL,
+    scope: ['profile', 'email'],
+    accessType: 'offline',
+    prompt: 'consent'
+  })(req, res, next)
+})
 
 // GET /api/auth/google/gmail (Using Gmail Connected Client)
 router.get('/google/gmail', auth, async (req, res, next) => {
@@ -237,7 +241,11 @@ router.get('/google/gmail', auth, async (req, res, next) => {
   }
   
   // Pass the user ID as state to identify the user in the callback
+  // Use dynamic callbackURL to match the current environment
+  const callbackURL = `${req.protocol}://${req.get('host')}/api/auth/google/gmail/callback`;
+  
   passport.authenticate('google-gmail', { 
+    callbackURL,
     scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
     accessType: 'offline',
     prompt: 'consent',
@@ -246,23 +254,33 @@ router.get('/google/gmail', auth, async (req, res, next) => {
 })
 
 // GET /api/auth/google/callback (Basic Login)
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  async (req, res) => {
-    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_failed`)
+router.get('/google/callback', (req, res, next) => {
+  const callbackURL = `${req.protocol}://${req.get('host')}/api/auth/google/callback`;
+  passport.authenticate('google', { 
+    callbackURL,
+    session: false, 
+    failureRedirect: '/login' 
+  })(req, res, next)
+}, async (req, res) => {
+    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'https://trkr-job.vercel.app'}/login?error=auth_failed`)
     
     const token = signToken(req.user._id)
-    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`)
+    res.redirect(`${process.env.CLIENT_URL || 'https://trkr-job.vercel.app'}/login?token=${token}`)
   }
 )
 
 // GET /api/auth/google/gmail/callback (Gmail Client)
-router.get('/google/gmail/callback', 
-  passport.authenticate('google-gmail', { session: false, failureRedirect: '/profile?error=gmail_failed' }),
-  async (req, res) => {
-    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=auth_failed`)
+router.get('/google/gmail/callback', (req, res, next) => {
+  const callbackURL = `${req.protocol}://${req.get('host')}/api/auth/google/gmail/callback`;
+  passport.authenticate('google-gmail', { 
+    callbackURL,
+    session: false, 
+    failureRedirect: '/profile?error=gmail_failed' 
+  })(req, res, next)
+}, async (req, res) => {
+    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'https://trkr-job.vercel.app'}/profile?error=auth_failed`)
     
-    res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
+    res.redirect(`${process.env.CLIENT_URL || 'https://trkr-job.vercel.app'}/profile?gmail=success`)
   }
 )
 
