@@ -205,12 +205,26 @@ router.get('/google', passport.authenticate('google', {
 }))
 
 // GET /api/auth/google/gmail (Using Gmail Connected Client)
-router.get('/google/gmail', auth, async (req, res, next) => {
-  const user = await User.findById(req.userId)
-  if (!user?.isPremium) {
-     return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/pricing?reason=gmail`)
+router.get('/google/gmail', async (req, res, next) => {
+  const token = req.query.token;
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id || decoded._id || decoded.userId;
+    
+    const user = await User.findById(req.userId)
+    if (!user?.isPremium) {
+       return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/pricing?reason=gmail`)
+    }
+    
+    // Save userId to session for the callback
+    req.session.gmailUserId = req.userId;
+    
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid token' });
   }
-  next()
 }, passport.authenticate('google-gmail', { 
   scope: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
   accessType: 'offline',
@@ -232,10 +246,22 @@ router.get('/google/callback',
 router.get('/google/gmail/callback', 
   passport.authenticate('google-gmail', { session: false, failureRedirect: '/profile?error=gmail_failed' }),
   async (req, res) => {
-    if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=auth_failed`)
+    const userId = req.session.gmailUserId || req.user?._id;
+    if (!userId) {
+      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=auth_failed`);
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=user_not_found`);
+    }
+
+    user.gmailConnected = true;
+    await user.save();
     
-    req.user.gmailConnected = true
-    await req.user.save()
+    // Cleanup session
+    delete req.session.gmailUserId;
+    
     res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
   }
 )

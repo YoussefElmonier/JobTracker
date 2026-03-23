@@ -74,8 +74,9 @@ export default function Profile() {
       setShowUpgrade(true)
       return
     }
+    const token = localStorage.getItem('jt_token');
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-    window.location.href = `${serverUrl}/api/auth/google/gmail`
+    window.location.href = `${serverUrl}/api/auth/google/gmail?token=${token}`
   }
 
   const handleDisconnectGmail = async () => {

@@ -66,6 +66,12 @@ app.use(cors({
 // Webhook must receive raw body — mount BEFORE express.json()
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
+const session = require('express-session')
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
 app.use(passport.initialize())
 
 // Routes
