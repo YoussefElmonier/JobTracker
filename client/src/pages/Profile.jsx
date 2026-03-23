@@ -70,26 +70,14 @@ export default function Profile() {
   }
 
   const handleConnectGmail = () => {
-    // Check for premium status first (existing logic preserved)
     if (!user?.isPremium) {
-      setShowUpgrade(true);
-      return;
+      setShowUpgrade(true)
+      return
     }
-
-    const token = localStorage.getItem('jt_token') ||
-                  localStorage.getItem('token') ||
-                  localStorage.getItem('jwt') ||
-                  localStorage.getItem('authToken') ||
-                  sessionStorage.getItem('token');
-
-    if (!token) {
-      console.error('No token found in storage');
-      alert('Please log in again before connecting Gmail');
-      return;
-    }
-
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google/gmail?token=${token}`;
-  };
+    const token = localStorage.getItem('jt_token');
+    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+    window.location.href = `${serverUrl}/api/auth/google/gmail?token=${token}`
+  }
 
   const handleDisconnectGmail = async () => {
     try {
