@@ -54,7 +54,14 @@ async function checkTokens(user) {
     user.gmailTokens.accessToken = credentials.access_token
     await user.save()
   } catch (err) {
-    console.error('Failed to refresh Gmail token for', user.email, err.message)
+    if (err.message?.includes('unauthorized_client') || err.message?.includes('invalid_grant')) {
+      console.error(`[Scanner] Reconnection needed for ${user.email}: Token expired or revoked (${err.message})`)
+      // Optional: automatically disconnect to show user they need to re-link
+      // user.gmailConnected = false;
+      // await user.save();
+    } else {
+      console.error(`[Scanner] Failed to refresh Gmail token for ${user.email}:`, err.message)
+    }
     return null
   }
 

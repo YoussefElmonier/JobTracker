@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
 import PremiumConfetti from '../components/PremiumConfetti'
 import PremiumSuccessModal from '../components/PremiumSuccessModal'
+import PageWrapper from '../components/PageWrapper'
 import './Pricing.css'
 
 const FREE_FEATURES = [
@@ -60,7 +61,7 @@ export default function Pricing() {
       }
       verify()
     }
-  }, [])
+  }, [navigate, refreshUser])
 
   useEffect(() => {
     initializePaddle({
@@ -108,7 +109,7 @@ export default function Pricing() {
         <div className="pricing-hero">
           <div className="pricing-badge">Simple Pricing</div>
           <h1 className="pricing-title">One payment.<br />Unlimited access.</h1>
-          <p className="pricing-sub">No subscriptions. No monthly fees. Pay once, use forever.</p>
+          <div className="pricing-sub">No subscriptions. No monthly fees. Pay once, use forever.</div>
         </div>
 
         <div className="pricing-cards">

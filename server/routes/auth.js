@@ -25,20 +25,13 @@ const router   = express.Router()
 const signToken = (userId) =>
   jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
-// Passport Google Strategy - SHARED CALLBACK
-const googleAuthCallback = async (req, accessToken, refreshToken, profile, done) => {
+// Strategy A Callback - BASIC LOGIN (Does NOT update Gmail tokens)
+const googleAuthCallbackLogin = async (req, accessToken, refreshToken, profile, done) => {
   try {
     const email = profile.emails[0].value
     let user = await User.findOne({ 
       $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
     })
-
-    // CRITICAL FIX 2: Gmail Account Linkage Takeover Protection
-    // If the user is already logged in (Gmail connection flow), 
-    // ensure the Gmail account being connected is theirs.
-    if (req.userId && user && user._id.toString() !== req.userId) {
-      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
-    }
 
     if (!user) {
       user = await User.create({
@@ -48,19 +41,44 @@ const googleAuthCallback = async (req, accessToken, refreshToken, profile, done)
       })
     } else if (!user.googleId) {
       user.googleId = profile.id
+      await user.save()
     }
 
-    // Attach/Update Gmail tokens
+    return done(null, user)
+  } catch (err) {
+    return done(err, null)
+  }
+}
+
+// Strategy B Callback - GMAIL CONNECTION (Updates Gmail tokens ONLY)
+const googleAuthCallbackGmail = async (req, accessToken, refreshToken, profile, done) => {
+  try {
+    const email = profile.emails[0].value
+    let user = await User.findOne({ 
+      $or: [{ googleId: profile.id }, { email: email.toLowerCase() }] 
+    })
+
+    // Ensure account linkage security
+    if (req.userId && user && user._id.toString() !== req.userId) {
+      return done(new Error('Email mismatch: This Gmail belongs to another user'), null);
+    }
+
+    if (!user) {
+      // In Gmail flow, user should ideally exist, but we handle creation just in case
+      user = await User.create({
+        name:     profile.displayName,
+        email:    email.toLowerCase(),
+        googleId: profile.id,
+      })
+    }
+
+    // Attach/Update Gmail tokens specifically
     user.gmailTokens = {
       accessToken,
       refreshToken: refreshToken || user.gmailTokens?.refreshToken
     }
     
-    // Migrate scannedEmailIds
-    if (user.scannedEmailIds && user.scannedEmailIds.length > 0 && typeof user.scannedEmailIds[0] === 'string') {
-        user.scannedEmailIds = [];
-    }
-    
+    user.gmailConnected = true
     await user.save()
     return done(null, user)
   } catch (err) {
@@ -68,19 +86,17 @@ const googleAuthCallback = async (req, accessToken, refreshToken, profile, done)
   }
 }
 
-// Client A - Basic Login Strategy
+// Client A - Basic Login Strategy (NO offline access needed)
 passport.use('google', new GoogleStrategy({
     clientID:     process.env.GOOGLE_LOGIN_CLIENT_ID,
     clientSecret: process.env.GOOGLE_LOGIN_CLIENT_SECRET,
     callbackURL:  `${process.env.SERVER_URL || 'http://localhost:3001'}/api/auth/google/callback`,
     proxy:        true,
-    accessType:   'offline',
-    prompt:       'consent',
     scope:        ['profile', 'email'],
     passReqToCallback: true
-  }, googleAuthCallback))
+  }, googleAuthCallbackLogin))
 
-// Client B - Gmail Connection Strategy
+// Client B - Gmail Connection Strategy (REQUIRED offline access)
 passport.use('google-gmail', new GoogleStrategy({
     clientID:     process.env.GOOGLE_GMAIL_CLIENT_ID,
     clientSecret: process.env.GOOGLE_GMAIL_CLIENT_SECRET,
@@ -90,7 +106,7 @@ passport.use('google-gmail', new GoogleStrategy({
     prompt:       'consent',
     scope:        ['profile', 'email', 'https://www.googleapis.com/auth/gmail.readonly'],
     passReqToCallback: true
-  }, googleAuthCallback))
+  }, googleAuthCallbackGmail))
 
 // POST /api/auth/register
 router.post('/register', upload.single('cvFile'), async (req, res) => {
@@ -234,8 +250,6 @@ router.get('/google/gmail/callback',
   async (req, res) => {
     if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?error=auth_failed`)
     
-    req.user.gmailConnected = true
-    await req.user.save()
     res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/profile?gmail=success`)
   }
 )
