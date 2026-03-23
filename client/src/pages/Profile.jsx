@@ -70,14 +70,16 @@ export default function Profile() {
   }
 
   const handleConnectGmail = () => {
-    if (!user?.isPremium) {
-      setShowUpgrade(true)
-      return
-    }
     const token = localStorage.getItem('jt_token');
-    const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-    window.location.href = `${serverUrl}/api/auth/google/gmail?token=${token}`
-  }
+
+    if (!token) {
+      alert('Please log in again before connecting Gmail');
+      return;
+    }
+
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    window.location.href = `${apiUrl}/api/auth/google/gmail?token=${token}`;
+  };
 
   const handleDisconnectGmail = async () => {
     try {
