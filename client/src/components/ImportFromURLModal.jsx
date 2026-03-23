@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { RiCloseLine, RiLinkM, RiMagicLine, RiErrorWarningLine } from 'react-icons/ri'
+import { createPortal } from 'react-dom'
 import api from '../api/axios'
 import './ImportFromURLModal.css'
 
@@ -61,7 +62,7 @@ export default function ImportFromURLModal({ onClose, onExtracted }) {
     if (e.key === 'Enter') handleExtract()
   }
 
-  return (
+  return createPortal(
     <div className="ifu-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="ifu-modal" role="dialog" aria-modal="true" aria-labelledby="ifu-title">
 
@@ -142,6 +143,7 @@ export default function ImportFromURLModal({ onClose, onExtracted }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

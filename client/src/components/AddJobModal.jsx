@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { RiCloseLine, RiBriefcaseLine, RiLink, RiUser3Line, RiCalendarLine } from 'react-icons/ri'
+import { RiCloseLine, RiBriefcaseLine, RiLink, RiUser3Line, RiCalendarLine, RiLinkM, RiMagicLine, RiErrorWarningLine } from 'react-icons/ri'
+import { createPortal } from 'react-dom'
 import './AddJobModal.css'
 
 const STATUS_OPTIONS = [
@@ -64,7 +65,7 @@ export default function AddJobModal({ onClose, onSave, onLimitReached, initial =
     }
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" role="dialog" aria-modal="true"
         aria-labelledby="modal-title">
@@ -141,6 +142,21 @@ export default function AddJobModal({ onClose, onSave, onLimitReached, initial =
               />
             </div>
             <div className="form-group">
+              <label className="form-label" htmlFor="m-location">📍 Location</label>
+              <input
+                id="m-location"
+                name="location"
+                type="text"
+                className="form-input"
+                placeholder="e.g. Cairo"
+                value={form.location}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="modal__row">
+            <div className="form-group">
               <label className="form-label" htmlFor="m-status">Status</label>
               <select
                 id="m-status"
@@ -153,6 +169,20 @@ export default function AddJobModal({ onClose, onSave, onLimitReached, initial =
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="m-contact">
+                <RiUser3Line /> Contact
+              </label>
+              <input
+                id="m-contact"
+                name="contact"
+                type="text"
+                className="form-input"
+                placeholder="Name or email"
+                value={form.contact}
+                onChange={handleChange}
+              />
             </div>
           </div>
 
@@ -167,34 +197,6 @@ export default function AddJobModal({ onClose, onSave, onLimitReached, initial =
               className="form-input"
               placeholder="https://..."
               value={form.url}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="m-contact">
-              <RiUser3Line /> Contact / Recruiter
-            </label>
-            <input
-              id="m-contact"
-              name="contact"
-              type="text"
-              className="form-input"
-              placeholder="Name or email of contact"
-              value={form.contact}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="m-location">📍 Location <span style={{ fontWeight: 400, opacity: 0.6, fontSize: '0.8rem' }}>(helps AI detect salary country)</span></label>
-            <input
-              id="m-location"
-              name="location"
-              type="text"
-              className="form-input"
-              placeholder="e.g. Cairo, Egypt or Remote"
-              value={form.location}
               onChange={handleChange}
             />
           </div>
@@ -251,6 +253,7 @@ export default function AddJobModal({ onClose, onSave, onLimitReached, initial =
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

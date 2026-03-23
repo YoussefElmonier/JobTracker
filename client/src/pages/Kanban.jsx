@@ -16,6 +16,7 @@ import AddJobModal from '../components/AddJobModal'
 import CoverLetterModal from '../components/CoverLetterModal'
 import UpgradeModal from '../components/UpgradeModal'
 import ImportFromURLModal from '../components/ImportFromURLModal'
+import PageWrapper from '../components/PageWrapper'
 import './Kanban.css'
 
 const COLUMNS = [
@@ -446,147 +447,149 @@ export default function Kanban() {
   }
 
   return (
-    <div className="page-container kanban-page animate-fade">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Job Board</h1>
-          <p className="page-subtitle">Drag cards to update their status</p>
+    <PageWrapper>
+      <div className="page-container kanban-page animate-fade">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Job Board</h1>
+            <p className="page-subtitle">Drag cards to update their status</p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button
+              id="kanban-import-url"
+              className="btn btn-import-url"
+              onClick={() => setShowImportModal(true)}
+            >
+              <RiLinkM /> Import from URL
+            </button>
+            <button className="btn btn-primary" onClick={() => { setEditJob(null); setImportPrefill(null); setShowModal(true) }}>
+              <RiAddLine /> Add Application
+            </button>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <button
-            id="kanban-import-url"
-            className="btn btn-import-url"
-            onClick={() => setShowImportModal(true)}
-          >
-            <RiLinkM /> Import from URL
-          </button>
-          <button className="btn btn-primary" onClick={() => { setEditJob(null); setImportPrefill(null); setShowModal(true) }}>
-            <RiAddLine /> Add Application
-          </button>
-        </div>
-      </div>
 
-      <DragDropContext onDragStart={() => setIsDragging(true)} onDragEnd={handleDragEnd}>
-        <div className={`kanban__board ${isDragging ? 'kanban__board--dragging' : ''}`}>
-          {COLUMNS.map(col => {
-            const colJobs = getColumnJobs(col.id)
-            const isExpanded = expandedCols[col.id]
-            const hasMore = colJobs.length > 2
+        <DragDropContext onDragStart={() => setIsDragging(true)} onDragEnd={handleDragEnd}>
+          <div className={`kanban__board ${isDragging ? 'kanban__board--dragging' : ''} animate-slide-up stagger-2`}>
+            {COLUMNS.map(col => {
+              const colJobs = getColumnJobs(col.id)
+              const isExpanded = expandedCols[col.id]
+              const hasMore = colJobs.length > 2
 
-            return (
-              <div key={col.id} className={`kanban__col kanban-col-${col.id}`}>
-                <div className="kanban__col-header">
-                  <div className="kanban__col-title-row">
-                    <span className="kanban__col-icon">{col.icon}</span>
-                    <h2 className="kanban__col-title">{col.label}</h2>
-                    <span className="kanban__col-count">{loading ? '...' : colJobs.length}</span>
+              return (
+                <div key={col.id} className={`kanban__col kanban-col-${col.id}`}>
+                  <div className="kanban__col-header">
+                    <div className="kanban__col-title-row">
+                      <span className="kanban__col-icon">{col.icon}</span>
+                      <h2 className="kanban__col-title">{col.label}</h2>
+                      <span className="kanban__col-count">{loading ? '...' : colJobs.length}</span>
+                    </div>
+                    <button className="kanban__col-add" onClick={() => handleAddForColumn(col.id)}>
+                      <RiAddLine />
+                    </button>
                   </div>
-                  <button className="kanban__col-add" onClick={() => handleAddForColumn(col.id)}>
-                    <RiAddLine />
-                  </button>
-                </div>
 
-                <Droppable droppableId={col.id}>
-                  {(provided, snapshot) => (
-                    <>
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`kanban__drop-zone ${snapshot.isDraggingOver ? 'kanban__drop-zone--over' : ''} ${(!isExpanded && hasMore) ? 'kanban__drop-zone--limited' : ''}`}
-                      >
-                        {loading ? (
-                           <>
-                             <JobCardSkeleton />
-                             <JobCardSkeleton />
-                           </>
-                        ) : colJobs.length === 0 && !snapshot.isDraggingOver ? (
-                          <div className="empty-state animate-float">
-                            <span className="empty-state__icon">🎯</span>
-                            <h3 className="empty-state__title">No applications yet</h3>
-                            <p className="empty-state__text">Add your first job or use the Chrome extension</p>
-                            <button className="btn btn-secondary btn-sm" onClick={() => handleAddForColumn(col.id)}>
-                              + Add Job
-                            </button>
-                          </div>
-                        ) : (
-                          colJobs.map((job, i) => (
-                            <JobCard
-                              key={job._id}
-                              job={job}
-                              index={i}
-                              user={user}
-                              isPremium={isPremium}
-                              onEdit={handleEdit => { setEditJob(handleEdit); setShowModal(true) }}
-                              onDelete={handleDelete}
-                              onConfirmQuestion={confirmQuestion}
-                              onGenerateQuestions={generateQuestions}
-                              onAnalyzeCV={analyzeCV}
-                              onGenerateSalary={generateSalaryInsights}
-                              onRefreshUser={refreshUser}
-                              onGenerateLetter={(j, forcedReason) => {
-                                if (forcedReason) { setUpgradeReason(forcedReason); setShowUpgrade(true); return }
-                                setLetterJob(j)
-                              }}
-                            />
-                          ))
-                        )}
-                        {provided.placeholder}
-                      </div>
-                      
-                      {hasMore && (
-                        <button 
-                          className="kanban__col-expand" 
-                          onClick={() => toggleExpand(col.id)}
+                  <Droppable droppableId={col.id}>
+                    {(provided, snapshot) => (
+                      <>
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`kanban__drop-zone ${snapshot.isDraggingOver ? 'kanban__drop-zone--over' : ''} ${(!isExpanded && hasMore) ? 'kanban__drop-zone--limited' : ''}`}
                         >
-                          {isExpanded ? (
-                            <><RiArrowUpSLine /> Show less</>
+                          {loading ? (
+                            <>
+                              <JobCardSkeleton />
+                              <JobCardSkeleton />
+                            </>
+                          ) : colJobs.length === 0 && !snapshot.isDraggingOver ? (
+                            <div className="empty-state animate-float">
+                              <span className="empty-state__icon">🎯</span>
+                              <h3 className="empty-state__title">No applications yet</h3>
+                              <p className="empty-state__text">Add your first job or use the Chrome extension</p>
+                              <button className="btn btn-secondary btn-sm" onClick={() => handleAddForColumn(col.id)}>
+                                + Add Job
+                              </button>
+                            </div>
                           ) : (
-                            <><RiArrowDownSLine /> Show all {colJobs.length} cards</>
+                            colJobs.map((job, i) => (
+                              <JobCard
+                                key={job._id}
+                                job={job}
+                                index={i}
+                                user={user}
+                                isPremium={isPremium}
+                                onEdit={handleEdit => { setEditJob(handleEdit); setShowModal(true) }}
+                                onDelete={handleDelete}
+                                onConfirmQuestion={confirmQuestion}
+                                onGenerateQuestions={generateQuestions}
+                                onAnalyzeCV={analyzeCV}
+                                onGenerateSalary={generateSalaryInsights}
+                                onRefreshUser={refreshUser}
+                                onGenerateLetter={(j, forcedReason) => {
+                                  if (forcedReason) { setUpgradeReason(forcedReason); setShowUpgrade(true); return }
+                                  setLetterJob(j)
+                                }}
+                              />
+                            ))
                           )}
-                        </button>
-                      )}
-                    </>
-                  )}
-                </Droppable>
-              </div>
-            )
-          })}
-        </div>
-      </DragDropContext>
+                          {provided.placeholder}
+                        </div>
+                        
+                        {hasMore && (
+                          <button 
+                            className="kanban__col-expand" 
+                            onClick={() => toggleExpand(col.id)}
+                          >
+                            {isExpanded ? (
+                              <><RiArrowUpSLine /> Show less</>
+                            ) : (
+                              <><RiArrowDownSLine /> Show all {colJobs.length} cards</>
+                            )}
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </Droppable>
+                </div>
+              )
+            })}
+          </div>
+        </DragDropContext>
 
-      {showModal && (
-        <AddJobModal
-          onClose={() => { setShowModal(false); setEditJob(null); setImportPrefill(null) }}
-          onSave={handleSave}
-          onLimitReached={() => { setUpgradeReason('limit'); setShowUpgrade(true) }}
-          initial={editJob || importPrefill || { status: defaultStatus }}
-          isEdit={!!editJob}
-        />
-      )}
+        {showModal && (
+          <AddJobModal
+            onClose={() => { setShowModal(false); setEditJob(null); setImportPrefill(null) }}
+            onSave={handleSave}
+            onLimitReached={() => { setUpgradeReason('limit'); setShowUpgrade(true) }}
+            initial={editJob || importPrefill || { status: defaultStatus }}
+            isEdit={!!editJob}
+          />
+        )}
 
-      {letterJob && (
-        <CoverLetterModal
-          job={letterJob}
-          onClose={() => setLetterJob(null)}
-          onGenerate={generateCoverLetter}
-          onSuccess={refreshUser}
-        />
-      )}
+        {letterJob && (
+          <CoverLetterModal
+            job={letterJob}
+            onClose={() => setLetterJob(null)}
+            onGenerate={generateCoverLetter}
+            onSuccess={refreshUser}
+          />
+        )}
 
-      {showUpgrade && (
-        <UpgradeModal reason={upgradeReason} onClose={() => setShowUpgrade(false)} />
-      )}
+        {showUpgrade && (
+          <UpgradeModal reason={upgradeReason} onClose={() => setShowUpgrade(false)} />
+        )}
 
-      {showImportModal && (
-        <ImportFromURLModal
-          onClose={() => setShowImportModal(false)}
-          onExtracted={(prefilled) => {
-            setImportPrefill({ ...prefilled, status: defaultStatus })
-            setEditJob(null)
-            setShowModal(true)
-          }}
-        />
-      )}
-    </div>
+        {showImportModal && (
+          <ImportFromURLModal
+            onClose={() => setShowImportModal(false)}
+            onExtracted={(prefilled) => {
+              setImportPrefill({ ...prefilled, status: defaultStatus })
+              setEditJob(null)
+              setShowModal(true)
+            }}
+          />
+        )}
+      </div>
+    </PageWrapper>
   )
 }

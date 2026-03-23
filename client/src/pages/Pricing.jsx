@@ -95,96 +95,98 @@ export default function Pricing() {
   }
 
   return (
-    <div className="pricing-page">
-      {/* Toast */}
-      {toast && (
-        <div className={`pricing-toast pricing-toast--${toast.type}`}>
-          {toast.msg}
-          <button onClick={() => setToast(null)}>✕</button>
+    <PageWrapper>
+      <div className="pricing-page">
+        {/* Toast */}
+        {toast && (
+          <div className={`pricing-toast pricing-toast--${toast.type}`}>
+            {toast.msg}
+            <button onClick={() => setToast(null)}>✕</button>
+          </div>
+        )}
+
+        <div className="pricing-hero">
+          <div className="pricing-badge">Simple Pricing</div>
+          <h1 className="pricing-title">One payment.<br />Unlimited access.</h1>
+          <p className="pricing-sub">No subscriptions. No monthly fees. Pay once, use forever.</p>
         </div>
-      )}
 
-      <div className="pricing-hero">
-        <div className="pricing-badge">Simple Pricing</div>
-        <h1 className="pricing-title">One payment.<br />Unlimited access.</h1>
-        <p className="pricing-sub">No subscriptions. No monthly fees. Pay once, use forever.</p>
-      </div>
-
-      <div className="pricing-cards">
-        {/* Free Card */}
-        <div className="pricing-card pricing-card--free">
-          <div className="pricing-card__header">
-            <div className="pricing-card__plan">Free</div>
-            <div className="pricing-card__price">
-              <span className="pricing-card__amount">$0</span>
-              <span className="pricing-card__per">forever</span>
+        <div className="pricing-cards">
+          {/* Free Card */}
+          <div className="pricing-card pricing-card--free">
+            <div className="pricing-card__header">
+              <div className="pricing-card__plan">Free</div>
+              <div className="pricing-card__price">
+                <span className="pricing-card__amount">$0</span>
+                <span className="pricing-card__per">forever</span>
+              </div>
+              <p className="pricing-card__desc">Perfect for getting started with your job search.</p>
             </div>
-            <p className="pricing-card__desc">Perfect for getting started with your job search.</p>
+
+            <ul className="pricing-card__features">
+              {FREE_FEATURES.map((f, i) => (
+                <li key={i} className={`pricing-card__feature ${f.ok ? '' : 'pricing-card__feature--locked'}`}>
+                  <span className={`pricing-card__feature-icon ${f.ok ? 'ok' : 'no'}`}>
+                    {f.ok ? f.icon : <RiLockLine size={12} />}
+                  </span>
+                  <span className="pricing-card__feature-text">{f.text}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button className="pricing-card__btn pricing-card__btn--current" disabled>
+              {isPremium ? 'Previous Plan' : 'Current Plan'}
+            </button>
           </div>
 
-          <ul className="pricing-card__features">
-            {FREE_FEATURES.map((f, i) => (
-              <li key={i} className={`pricing-card__feature ${f.ok ? '' : 'pricing-card__feature--locked'}`}>
-                <span className={`pricing-card__feature-icon ${f.ok ? 'ok' : 'no'}`}>
-                  {f.ok ? f.icon : <RiLockLine size={12} />}
-                </span>
-                <span className="pricing-card__feature-text">{f.text}</span>
-              </li>
-            ))}
-          </ul>
+          {/* Premium Card */}
+          <div className="pricing-card pricing-card--premium">
+            <div className="pricing-card__crown"><RiVipCrownFill /></div>
+            <div className="pricing-card__popular">Best Value</div>
 
-          <button className="pricing-card__btn pricing-card__btn--current" disabled>
-            {isPremium ? 'Previous Plan' : 'Current Plan'}
-          </button>
-        </div>
-
-        {/* Premium Card */}
-        <div className="pricing-card pricing-card--premium">
-          <div className="pricing-card__crown"><RiVipCrownFill /></div>
-          <div className="pricing-card__popular">Best Value</div>
-
-          <div className="pricing-card__header">
-            <div className="pricing-card__plan">Premium</div>
-            <div className="pricing-card__price">
-              <span className="pricing-card__amount">$10</span>
-              <span className="pricing-card__per">one-time</span>
+            <div className="pricing-card__header">
+              <div className="pricing-card__plan">Premium</div>
+              <div className="pricing-card__price">
+                <span className="pricing-card__amount">$10</span>
+                <span className="pricing-card__per">one-time</span>
+              </div>
+              <p className="pricing-card__desc">Everything you need to land the perfect job, forever.</p>
             </div>
-            <p className="pricing-card__desc">Everything you need to land the perfect job, forever.</p>
+
+            <ul className="pricing-card__features">
+              {PREMIUM_FEATURES.map((f, i) => (
+                <li key={i} className="pricing-card__feature">
+                  <span className="pricing-card__feature-icon ok">{f.icon}</span>
+                  <span className="pricing-card__feature-text">{f.text}</span>
+                </li>
+              ))}
+            </ul>
+
+            {isPremium ? (
+              <button className="pricing-card__btn pricing-card__btn--owned" disabled>
+                <RiVipCrownFill /> You're Premium!
+              </button>
+            ) : (
+              <button
+                className="pricing-card__btn pricing-card__btn--upgrade"
+                onClick={handleUpgrade}
+                disabled={loading}
+              >
+                {loading ? 'Opening checkout...' : '⚡ Upgrade for $10'}
+              </button>
+            )}
+
+            <p className="pricing-card__guarantee">
+              🔒 Secure payment via Paddle · One-time charge · No hidden fees
+            </p>
           </div>
-
-          <ul className="pricing-card__features">
-            {PREMIUM_FEATURES.map((f, i) => (
-              <li key={i} className="pricing-card__feature">
-                <span className="pricing-card__feature-icon ok">{f.icon}</span>
-                <span className="pricing-card__feature-text">{f.text}</span>
-              </li>
-            ))}
-          </ul>
-
-          {isPremium ? (
-            <button className="pricing-card__btn pricing-card__btn--owned" disabled>
-              <RiVipCrownFill /> You're Premium!
-            </button>
-          ) : (
-            <button
-              className="pricing-card__btn pricing-card__btn--upgrade"
-              onClick={handleUpgrade}
-              disabled={loading}
-            >
-              {loading ? 'Opening checkout...' : '⚡ Upgrade for $10'}
-            </button>
-          )}
-
-          <p className="pricing-card__guarantee">
-            🔒 Secure payment via Paddle · One-time charge · No hidden fees
-          </p>
         </div>
-      </div>
 
-      <PremiumConfetti trigger={showSuccess} />
-      {showPremiumModal && (
-        <PremiumSuccessModal onClose={() => setShowPremiumModal(false)} />
-      )}
-    </div>
+        <PremiumConfetti trigger={showSuccess} />
+        {showPremiumModal && (
+          <PremiumSuccessModal onClose={() => setShowPremiumModal(false)} />
+        )}
+      </div>
+    </PageWrapper>
   )
 }

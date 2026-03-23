@@ -6,6 +6,7 @@ import {
 } from 'react-icons/ri'
 import { useJobs } from '../hooks/useJobs'
 import AddJobModal from '../components/AddJobModal'
+import PageWrapper from '../components/PageWrapper'
 import './Reminders.css'
 
 function getFollowUpDate(job) {
@@ -68,142 +69,142 @@ export default function Reminders() {
   }
 
   return (
-    <div className="page-container reminders">
-      {/* Header */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Reminders</h1>
-          <p className="page-subtitle">Follow up on pending applications, sorted by urgency</p>
+    <PageWrapper>
+      <div className="page-container reminders animate-fade">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Reminders</h1>
+            <p className="page-subtitle">Follow up on pending applications, sorted by urgency</p>
+          </div>
+          <div className="reminders__summary">
+            {overdue.length > 0 && (
+              <span className="reminders__badge reminders__badge--overdue">
+                <RiAlarmWarningLine /> {overdue.length} Overdue
+              </span>
+            )}
+            {today.length > 0 && (
+              <span className="reminders__badge reminders__badge--today">
+                <RiBellLine /> {today.length} Today
+              </span>
+            )}
+          </div>
         </div>
-        <div className="reminders__summary">
-          {overdue.length > 0 && (
-            <span className="reminders__badge reminders__badge--overdue">
-              <RiAlarmWarningLine /> {overdue.length} Overdue
-            </span>
-          )}
-          {today.length > 0 && (
-            <span className="reminders__badge reminders__badge--today">
-              <RiBellLine /> {today.length} Today
-            </span>
-          )}
-        </div>
-      </div>
 
-      {reminders.length === 0 ? (
-        <div className="empty-state animate-float">
-          <span className="empty-state__icon">🔔</span>
-          <h3 className="empty-state__title">You're all caught up!</h3>
-          <p className="empty-state__text">No follow-ups needed today. Keep crushing those applications!</p>
-        </div>
-      ) : (
-        <div className="reminders__sections">
-          {[
-            { key: 'overdue',  label: 'Overdue', items: overdue },
-            { key: 'today',    label: 'Due Today', items: today },
-            { key: 'upcoming', label: 'Upcoming (this week)', items: upcoming },
-          ].map(section => section.items.length > 0 && (
-            <div key={section.key} className="reminders__section">
-              <div className="reminders__section-header">
-                {URGENCY_CONFIG[section.key].icon}
-                <h2 className="reminders__section-title" style={{ color: URGENCY_CONFIG[section.key].color }}>
-                  {section.label}
-                </h2>
-                <span className="reminders__section-count">{section.items.length}</span>
-              </div>
+        {reminders.length === 0 ? (
+          <div className="empty-state animate-float">
+            <span className="empty-state__icon">🔔</span>
+            <h3 className="empty-state__title">You're all caught up!</h3>
+            <p className="empty-state__text">No follow-ups needed today. Keep crushing those applications!</p>
+          </div>
+        ) : (
+          <div className="reminders__sections">
+            {[
+              { key: 'overdue',  label: 'Overdue', items: overdue },
+              { key: 'today',    label: 'Due Today', items: today },
+              { key: 'upcoming', label: 'Upcoming (this week)', items: upcoming },
+            ].map(section => section.items.length > 0 && (
+              <div key={section.key} className="reminders__section">
+                <div className="reminders__section-header">
+                  {URGENCY_CONFIG[section.key].icon}
+                  <h2 className="reminders__section-title" style={{ color: URGENCY_CONFIG[section.key].color }}>
+                    {section.label}
+                  </h2>
+                  <span className="reminders__section-count">{section.items.length}</span>
+                </div>
 
-              <div className="reminders__list">
-                {section.items.map((job, index) => (
-                  <div
-                    key={job._id}
-                    className={`reminders__item animate-slide-up stagger-${(index % 4) + 1} reminders__item--${job.urgency}`}
-                    id={`reminder-${job._id}`}
-                  >
+                <div className="reminders__list">
+                  {section.items.map((job, index) => (
                     <div
-                      className="reminders__urgency-bar"
-                      style={{ background: URGENCY_CONFIG[job.urgency].color }}
-                    />
-
-                    <div className="reminders__item-logo">
-                      {job.company?.[0]?.toUpperCase() || '?'}
-                    </div>
-
-                    <div className="reminders__item-info">
-                      <p className="reminders__item-company">{job.company}</p>
-                      <p className="reminders__item-title">{job.title}</p>
-                      <div className="reminders__item-meta">
-                        <span className={`badge badge-${job.status}`}>{job.status}</span>
-                        {job.contact && (
-                          <span className="reminders__contact">👤 {job.contact}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="reminders__item-dates">
-                      <div className="reminders__date-row">
-                        <RiCalendarLine />
-                        <span>Applied: {format(new Date(job.dateApplied), 'MMM d, yyyy')}</span>
-                      </div>
+                      key={job._id}
+                      className={`reminders__item animate-slide-up stagger-${(index % 4) + 1} reminders__item--${job.urgency}`}
+                      id={`reminder-${job._id}`}
+                    >
                       <div
-                        className="reminders__date-row reminders__date-row--followup" 
-                        style={{ color: URGENCY_CONFIG[job.urgency].color }}
-                      >
-                        <RiBellLine />
-                        <span>
-                          Follow up:{' '}
-                          {isToday(job.followUpDate)
-                            ? 'Today'
-                            : format(job.followUpDate, 'MMM d, yyyy')}
-                        </span>
+                        className="reminders__urgency-bar"
+                        style={{ background: URGENCY_CONFIG[job.urgency].color }}
+                      />
+
+                      <div className="reminders__item-logo">
+                        {job.company?.[0]?.toUpperCase() || '?'}
+                      </div>
+
+                      <div className="reminders__item-info">
+                        <p className="reminders__item-company">{job.company}</p>
+                        <p className="reminders__item-title">{job.title}</p>
+                        <div className="reminders__item-meta">
+                          <span className={`badge badge-${job.status}`}>{job.status}</span>
+                          {job.contact && (
+                            <span className="reminders__contact">👤 {job.contact}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="reminders__item-dates">
+                        <div className="reminders__date-row">
+                          <RiCalendarLine />
+                          <span>Applied: {format(new Date(job.dateApplied), 'MMM d, yyyy')}</span>
+                        </div>
+                        <div
+                          className="reminders__date-row reminders__date-row--followup" 
+                          style={{ color: URGENCY_CONFIG[job.urgency].color }}
+                        >
+                          <RiBellLine />
+                          <span>
+                            Follow up:{' '}
+                            {isToday(job.followUpDate)
+                              ? 'Today'
+                              : format(job.followUpDate, 'MMM d, yyyy')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="reminders__item-actions" >
+                        {job.url && (
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-ghost"  
+                            title="View posting"
+                          >
+                            <RiExternalLinkLine />
+                          </a>
+                        )}
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => setEditJob(job)}
+                          title="Edit"
+                        >
+                          <RiEdit2Line />
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => handleMarkDone(job)}
+                          title="Snooze / Mark followed-up"
+                        >
+                          <RiCheckLine /> Done
+                        </button>
                       </div>
                     </div>
-
-                    <div className="reminders__item-actions" >
-                      {job.url && (
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn btn-ghost"  
-                          title="View posting"
-                        >
-                          <RiExternalLinkLine />
-                        </a>
-                      )}
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => setEditJob(job)}
-                        title="Edit"
-                      >
-                        <RiEdit2Line />
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={() => handleMarkDone(job)}
-                        title="Snooze / Mark followed-up"
-                      >
-                        <RiCheckLine /> Done
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      {/* Edit modal */}
-      {editJob && (
-        <AddJobModal
-          onClose={() => setEditJob(null)}
-          onSave={async (data) => {
-            await updateJob(editJob._id, data)
-            setEditJob(null)
-          }}
-          initial={editJob}
-          isEdit
-        />
-      )}
-    </div>
+        {editJob && (
+          <AddJobModal
+            onClose={() => setEditJob(null)}
+            onSave={async (data) => {
+              await updateJob(editJob._id, data)
+              setEditJob(null)
+            }}
+            initial={editJob}
+            isEdit
+          />
+        )}
+      </div>
+    </PageWrapper>
   )
 }
