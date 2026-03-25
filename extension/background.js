@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('📬 Background: Incoming SAVE_JOB request');
     console.log('🔑 Token check:', bearerToken.substring(0, 15) + '...');
 
-    fetch('https://trkr-job.vercel.app/api/jobs', {
+    fetch('https://job-tracker-five-dusky.vercel.app/api/jobs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

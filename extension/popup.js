@@ -15,7 +15,7 @@ async function checkAuth(token) {
   }
   
   try {
-    const res = await fetch('https://trkr-job.vercel.app/api/auth/me', {
+    const res = await fetch('https://job-tracker-five-dusky.vercel.app/api/auth/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {

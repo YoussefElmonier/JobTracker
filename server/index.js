@@ -40,6 +40,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   'https://trkr-job.vercel.app',
+  'https://job-tracker-five-dusky.vercel.app',
   process.env.CLIENT_URL?.replace(/\/$/, ''), // strip trailing slash if any
 ].filter(Boolean)
 
