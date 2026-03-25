@@ -68,7 +68,7 @@ async function scanUserEmails(user) {
 
     const gmail = google.gmail({ version: 'v1', auth });
     // Search 1: keyword-based subject query
-    const keywordQuery = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)';
+    const keywordQuery = 'subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected) newer_than:7d';
 
     // Search 2: company-name-based query from user's job cards
     const userJobs = await Job.find({ user: user._id }).select('company');
@@ -81,7 +81,7 @@ async function scanUserEmails(user) {
       companyNames.length > 0
         ? gmail.users.messages.list({
             userId: 'me',
-            q: `is:unread (${companyNames.map(c => `from:${c}`).join(' OR ')})`,
+            q: `(${companyNames.map(c => `from:${c}`).join(' OR ')}) newer_than:7d`,
             maxResults: 5
           })
         : Promise.resolve({ data: { messages: [] } })
