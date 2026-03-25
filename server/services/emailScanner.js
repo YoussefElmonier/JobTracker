@@ -79,19 +79,27 @@ async function scanUserEmails(user) {
     const messageIds = res.data.messages || [];
     console.log('Message IDs found:', messageIds.length);
 
-    const emails = await Promise.all(
+    console.log('Fetching full email metadata for', messageIds.length, 'messages...');
+    const emails = (await Promise.all(
       messageIds.map(async (msg) => {
-        const full = await gmail.users.messages.get({
-          userId: 'me',
-          id: msg.id,
-          format: 'metadata',
-          metadataHeaders: ['Subject', 'From', 'Date']
-        });
-        const subject = full.data.payload.headers.find(h => h.name === 'Subject')?.value || '';
-        const from = full.data.payload.headers.find(h => h.name === 'From')?.value || '';
-        return { id: msg.id, subject, from, snippet: full.data.snippet };
+        try {
+          const full = await gmail.users.messages.get({
+            userId: 'me',
+            id: msg.id,
+            format: 'metadata',
+            metadataHeaders: ['Subject', 'From', 'Date']
+          });
+          const subject = full.data.payload.headers.find(h => h.name === 'Subject')?.value || '';
+          const from = full.data.payload.headers.find(h => h.name === 'From')?.value || '';
+          console.log('Fetched email subject:', subject);
+          return { id: msg.id, subject, from, snippet: full.data.snippet };
+        } catch (fetchErr) {
+          console.error('Failed to fetch email id:', msg.id, fetchErr.message);
+          return null;
+        }
       })
-    );
+    )).filter(Boolean);
+    console.log('Successfully fetched', emails.length, 'emails for user:', user.email);
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     // Fix 4 — Date Parsing: wrap entry.date in new Date() to handle MongoDB string storage
