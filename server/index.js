@@ -54,6 +54,19 @@ app.use(async (req, res, next) => {
     res.status(500).json({ message: 'Internal server error (DB)' });
   }
 });
+// Handle OPTIONS preflight manually BEFORE cors() — Vercel can return 405 otherwise
+// Must use app.use (not app.options) to avoid path-to-regexp wildcard issues
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*')
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    res.header('Access-Control-Allow-Credentials', 'true')
+    return res.sendStatus(204)
+  }
+  next()
+})
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (curl, Postman, server-to-server)
