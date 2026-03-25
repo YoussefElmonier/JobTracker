@@ -67,17 +67,35 @@ async function scanUserEmails(user) {
     if (!auth) return;
 
     const gmail = google.gmail({ version: 'v1', auth });
-    const query = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)';
+    // Search 1: keyword-based subject query
+    const keywordQuery = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)';
+
+    // Search 2: company-name-based query from user's job cards
+    const userJobs = await Job.find({ user: user._id }).select('company');
+    const companyNames = [...new Set(userJobs.map(j => j.company).filter(Boolean))];
+    console.log('Building company query from', companyNames.length, 'job cards:', companyNames.join(', '));
 
     console.log('Calling Gmail API for user:', user.email);
-    const res = await gmail.users.messages.list({
-      userId: 'me',
-      q: query,
-      maxResults: 5
-    });
+    const [keywordRes, companyRes] = await Promise.all([
+      gmail.users.messages.list({ userId: 'me', q: keywordQuery, maxResults: 5 }),
+      companyNames.length > 0
+        ? gmail.users.messages.list({
+            userId: 'me',
+            q: `is:unread (${companyNames.map(c => `from:${c}`).join(' OR ')})`,
+            maxResults: 5
+          })
+        : Promise.resolve({ data: { messages: [] } })
+    ]);
 
-    const messageIds = res.data.messages || [];
-    console.log('Message IDs found:', messageIds.length);
+    // Merge and deduplicate message IDs from both searches
+    const seen = new Set();
+    const messageIds = [...(keywordRes.data.messages || []), ...(companyRes.data.messages || [])]
+      .filter(msg => {
+        if (seen.has(msg.id)) return false;
+        seen.add(msg.id);
+        return true;
+      });
+    console.log('Message IDs found (keyword:', (keywordRes.data.messages || []).length, '| company:', (companyRes.data.messages || []).length, '| merged:', messageIds.length, ')');
 
     console.log('Fetching full email metadata for', messageIds.length, 'messages...');
     const emails = (await Promise.all(
@@ -91,7 +109,7 @@ async function scanUserEmails(user) {
           });
           const subject = full.data.payload.headers.find(h => h.name === 'Subject')?.value || '';
           const from = full.data.payload.headers.find(h => h.name === 'From')?.value || '';
-          console.log('Fetched email subject:', subject);
+          console.log('Fetched email subject:', subject, '| from:', from);
           return { id: msg.id, subject, from, snippet: full.data.snippet };
         } catch (fetchErr) {
           console.error('Failed to fetch email id:', msg.id, fetchErr.message);
