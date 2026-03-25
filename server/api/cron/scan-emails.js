@@ -37,18 +37,41 @@ async function scanUserEmails(user) {
       maxResults: 15 
     });
     
-    const messages = res.data.messages || [];
+    // Fix 1 — Limit emails fetched per user to 3 max:
+    const messageIds = (res.data.messages || []).slice(0, 3);
+    console.log('Processing', messageIds.length, 'emails for user:', user.email);
 
-    for (const msg of messages) {
-      if (user.scannedEmailIds?.includes(msg.id)) continue;
-      
-      const msgData = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'full' });
-      const payload = msgData.data.payload;
-      const headers = payload.headers || [];
-      const subject = headers.find(h => h.name.toLowerCase() === 'subject')?.value || '';
-      let snippet = msgData.data.snippet || '';
+    // Fix 2 — Add error logging around full email fetch:
+    const emails = await Promise.all(
+      messageIds.map(async (msg) => {
+        try {
+          if (user.scannedEmailIds?.includes(msg.id)) return null;
 
-      // Checks subject and first 200 chars for keywords
+          const full = await gmail.users.messages.get({
+            userId: 'me',
+            id: msg.id,
+            format: 'metadata',
+            metadataHeaders: ['Subject', 'From', 'Date']
+          });
+          const subject = full.data.payload.headers.find(h => h.name === 'Subject')?.value || '';
+          const from = full.data.payload.headers.find(h => h.name === 'From')?.value || '';
+          console.log('Fetched email subject:', subject);
+          return { id: msg.id, subject, from, snippet: full.data.snippet };
+        } catch (err) {
+          console.error('Failed to fetch email:', msg.id, err.message);
+          return null;
+        }
+      })
+    );
+
+    // Filter out failed fetches
+    const validEmails = emails.filter(Boolean);
+    console.log('Valid emails fetched:', validEmails.length);
+
+    for (const emailData of validEmails) {
+      const { id, subject, from, snippet } = emailData;
+
+      // Checks subject and snippet for keywords
       const checkText = (subject + ' ' + snippet).toLowerCase();
       const matchFound = keywords.some(kw => checkText.includes(kw));
 
@@ -76,15 +99,15 @@ async function scanUserEmails(user) {
              
              // Save notification
              await Notification.create({ 
-               userId: user._id, 
-               type: 'email_detected', 
-               message: `Recruiter email for ${json.company} detected! Job card automatically updated.`, 
-               jobId: job._id 
+                userId: user._id, 
+                type: 'email_detected', 
+                message: `Recruiter email for ${json.company} detected! Job card automatically updated.`, 
+                jobId: job._id 
              });
           }
         }
       }
-      user.scannedEmailIds.push(msg.id);
+      user.scannedEmailIds.push(id);
     }
     await user.save();
   } catch (err) {
@@ -106,7 +129,11 @@ module.exports = async (req, res) => {
     const users = await User.find({ gmailConnected: true, isPremium: true }).limit(3);
     
     for (const user of users) {
-      await scanUserEmails(user);
+      try {
+        await scanUserEmails(user);
+      } catch (err) {
+        console.error('Error scanning user:', user.email, err.message);
+      }
     }
     
     res.status(200).json({ success: true, scanned: users.length });
