@@ -15,7 +15,7 @@ async function checkAuth(token) {
   }
   
   try {
-    const res = await fetch('http://localhost:3001/api/auth/me', {
+    const res = await fetch('https://trkr-job.vercel.app/api/auth/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
