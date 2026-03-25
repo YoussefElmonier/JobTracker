@@ -68,7 +68,8 @@ app.use(cors({
   credentials: true,
 }))
 // Explicitly handle OPTIONS preflight for all routes (required for extension POST requests)
-app.options('*', cors({
+// Note: path-to-regexp v8+ requires (.*) instead of bare *
+app.options('/(.*)', cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true)
     if (origin.startsWith('chrome-extension://')) return callback(null, true)
