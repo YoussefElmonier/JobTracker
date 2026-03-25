@@ -67,19 +67,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }))
-// Explicitly handle OPTIONS preflight for all routes (required for extension POST requests)
-// Note: path-to-regexp v8+ requires (.*) instead of bare *
-app.options('/(.*)', cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true)
-    if (origin.startsWith('chrome-extension://')) return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
-    callback(new Error(`CORS blocked: ${origin}`))
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}))
+
 // Webhook must receive raw body — mount BEFORE express.json()
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
