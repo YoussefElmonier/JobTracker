@@ -3,7 +3,8 @@
   // We run this ALWAYS when the URL matches, even if jt_injected is true,
   // because SPA navigation (Login -> Dashboard) doesn't reload the page.
   const url = window.location.href;
-  if (url.includes(":3000") || url.includes(":3001")) {
+  const isTrkrSite = url.includes(":3000") || url.includes(":3001") || url.includes("trkr-job.vercel.app");
+  if (isTrkrSite) {
     const token = localStorage.getItem('jt_token');
     if (token) {
       chrome.storage.local.set({ jt_token: token.replace(/Bearer /i, '').trim() }, () => {
@@ -12,13 +13,13 @@
     }
   }
 
-  if (window.jt_injected && !url.includes(":3000") && !url.includes(":3001")) {
+  if (window.jt_injected && !isTrkrSite) {
     return;
   }
   window.jt_injected = true;
   console.log("trkr: Clipper Active.");
 
-  if (url.includes(":3000") || url.includes(":3001")) return;
+  if (isTrkrSite) return;
 
   // --- 2. Robust Scraper Logic ---
   function scrapJobData() {
