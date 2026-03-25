@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "trkr Clipper",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Clip job listings from LinkedIn and Indeed directly to your trkr dashboard.",
   "permissions": [
     "activeTab",
