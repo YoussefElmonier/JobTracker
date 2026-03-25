@@ -44,12 +44,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     })
     .then(async response => {
       console.log('📡 Background: Response Status ->', response.status);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('❌ Background: API Error ->', errorData.message);
-        throw new Error(errorData.message || 'Failed to save job');
+      const text = await response.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        // Server returned non-JSON (e.g. Vercel HTML error page)
+        throw new Error(`Server error ${response.status}: ${text.slice(0, 120)}`);
       }
-      return response.json();
+      if (!response.ok) {
+        throw new Error(parsed.message || parsed.error || `Request failed (${response.status})`);
+      }
+      return parsed;
     })
     .then(result => {
       console.log('✅ Background: Job saved successfully!');
