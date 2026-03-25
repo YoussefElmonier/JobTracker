@@ -63,18 +63,18 @@ async function checkTokens(user) {
 
 async function scanUserEmails(user) {
   try {
-    const auth = await checkTokens(user)
-    if (!auth) return
+    const auth = await checkTokens(user);
+    if (!auth) return;
 
-    const gmail = google.gmail({ version: 'v1', auth })
-    const query = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)'
+    const gmail = google.gmail({ version: 'v1', auth });
+    const query = 'is:unread subject:(offer OR interview OR congratulations OR unfortunately OR hired OR rejected)';
 
     console.log('Calling Gmail API for user:', user.email);
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: query,
       maxResults: 5
-    })
+    });
 
     const messageIds = res.data.messages || [];
     console.log('Message IDs found:', messageIds.length);
@@ -94,129 +94,118 @@ async function scanUserEmails(user) {
     );
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    user.scannedEmailIds = (user.scannedEmailIds || []).filter(entry => entry.date > sevenDaysAgo);
+    // Fix 4 — Date Parsing: wrap entry.date in new Date() to handle MongoDB string storage
+    user.scannedEmailIds = (user.scannedEmailIds || []).filter(entry => new Date(entry.date) > sevenDaysAgo);
 
     for (const email of emails) {
       if (user.scannedEmailIds.some(entry => entry.id === email.id)) continue;
 
-      const textToCheck = (email.subject + ' ' + (email.snippet || '')).toLowerCase();
-      
-      const isOffer = offerKeywordsArr.some(k => textToCheck.includes(k));
-      const isInterview = interviewKeywordsArr.some(k => textToCheck.includes(k));
-      const isRejection = rejectionKeywordsArr.some(k => textToCheck.includes(k));
-
-      const matched = isOffer || isInterview || isRejection;
-      console.log('Email processing: Keywords matched:', matched);
-
-      if (!matched) {
-        user.scannedEmailIds.push({ id: email.id, date: new Date() });
-        continue;
-      }
-
-      const detectedType = isOffer ? 'offer' : isInterview ? 'interview' : 'rejection';
-      const jobs = await Job.find({ user: user._id });
-      const matchedJob = jobs.find(j => textToCheck.includes(j.company.toLowerCase()));
-
-      if (matchedJob) {
-        console.log('Skipping Groq — type and company detected from keywords alone');
-        matchedJob.status = detectedType;
-        await matchedJob.save();
-        await Notification.create({
-          userId: user._id,
-          type: 'email_detected',
-          message: `${detectedType === 'offer' ? 'Offer' : detectedType === 'interview' ? 'Interview' : 'Update'} detected from ${matchedJob.company} — job card updated!`,
-          read: false,
-          jobId: matchedJob._id
-        });
-        console.log('Job card updated without Groq:', matchedJob.company, '→', detectedType);
-        user.scannedEmailIds.push({ id: email.id, date: new Date() });
-        continue;
-      }
-
-      console.log('Calling Groq with model: llama-3.3-70b-versatile');
-
       try {
-        const groqResponse = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
-          max_tokens: 80,
-          messages: [
-            { role: 'system', content: 'Return only JSON: {type:"interview"|"rejection"|"offer"|"unknown", company:string|null}. Analyze this recruiter email subject.' },
-            { role: 'user', content: `Subject: ${email.subject}` }
-          ]
-        });
+        const textToCheck = (email.subject + ' ' + (email.snippet || '')).toLowerCase();
 
-        const raw = groqResponse.choices[0].message.content;
-        console.log('Groq raw response:', raw);
+        const isOffer = offerKeywordsArr.some(k => textToCheck.includes(k));
+        const isInterview = interviewKeywordsArr.some(k => textToCheck.includes(k));
+        const isRejection = rejectionKeywordsArr.some(k => textToCheck.includes(k));
 
-        let result;
-        try {
-          result = JSON.parse(raw);
-        } catch {
-          console.log('Failed to parse Groq response');
-          user.scannedEmailIds.push({ id: email.id, date: new Date() });
-          continue;
-        }
+        const matched = isOffer || isInterview || isRejection;
+        console.log('Email processing: Keywords matched:', matched);
 
-        console.log('Groq result:', result);
+        if (matched) {
+          const detectedType = isOffer ? 'offer' : isInterview ? 'interview' : 'rejection';
+          const jobs = await Job.find({ user: user._id });
+          const matchedJob = jobs.find(j => textToCheck.includes(j.company.toLowerCase()));
 
-        if (result.type === 'unknown' || !result.company) {
-          user.scannedEmailIds.push({ id: email.id, date: new Date() });
-          continue;
-        }
-
-        const job = await Job.findOne({
-          user: user._id,
-          company: { $regex: new RegExp(result.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') }
-        });
-
-        console.log('Job found for company:', result.company, !!job);
-
-        if (job) {
-          const statusMap = {
-            offer: 'offer',
-            interview: 'interview',
-            rejection: 'rejected'
-          };
-
-          if (statusMap[result.type]) {
-            job.status = statusMap[result.type];
-            await job.save();
-            console.log('Job card updated:', job.company, '→', job.status);
-
+          if (matchedJob) {
+            console.log('Skipping Groq — type and company detected from keywords alone');
+            matchedJob.status = detectedType;
+            await matchedJob.save();
             await Notification.create({
               userId: user._id,
               type: 'email_detected',
-              message: `${result.type === 'offer' ? 'Offer' : result.type === 'interview' ? 'Interview' : 'Update'} detected from ${result.company} — job card updated!`,
+              message: `${detectedType === 'offer' ? 'Offer' : detectedType === 'interview' ? 'Interview' : 'Update'} detected from ${matchedJob.company} — job card updated!`,
               read: false,
-              jobId: job._id
+              jobId: matchedJob._id
             });
-            console.log('Notification created for:', result.company);
+            console.log('Job card updated without Groq:', matchedJob.company, '→', detectedType);
+          } else {
+            console.log('Calling Groq with model: llama-3.3-70b-versatile');
+            const groqResponse = await groq.chat.completions.create({
+              model: 'llama-3.3-70b-versatile',
+              max_tokens: 80,
+              messages: [
+                { role: 'system', content: 'Return only JSON: {type:"interview"|"rejection"|"offer"|"unknown", company:string|null}. Analyze this recruiter email subject.' },
+                { role: 'user', content: `Subject: ${email.subject}` }
+              ]
+            });
+
+            const raw = groqResponse.choices[0].message.content;
+            console.log('Groq raw response:', raw);
+
+            let result;
+            try {
+              result = JSON.parse(raw);
+            } catch {
+              console.log('Failed to parse Groq response');
+            }
+
+            // Fix 2 — TypeError Safety: guard against null result.company before .replace
+            if (result && result.type !== 'unknown' && result.company) {
+              console.log('Groq result:', result);
+              const escapedCompany = result.company.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const job = await Job.findOne({
+                user: user._id,
+                company: { $regex: new RegExp(escapedCompany, 'i') }
+              });
+
+              console.log('Job found for company:', result.company, !!job);
+
+              if (job) {
+                const statusMap = { offer: 'offer', interview: 'interview', rejection: 'rejected' };
+                if (statusMap[result.type]) {
+                  job.status = statusMap[result.type];
+                  await job.save();
+                  console.log('Job card updated:', job.company, '→', job.status);
+                  await Notification.create({
+                    userId: user._id,
+                    type: 'email_detected',
+                    message: `${result.type === 'offer' ? 'Offer' : result.type === 'interview' ? 'Interview' : 'Update'} detected from ${result.company} — job card updated!`,
+                    read: false,
+                    jobId: job._id
+                  });
+                  console.log('Notification created for:', result.company);
+                }
+              } else {
+                await Notification.create({
+                  userId: user._id,
+                  type: 'email_detected',
+                  message: `${result.type === 'offer' ? 'Offer' : result.type === 'interview' ? 'Interview' : 'Update'} detected from ${result.company}, but no matching job card found.`,
+                  read: false
+                });
+              }
+            }
           }
-        } else {
-          await Notification.create({
-            userId: user._id,
-            type: 'email_detected',
-            message: `${result.type === 'offer' ? 'Offer' : result.type === 'interview' ? 'Interview' : 'Update'} detected from ${result.company}, but no matching job card found.`,
-            read: false
-          });
         }
-      } catch (err) {
-        console.error('Email processing error:', err.message);
+      } catch (innerErr) {
+        console.error('Individual email scan error:', innerErr.message);
+      } finally {
+        // Fix 1 & 3 — State Protection + Consolidated push: mark scanned exactly once per
+        // iteration regardless of outcome, and save inside the loop to persist state immediately
+        user.scannedEmailIds.push({ id: email.id, date: new Date() });
+        await user.save();
       }
-
-      user.scannedEmailIds.push({ id: email.id, date: new Date() });
     }
 
+    // Fix 5 — Clean Up: slice and final save after the loop
     if (user.scannedEmailIds.length > 1000) {
-        user.scannedEmailIds = user.scannedEmailIds.slice(-1000)
+      user.scannedEmailIds = user.scannedEmailIds.slice(-1000);
+      await user.save();
     }
-    await user.save()
   } catch (err) {
     if (err.message?.includes('invalid_grant')) {
-      user.gmailConnected = false
-      await user.save()
+      user.gmailConnected = false;
+      await user.save();
     }
-    console.error(`Error scanning emails for user ${user.email}:`, err.message)
+    console.error(`Error scanning emails for user ${user.email}:`, err.message);
   }
 }
 
