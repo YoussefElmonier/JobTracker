@@ -12,9 +12,7 @@
   "host_permissions": [
     "https://*.linkedin.com/*",
     "https://*.indeed.com/*",
-    "https://trkr-job.vercel.app/*",
-    "http://127.0.0.1:3001/*",
-    "http://localhost:3001/*"
+    "https://trkr-job.vercel.app/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -24,9 +22,7 @@
       "matches": [
         "https://*.linkedin.com/*",
         "https://*.indeed.com/*",
-        "https://trkr-job.vercel.app/*",
-        "http://localhost:3000/*",
-        "http://127.0.0.1:3000/*"
+        "https://trkr-job.vercel.app/*"
       ],
       "js": ["content.js"],
       "run_at": "document_end"
