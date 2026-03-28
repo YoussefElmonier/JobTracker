@@ -165,7 +165,13 @@ export default function Profile() {
         if (!res.ok) {
           const body = await res.text();
           console.error('ntfy.sh error:', res.status, body);
-          setAlertError(`Server error ${res.status}: ${body}`);
+          
+          if (res.status === 500 || body.includes('50001')) {
+            setAlertError('ntfy.sh public server is currently locked/down. Trying again later.');
+          } else {
+            setAlertError(`ntfy server error: ${res.status}`);
+          }
+          
           setEnableLoading(false);
           return;
         }
