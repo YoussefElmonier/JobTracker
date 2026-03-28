@@ -15,6 +15,7 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -32,7 +33,19 @@ export default function Profile() {
       refreshUser()
       navigate('/profile', { replace: true })
     }
+    checkSubscription()
   }, [user, location, navigate])
+
+  const checkSubscription = async () => {
+    if (!('serviceWorker' in navigator)) return
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      setIsSubscribed(!!sub)
+    } catch (err) {
+      console.error('Error checking subscription:', err)
+    }
+  }
 
   const handleTextChange = (e) => {
     setCvText(e.target.value.slice(0, 2000))
@@ -149,10 +162,46 @@ export default function Profile() {
 
       if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
 
+      setIsSubscribed(true);
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
     } catch (err) {
       console.error('Subscription error:', err);
       setError('Failed to enable background notifications.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisableNotifications = async () => {
+    try {
+      setLoading(true);
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      
+      if (sub) {
+        await sub.unsubscribe();
+        // Also tell ntfy to remove it (optional but good practice)
+        try {
+          await fetch('https://ntfy.sh/v1/webpush', {
+            method: 'POST',
+            body: JSON.stringify({
+              endpoint: sub.endpoint,
+              auth:     sub.toJSON().keys.auth,
+              p256dh:   sub.toJSON().keys.p256dh,
+              topics:   [] // Empty topics removes the subscription from ntfy
+            }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } catch (e) {
+          console.warn('Failed to unregister at ntfy side (non-fatal)', e);
+        }
+      }
+      
+      setIsSubscribed(false);
+      setMessage('Notifications disabled.');
+    } catch (err) {
+      console.error('Unsubscribe error:', err);
+      setError('Failed to disable notifications.');
     } finally {
       setLoading(false);
     }
@@ -361,19 +410,35 @@ export default function Profile() {
                   </div>
                 )}
 
-                <button
-                  id="enable-notifications-btn"
-                  onClick={handleEnableNotifications}
-                  className="profile__save-btn"
-                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  disabled={loading}
-                >
-                  {loading ? (
-                      'Enabling...'
+                 {isSubscribed ? (
+                    <button
+                      onClick={handleDisableNotifications}
+                      className="profile__save-btn"
+                      style={{ 
+                        marginTop: '12px', 
+                        marginBottom: '16px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        background: '#fef2f2',
+                        color: '#991b1b',
+                        border: '1px solid #fecaca'
+                      }}
+                      disabled={loading}
+                    >
+                      {loading ? 'Disabling...' : <>🟢 Notifications Enabled (Click to Disable)</>}
+                    </button>
                   ) : (
-                      <>🔔 Enable Notifications</>
+                    <button
+                      id="enable-notifications-btn"
+                      onClick={handleEnableNotifications}
+                      className="profile__save-btn"
+                      style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      disabled={loading}
+                    >
+                      {loading ? 'Enabling...' : <>🔔 Enable Notifications</>}
+                    </button>
                   )}
-                </button>
 
                 {user?.isPremium && (
                     <button 
