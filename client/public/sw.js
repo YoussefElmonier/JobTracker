@@ -8,28 +8,26 @@ self.addEventListener('push', (event) => {
   
   if (event.data) {
     try {
-      // ntfy.sh usually sends JSON for web push
       data = event.data.json();
     } catch (e) {
-      // Fallback to plain text if it's not JSON
       data = { message: event.data.text() };
     }
   }
 
-  // ntfy.sh JSON format usually uses 'message' or 'body'
-  const message = data.message || data.body || (typeof data === 'string' ? data : 'New alert from TRKR');
-  const title = data.title || 'TRKR Alert';
-  const clickUrl = data.click || data.url || '/dashboard';
+  // Surgical extraction from ntfy schema
+  const title   = data.title || 'TRKR Alert';
+  const message = data.message || (typeof data === 'string' ? data : 'Job search update detected!');
+  const click   = data.click || data.url || '/dashboard';
 
   const options = {
-    body: typeof message === 'object' ? JSON.stringify(message) : message,
+    body: message, 
     icon: '/icon-192.png',
     badge: '/favicon.png',
     vibrate: [200, 100, 200],
     tag: 'trkr-notification',
     renotify: true,
     data: {
-      url: clickUrl
+      url: click
     }
   };
 
