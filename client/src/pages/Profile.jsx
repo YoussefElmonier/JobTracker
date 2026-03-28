@@ -164,7 +164,8 @@ export default function Profile() {
     }
   };
 
-  const handleTestPush = async () => {
+  const handleTestPush = async (e) => {
+    if (e) e.preventDefault();
     try {
         setLoading(true);
         const topic = user?.ntfyTopic;
@@ -383,6 +384,7 @@ export default function Profile() {
 
                 {user?.isPremium && (
                     <button 
+                        type="button"
                         onClick={handleTestPush}
                         className="btn-ghost"
                         style={{ fontSize: '13px', textDecoration: 'underline', marginBottom: '16px', display: 'block' }}
