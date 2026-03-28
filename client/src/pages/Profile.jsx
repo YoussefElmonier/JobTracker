@@ -254,16 +254,16 @@ export default function Profile() {
                 <label className="custom-file-upload">
                   {file ? (
                     <>
-                      <RiCheckLine className="file-upload-icon" style={{ color: '#10b981' }} />
-                      <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>{file.name}</span>
+                      <RiCheckLine className="file-upload-icon" style={{ color: '#fff' }} />
+                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold' }}>{file.name} (Ready)</span>
                     </>
                   ) : (
                     <>
-                      <RiUpload2Line className="file-upload-icon" />
-                      <span>Choose PDF File</span>
+                      <RiUpload2Line className="file-upload-icon" style={{ color: '#fff' }} />
+                      <span style={{ color: '#fff' }}>Choose PDF CV</span>
                     </>
                   )}
-                  <input type="file" accept="application/pdf" onChange={handleFileChange} />
+                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} />
                 </label>
               </div>
 
@@ -410,45 +410,64 @@ export default function Profile() {
                   </div>
                 )}
 
-                 {isSubscribed ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', marginBottom: '16px' }}>
+                  {isSubscribed ? (
                     <button
+                      type="button"
                       onClick={handleDisableNotifications}
                       className="profile__save-btn"
                       style={{ 
-                        marginTop: '12px', 
-                        marginBottom: '16px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px',
-                        background: '#fef2f2',
-                        color: '#991b1b',
-                        border: '1px solid #fecaca'
+                        background: '#fff1f2',
+                        color: '#e11d48',
+                        border: '1px solid #fecdd3',
+                        boxShadow: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
                       }}
                       disabled={loading}
                     >
-                      {loading ? 'Disabling...' : <>🟢 Notifications Enabled (Click to Disable)</>}
+                      {loading ? 'Disabling...' : <>🔴 Disable Notifications</>}
                     </button>
                   ) : (
                     <button
+                      type="button"
                       id="enable-notifications-btn"
                       onClick={handleEnableNotifications}
                       className="profile__save-btn"
-                      style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: '6px' 
+                      }}
                       disabled={loading}
                     >
                       {loading ? 'Enabling...' : <>🔔 Enable Notifications</>}
                     </button>
                   )}
 
-                {user?.isPremium && (
+                  {user?.isPremium && isSubscribed && (
                     <button 
+                        type="button"
                         onClick={handleTestPush}
                         className="btn-ghost"
-                        style={{ fontSize: '13px', textDecoration: 'underline', marginBottom: '16px', display: 'block' }}
+                        style={{ 
+                          fontSize: '13px', 
+                          color: 'var(--accent)', 
+                          textDecoration: 'none', 
+                          padding: '8px', 
+                          textAlign: 'center',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          marginTop: '4px'
+                        }}
                     >
-                        Send a verify alert
+                        ⚡ Send verify alert
                     </button>
-                )}
+                  )}
+                </div>
 
                 {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
                 {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}
