@@ -145,6 +145,12 @@ export default function Profile() {
 
     try {
       setLoading(true);
+
+      // Check for explicit 'denied' permission
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        throw new Error('Notification permission was denied. Please unblock TRKR in your browser settings and try again.');
+      }
+
       const reg = await navigator.serviceWorker.ready;
       
       // Real VAPID Public Key for ntfy.sh public server
@@ -173,12 +179,13 @@ export default function Profile() {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
+      if (!res.ok) throw new Error('ntfy.sh rejected the subscription handshake.');
 
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
+      setNotifPermission('granted'); // Update state immediately
     } catch (err) {
       console.error('Subscription error:', err);
-      setError('Failed to enable background notifications.');
+      setError(err.message || 'Failed to enable background notifications.');
     } finally {
       setLoading(false);
     }
