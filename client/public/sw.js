@@ -1,5 +1,5 @@
 /*
- * sw.js — Service Worker for TRKR PWA. v4
+ * sw.js — Service Worker for TRKR PWA. v6
  * Handles background push notifications from ntfy.sh.
  */
 
@@ -13,10 +13,18 @@ self.addEventListener('push', (event) => {
   let data = {};
   
   if (event.data) {
+    const rawData = event.data.text();
     try {
+      // Try parsing as JSON first
       data = event.data.json();
     } catch (e) {
-      data = { message: event.data.text() };
+      try {
+         // Fallback: Manually parse the text if it's a JSON string
+         data = JSON.parse(rawData);
+      } catch (e2) {
+         // Real fallback: just use the text itself
+         data = { message: rawData };
+      }
     }
   }
 
