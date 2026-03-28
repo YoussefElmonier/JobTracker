@@ -398,18 +398,32 @@ export default function Profile() {
                   </div>
                 )}
 
-                <div className="profile__setting-toggle" style={{ marginTop: '16px', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {enableLoading ? 'Updating...' : user?.pushSubscription ? 'Notifications Active' : 'Enable Mobile Alerts'}
-                  </span>
-                  <label className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={!!user?.pushSubscription} 
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', background: 'var(--surface-color)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', marginTop: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ display: 'block', marginBottom: '4px' }}>Native Mobile Alerts</strong>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      {enableLoading ? 'Updating status...' : user?.pushSubscription ? 'Notifications are active on this device.' : 'Enable background push notifications.'}
+                    </span>
+                  </div>
+                  <label className="toggle-switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                    <input
+                      type="checkbox"
+                      checked={!!user?.pushSubscription}
                       onChange={(e) => handleToggleNotifications(e.target.checked)}
                       disabled={enableLoading}
+                      style={{ opacity: 0, width: 0, height: 0 }}
                     />
-                    <span className="slider round"></span>
+                    <span style={{
+                      position: 'absolute', cursor: enableLoading ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0,
+                      backgroundColor: (!!user?.pushSubscription) ? '#10b981' : '#ccc', transition: '.4s', borderRadius: '24px',
+                      opacity: enableLoading ? 0.6 : 1
+                    }}>
+                      <span style={{
+                        position: 'absolute', height: '18px', width: '18px', left: '3px', bottom: '3px',
+                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
+                        transform: (!!user?.pushSubscription) ? 'translateX(20px)' : 'translateX(0)'
+                      }}></span>
+                    </span>
                   </label>
                 </div>
 
