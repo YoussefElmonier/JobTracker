@@ -158,6 +158,21 @@ export default function Profile() {
     }
   };
 
+  const handleTestPush = async () => {
+    try {
+        setLoading(true);
+        const topic = user?.ntfyTopic;
+        if (!topic) return;
+        
+        await api.post('/auth/test-push', { topic });
+        setMessage('📬 Test push sent! Check your phone.');
+    } catch (err) {
+        setError('Manual test failed.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <PageWrapper>
       <div className="page-container animate-fade">
@@ -359,6 +374,16 @@ export default function Profile() {
                       <>🔔 Enable Notifications</>
                   )}
                 </button>
+
+                {user?.isPremium && (
+                    <button 
+                        onClick={handleTestPush}
+                        className="btn-ghost"
+                        style={{ fontSize: '13px', textDecoration: 'underline', marginBottom: '16px', display: 'block' }}
+                    >
+                        Send a verify alert
+                    </button>
+                )}
 
                 {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
                 {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}
