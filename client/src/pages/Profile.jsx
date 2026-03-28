@@ -162,27 +162,25 @@ export default function Profile() {
         applicationServerKey: convertedVapidKey
       });
 
-      // Prepare the exact payload required by ntfy.sh v1/webpush
+      // Prepare the payload for ntfy.sh subscription
       const subJSON = subscription.toJSON();
       const payload = {
         endpoint: subJSON.endpoint,
         auth:     subJSON.keys.auth,
         p256dh:   subJSON.keys.p256dh,
-        topic:    topic,   // Singular format (legacy/standard)
-        topics:   [topic]  // Plural format (v1 spec)
+        topic:    topic // Standard root-level topic field
       };
 
-      // Send the subscription to ntfy.sh backend silently
-      const ntfyWebPushUrl = 'https://ntfy.sh/v1/webpush';
-      const res = await fetch(ntfyWebPushUrl, {
+      // Send the subscription to ntfy.sh backend silently using the base endpoint
+      const res = await fetch('https://ntfy.sh/v1/webpush', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, topics: [topic] }), // Send both to be safe
         headers: { 'Content-Type': 'application/json' }
       });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(`ntfy.sh rejection: ${errorData.error || res.statusText || 'Unknown error'}`);
+        throw new Error(`ntfy.sh error: ${errorData.error || res.statusText || 'Server Error'}`);
       }
 
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
