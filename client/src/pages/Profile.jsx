@@ -121,6 +121,12 @@ export default function Profile() {
       setLoading(true);
       const reg = await navigator.serviceWorker.ready;
       
+      // Cleanup: Force-unsubscribe any stale/old subscriptions to avoid key-mismatch errors on iOS
+      const oldSub = await reg.pushManager.getSubscription();
+      if (oldSub) {
+        await oldSub.unsubscribe();
+      }
+      
       // Real VAPID Public Key for ntfy.sh public server
       const vapidPublicKey = 'BEMjM0sNxh41x0a6Lz3YaqkJ7AUhZefxsOQgw-at69i0fM1CybVBcj7-QQXf4N_tPCgFnOXdRbQ5jrSrr9Yg9Lc';
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
