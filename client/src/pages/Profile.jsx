@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UpgradeModal from '../components/UpgradeModal'
 import api from '../api/axios'
-import { RiUpload2Line, RiCheckLine } from 'react-icons/ri'
+import { RiUpload2Line, RiCheckLine, RiShareBoxLine } from 'react-icons/ri'
 import PageWrapper from '../components/PageWrapper'
 import './Profile.css'
 
@@ -15,9 +15,13 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
-  
+
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Platform detection — used to tailor the notification subscribe experience
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
 
   useEffect(() => {
     if (user?.cvText) {
@@ -26,7 +30,6 @@ export default function Profile() {
     if (new URLSearchParams(location.search).get('gmail') === 'success') {
       setMessage('✅ Gmail connected successfully!')
       refreshUser()
-      // Clean url
       navigate('/profile', { replace: true })
     }
   }, [user, location, navigate])
@@ -46,7 +49,6 @@ export default function Profile() {
     setLoading(true)
     setMessage('')
     setError('')
-
     try {
       if (file) {
         const formData = new FormData()
@@ -74,7 +76,7 @@ export default function Profile() {
       setShowUpgrade(true)
       return
     }
-    const token = localStorage.getItem('jt_token');
+    const token = localStorage.getItem('jt_token')
     const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001'
     window.location.href = `${serverUrl}/api/auth/google/gmail?token=${token}`
   }
@@ -100,6 +102,25 @@ export default function Profile() {
     }
   }
 
+  const handleEnableNotifications = () => {
+    const topic = user?.ntfyTopic
+    if (!topic) return
+
+    const shareUrl = `https://ntfy.sh/${topic}`
+    const appUrl   = `ntfy://ntfy.sh/${topic}?display=TRKR+Alerts`
+
+    if (/Android/i.test(navigator.userAgent)) {
+      // Try to open the ntfy Android app directly via deep link.
+      // If the app isn't installed the browser will just ignore the URI,
+      // so we fall back to the web page after 500 ms.
+      window.location.href = appUrl
+      setTimeout(() => { window.open(shareUrl, '_blank', 'noopener,noreferrer') }, 500)
+    } else {
+      // iOS (web subscribe), Desktop — open the ntfy web page
+      window.open(shareUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
     <PageWrapper>
       <div className="page-container animate-fade">
@@ -108,6 +129,7 @@ export default function Profile() {
         </div>
 
         <div className="profile__content">
+          {/* ── User Details ── */}
           <section className="profile__section">
             <h2>User Details</h2>
             <div className="profile__user-info">
@@ -116,6 +138,7 @@ export default function Profile() {
             </div>
           </section>
 
+          {/* ── CV Section ── */}
           <section className="profile__section profile__cv-section">
             <h2>My CV</h2>
             {!user?.cvText ? (
@@ -142,12 +165,12 @@ export default function Profile() {
                   <input type="file" accept="application/pdf" onChange={handleFileChange} />
                 </label>
               </div>
-              
+
               <div className="profile__cv-divider">OR</div>
 
               <div className="profile__cv-textarea-wrapper">
                 <label>Paste CV Text:</label>
-                <textarea 
+                <textarea
                   value={cvText}
                   onChange={handleTextChange}
                   placeholder="Paste your CV text here..."
@@ -167,6 +190,7 @@ export default function Profile() {
             </form>
           </section>
 
+          {/* ── Gmail Integration ── */}
           <section className="profile__section profile__gmail-section" style={{ marginTop: '24px' }}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               Gmail Integration
@@ -181,25 +205,25 @@ export default function Profile() {
                 <p style={{ color: '#10b981', fontWeight: 'bold', marginBottom: '16px' }}>
                   ✅ Gmail connected
                 </p>
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: 'var(--surface-color)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                   <div style={{ flex: 1 }}>
                     <strong style={{ display: 'block', marginBottom: '4px' }}>Auto-track email updates</strong>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Automatically read recruiter emails and update job card statuses.</span>
                   </div>
                   <label className="toggle-switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={user?.autoTrackEmails !== false} 
+                    <input
+                      type="checkbox"
+                      checked={user?.autoTrackEmails !== false}
                       onChange={handleToggleTracking}
-                      style={{ opacity: 0, width: 0, height: 0 }} 
+                      style={{ opacity: 0, width: 0, height: 0 }}
                     />
                     <span style={{
                       position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0,
                       backgroundColor: (user?.autoTrackEmails !== false) ? '#10b981' : '#ccc', transition: '.4s', borderRadius: '24px'
                     }}>
                       <span style={{
-                        position: 'absolute', content: '""', height: '18px', width: '18px', left: '3px', bottom: '3px',
+                        position: 'absolute', height: '18px', width: '18px', left: '3px', bottom: '3px',
                         backgroundColor: 'white', transition: '.4s', borderRadius: '50%',
                         transform: (user?.autoTrackEmails !== false) ? 'translateX(20px)' : 'translateX(0)'
                       }} />
@@ -216,11 +240,11 @@ export default function Profile() {
                 <p style={{ marginBottom: '16px', color: '#4b5563', fontSize: '15px' }}>
                   Connect your Gmail to allow TRKR to automatically read recruiter emails and update your job applications accordingly.
                 </p>
-                
-                <button 
-                  onClick={handleConnectGmail} 
-                  className="btn" 
-                  style={{ 
+
+                <button
+                  onClick={handleConnectGmail}
+                  className="btn"
+                  style={{
                     background: !user?.isPremium ? '#f3f4f6' : 'var(--accent)',
                     color: !user?.isPremium ? '#9ca3af' : '#fff',
                     border: !user?.isPremium ? '1px solid #e5e7eb' : 'none',
@@ -241,9 +265,153 @@ export default function Profile() {
                   </p>
                 ) : (
                   <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '12px' }}>
-                      ✅ Ready to connect
+                    ✅ Ready to connect
                   </p>
                 )}
+              </div>
+            )}
+          </section>
+
+          {/* ── Mobile Alerts Card ── */}
+          <section
+            className="profile__section profile__alerts-section"
+            style={{ marginTop: '24px', position: 'relative', overflow: 'hidden' }}
+          >
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🔔 Mobile Alerts
+              {!user?.isPremium && (
+                <span style={{ fontSize: '0.7rem', padding: '2px 8px', background: '#fef3c7', color: '#92400e', borderRadius: '4px', textTransform: 'uppercase' }}>
+                  👑 Premium
+                </span>
+              )}
+            </h2>
+
+            {user?.isPremium ? (
+              /* Premium view */
+              <div style={{ marginTop: '16px' }}>
+                <p style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '15px', lineHeight: '1.6' }}>
+                  Get real-time push notifications the moment TRKR detects a job offer in your inbox.
+                </p>
+
+                <button
+                  id="enable-notifications-btn"
+                  onClick={handleEnableNotifications}
+                  className="profile__save-btn"
+                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  🔔 Enable Notifications
+                </button>
+
+                {/* iOS PWA install hint — only shown in Safari when NOT already on home screen */}
+                {isIOS && !isStandalone && (
+                  <div style={{
+                    marginBottom: '16px',
+                    padding: '12px 14px',
+                    background: 'rgba(59,130,246,0.08)',
+                    border: '1px solid rgba(59,130,246,0.25)',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    color: 'var(--text-muted)',
+                    lineHeight: '1.6',
+                  }}>
+                    <strong style={{ color: 'var(--text-main)' }}>📲 iPhone User?</strong>{' '}
+                    To receive alerts, tap the{' '}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <strong style={{ color: 'var(--text-main)' }}>Share</strong>{' '}
+                      <RiShareBoxLine className="animate-bounce-slow" style={{ color: 'var(--accent)', fontSize: '1.1rem' }} />
+                    </span>{' '}
+                    icon in Safari and select{' '}
+                    <strong style={{ color: 'var(--text-main)' }}>&ldquo;Add to Home Screen&rdquo;</strong>.
+                    Then open TRKR from your home screen and subscribe.
+                  </div>
+                )}
+
+                <div style={{
+                  background: 'var(--bg-page)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  fontSize: '13px',
+                  color: 'var(--text-muted)',
+                  lineHeight: '1.7',
+                }}>
+                  <p style={{ margin: 0 }}>
+                    📱 <strong style={{ color: 'var(--text-main)' }}>iPhone / Desktop:</strong> No app needed — click Enable and subscribe in your browser.
+                  </p>
+                  <p style={{ margin: '6px 0 0' }}>
+                    🤖 <strong style={{ color: 'var(--text-main)' }}>Android:</strong> For the best experience, download the free{' '}
+                    <a
+                      href="https://ntfy.sh"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--accent)', textDecoration: 'underline' }}
+                    >
+                      ntfy app
+                    </a>{' '}
+                    — we'll open it automatically.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Free user — blurred lock overlay */
+              <div style={{ position: 'relative' }}>
+                {/* Blurred preview */}
+                <div style={{ filter: 'blur(4px)', pointerEvents: 'none', userSelect: 'none', marginTop: '16px' }}>
+                  <p style={{ marginBottom: '8px', color: 'var(--text-muted)', fontSize: '15px' }}>
+                    Get real-time push notifications the moment TRKR detects a job offer in your inbox.
+                  </p>
+                  <div style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '10px 20px', background: 'var(--accent)', color: '#fff',
+                    borderRadius: '999px', fontWeight: '500', fontSize: '0.9rem',
+                    marginTop: '12px', marginBottom: '16px',
+                  }}>
+                    🔔 Enable Notifications
+                  </div>
+                  <div style={{
+                    background: 'var(--bg-page)', border: '1px solid var(--border)',
+                    borderRadius: '10px', padding: '14px 16px', fontSize: '13px', color: 'var(--text-muted)',
+                  }}>
+                    <p style={{ margin: 0 }}>📱 iPhone / Desktop: No app needed.</p>
+                    <p style={{ margin: '6px 0 0' }}>🤖 Android: Download the ntfy app for the best experience.</p>
+                  </div>
+                </div>
+
+                {/* Overlay */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  gap: '12px', zIndex: 2,
+                }}>
+                  <div style={{ fontSize: '2rem' }}>🔒</div>
+                  <button
+                    id="upgrade-for-alerts-btn"
+                    onClick={() => setShowUpgrade(true)}
+                    style={{
+                      padding: '10px 22px',
+                      background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '999px',
+                      fontWeight: '600',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
+                      transition: 'transform 0.15s, box-shadow 0.15s',
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 8px 20px rgba(239,68,68,0.4)'
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 4px 14px rgba(239,68,68,0.35)'
+                    }}
+                  >
+                    🚀 Upgrade to Premium
+                  </button>
+                </div>
               </div>
             )}
           </section>

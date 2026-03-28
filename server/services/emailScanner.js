@@ -4,6 +4,7 @@ const User = require('../models/User')
 const Job = require('../models/Job')
 const Notification = require('../models/Notification')
 const Groq = require('groq-sdk')
+const { sendPremiumAlert } = require('../utils/notificationService')
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
@@ -152,6 +153,14 @@ async function scanUserEmails(user) {
               read: false,
               jobId: matchedJob._id
             });
+            // Premium real-time push notification via ntfy.sh
+            if (user.isPremium && user.ntfyTopic && detectedType === 'offer') {
+              await sendPremiumAlert(
+                user.ntfyTopic,
+                `🎉 Offer from ${matchedJob.company}!`,
+                `TRKR detected a job offer from ${matchedJob.company}. Your job card has been updated. Log in to review it!`
+              )
+            }
             console.log('Job card updated without Groq:', matchedJob.company, '→', detectedType);
           } else {
             console.log('Calling Groq with model: llama-3.3-70b-versatile');
@@ -199,6 +208,14 @@ async function scanUserEmails(user) {
                     jobId: job._id
                   });
                   console.log('Notification created for:', result.company);
+                  // Premium real-time push notification via ntfy.sh
+                  if (user.isPremium && user.ntfyTopic && result.type === 'offer') {
+                    await sendPremiumAlert(
+                      user.ntfyTopic,
+                      `🎉 Offer from ${result.company}!`,
+                      `TRKR detected a job offer from ${result.company}. Your job card has been updated. Log in to review it!`
+                    )
+                  }
                 }
               } else {
                 await Notification.create({

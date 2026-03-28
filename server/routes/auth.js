@@ -6,6 +6,7 @@ const User     = require('../models/User')
 const auth     = require('../middleware/auth')
 const { google } = require('googleapis')
 const multer   = require('multer')
+const { generateNtfyTopic } = require('../utils/notificationService')
 
 // Client A — Basic login: used for all users — login only
 const loginClient = new google.auth.OAuth2(
@@ -159,7 +160,8 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
         cvText: user.cvText || '',
-        gmailConnected: !!user.gmailConnected
+        gmailConnected: !!user.gmailConnected,
+        ntfyTopic: user.ntfyTopic || null
       },
     })
   } catch (err) {
@@ -203,7 +205,8 @@ router.post('/login', async (req, res) => {
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
         cvText: user.cvText || '',
-        gmailConnected: !!user.gmailConnected
+        gmailConnected: !!user.gmailConnected,
+        ntfyTopic: user.ntfyTopic || null
       },
     })
   } catch (err) {
@@ -217,6 +220,13 @@ router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('-password')
     if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // Lazy-provision a ntfy topic for Premium users who don't have one yet
+    if (user.isPremium && !user.ntfyTopic) {
+      user.ntfyTopic = generateNtfyTopic()
+      await user.save()
+    }
+
     res.json({ user })
   } catch (err) {
     res.status(500).json({ message: 'Server error' })

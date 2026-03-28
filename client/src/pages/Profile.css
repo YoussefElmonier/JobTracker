@@ -176,3 +176,13 @@
   padding: 8px 12px;
   border-radius: 6px;
 }
+
+@keyframes subtle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+.animate-bounce-slow {
+  display: inline-block;
+  animation: subtle-bounce 2s infinite;
+}

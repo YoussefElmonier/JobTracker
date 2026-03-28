@@ -59,6 +59,12 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  ntfyTopic: {
+    type:   String,
+    unique: true,
+    sparse: true, // Allows multiple docs to have null/undefined without violating unique constraint
+    select: true,
+  },
   scannedEmailIds: [
     {
       id: { type: String },

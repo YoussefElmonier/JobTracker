@@ -3,6 +3,7 @@ const { Paddle, Environment, EventName } = require('@paddle/paddle-node-sdk')
 const crypto     = require('crypto')
 const User       = require('../models/User')
 const auth       = require('../middleware/auth')
+const { generateNtfyTopic } = require('../utils/notificationService')
 
 const router = express.Router()
 
@@ -72,7 +73,14 @@ router.post('/verify-payment', auth, async (req, res) => {
     }
 
     if (userTransaction) {
-      await User.findByIdAndUpdate(req.userId, { isPremium: true })
+      const upgradeUser = await User.findById(req.userId)
+      if (upgradeUser && !upgradeUser.ntfyTopic) {
+        upgradeUser.isPremium = true
+        upgradeUser.ntfyTopic = generateNtfyTopic()
+        await upgradeUser.save()
+      } else {
+        await User.findByIdAndUpdate(req.userId, { isPremium: true })
+      }
       console.log(`✅ Verified: User ${req.userId} found in Paddle transaction ${userTransaction.id}`)
       return res.json({ success: true, message: 'Upgraded successfully!' })
     }
@@ -110,9 +118,12 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     if (eventData.eventType === EventName.TransactionCompleted || eventData.eventType === EventName.TransactionPaid) {
       const userId = eventData.data.customData?.userId
       if (userId) {
-        const updatedUser = await User.findByIdAndUpdate(userId, { isPremium: true }, { new: true })
-        if (updatedUser) {
-          console.log(`✅ Webhook: User ${userId} (${updatedUser.email}) upgraded to Premium`)
+        const upgradeUser = await User.findById(userId)
+        if (upgradeUser) {
+          upgradeUser.isPremium = true
+          if (!upgradeUser.ntfyTopic) upgradeUser.ntfyTopic = generateNtfyTopic()
+          await upgradeUser.save()
+          console.log(`✅ Webhook: User ${userId} (${upgradeUser.email}) upgraded to Premium`)
         } else {
           console.warn(`⚠️ Webhook: Received successful payment but user ${userId} NOT found in DB`)
         }
