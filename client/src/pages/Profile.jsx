@@ -251,31 +251,13 @@ export default function Profile() {
             <form onSubmit={handleSubmit} className="profile__cv-form">
               <div className="profile__cv-upload">
                 <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
-                <label 
-                  className="custom-file-upload"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '14px 28px',
-                    background: '#4f46e5', // Direct primary blue
-                    color: '#ffffff',
-                    borderRadius: '999px',
-                    fontWeight: '600',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center',
-                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)',
-                    border: 'none'
-                  }}
-                >
+                <label className="profile__action-btn">
                   {file ? (
-                    <span style={{ fontWeight: 'bold' }}>{file.name} (Ready)</span>
+                    <span>{file.name} (Ready)</span>
                   ) : (
                     <span>Choose PDF CV</span>
                   )}
-                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} />
                 </label>
               </div>
 
@@ -297,7 +279,7 @@ export default function Profile() {
               {error && <div className="profile__error">{error}</div>}
               {message && <div className="profile__success">{message}</div>}
 
-              <button type="submit" className="profile__save-btn" disabled={loading || (!cvText && !file)}>
+              <button type="submit" className="profile__action-btn" disabled={loading || (!cvText && !file)}>
                 {loading ? 'Saving...' : 'Save CV'}
               </button>
             </form>

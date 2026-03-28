@@ -51,37 +51,44 @@
 .profile__cv-upload {
   display: flex;
   width: 100%;
-  max-width: 300px;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
-.custom-file-upload {
+.profile__action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 32px;
+  width: 100%;
+  max-width: 320px;
+  padding: 14px 28px;
   background: var(--accent);
   color: #fff;
-  border: none;
-  border-radius: 999px;
-  font-weight: 500;
+  border: none !important;
+  border-radius: 999px !important;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
   text-align: center;
-  width: 100%;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
 }
 
-.custom-file-upload:hover {
-  filter: brightness(1.1);
+.profile__action-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.35);
 }
 
-.custom-file-upload:active {
+.profile__action-btn:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
+}
+
+.profile__action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .profile__cv-upload input[type="file"] {
@@ -147,16 +154,17 @@
 }
 
 .profile__save-btn {
-  padding: 12px 24px;
+  padding: 12px 28px;
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: var(--radius-pill);
-  font-weight: 500;
-  font-size: 0.9rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
   align-self: flex-start;
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);
 }
 
 .profile__save-btn:hover:not(:disabled) {
