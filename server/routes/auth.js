@@ -378,18 +378,37 @@ router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
   }
 })
 
+// POST /api/auth/push/subscribe (protected)
+router.post('/push/subscribe', auth, async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription) return res.status(400).json({ message: 'No subscription provided' });
+
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    user.pushSubscription = subscription;
+    await user.save();
+    
+    res.json({ success: true, message: 'Push subscription saved' });
+  } catch (err) {
+    console.error('Push subscribe error:', err);
+    res.status(500).json({ message: 'Failed to save push subscription' });
+  }
+});
+
 // POST /api/auth/test-push (protected) — Manual notification verification
 router.post('/test-push', auth, async (req, res) => {
   try {
     const { sendPremiumAlert } = require('../utils/notificationService');
     const user = await User.findById(req.userId);
     
-    if (!user || !user.isPremium || !user.ntfyTopic) {
-      return res.status(403).json({ message: 'Premium and ntfyTopic required' });
+    if (!user || !user.isPremium || !user.pushSubscription) {
+      return res.status(403).json({ message: 'Premium and valid push subscription required' });
     }
 
     await sendPremiumAlert(
-      user.ntfyTopic,
+      user.pushSubscription,
       '💎 TRKR: Connection Verified!',
       'Your real-time notification system is now fully active. Happy job searching!'
     );
@@ -402,3 +421,4 @@ router.post('/test-push', auth, async (req, res) => {
 })
 
 module.exports = router
+

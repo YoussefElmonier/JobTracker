@@ -1,6 +1,6 @@
 /*
- * sw.js — Service Worker for TRKR PWA. v7
- * Handles background push notifications from ntfy.sh.
+ * sw.js — Service Worker for TRKR PWA. v8
+ * Handles Native Web Push notifications directly via web-push (No ntfy).
  */
 
 // Force the new Service Worker to take over immediately
@@ -16,36 +16,16 @@ self.addEventListener('push', (event) => {
   let data = {};
   
   if (event.data) {
-    const rawText = event.data.text();
     try {
-      // 1. Try native JSON parsing from the push event
       data = event.data.json();
     } catch (e) {
-      try {
-        // 2. Fallback: Parse the raw text manually if it's a JSON string
-        data = JSON.parse(rawText);
-      } catch (e2) {
-        // 3. Last Fallback: It's just raw text
-        data = { message: rawText };
-      }
+      data = { message: event.data.text() };
     }
   }
 
-  // Pick out the actual message and title using all possible keys ntfy uses
-  const title   = data.title || data.t || 'TRKR Alert';
-  let message = data.message || data.body || data.m || data.text;
-
-  // Final Safety check: ensure we don't display [object Object]
-  if (!message || typeof message !== 'string') {
-    if (typeof data === 'string') {
-      message = data;
-    } else {
-      // If we're stuck with an object we can't parse, just say job update
-      message = 'New job search update detected!';
-    }
-  }
-
-  const clickUrl = data.click || data.url || data.link || '/dashboard';
+  const title   = data.title || 'TRKR Alert';
+  const message = data.message || 'Job search update detected!';
+  const clickUrl = data.url || '/dashboard';
 
   const options = {
     body: message,

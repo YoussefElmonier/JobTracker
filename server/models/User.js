@@ -65,6 +65,10 @@ const UserSchema = new mongoose.Schema({
     sparse: true, // Allows multiple docs to have null/undefined without violating unique constraint
     select: true,
   },
+  pushSubscription: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
   scannedEmailIds: [
     {
       id: { type: String },

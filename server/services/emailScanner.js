@@ -153,10 +153,10 @@ async function scanUserEmails(user) {
               read: false,
               jobId: matchedJob._id
             });
-            // Premium real-time push notification via ntfy.sh
-            if (user.isPremium && user.ntfyTopic && detectedType === 'offer') {
+            // Premium real-time push notification natively
+            if (user.isPremium && user.pushSubscription && detectedType === 'offer') {
               await sendPremiumAlert(
-                user.ntfyTopic,
+                user.pushSubscription,
                 `🎉 Offer from ${matchedJob.company}!`,
                 `TRKR detected a job offer from ${matchedJob.company}. Your job card has been updated. Log in to review it!`
               )
@@ -208,10 +208,10 @@ async function scanUserEmails(user) {
                     jobId: job._id
                   });
                   console.log('Notification created for:', result.company);
-                  // Premium real-time push notification via ntfy.sh
-                  if (user.isPremium && user.ntfyTopic && result.type === 'offer') {
+                  // Premium real-time push notification natively
+                  if (user.isPremium && user.pushSubscription && result.type === 'offer') {
                     await sendPremiumAlert(
-                      user.ntfyTopic,
+                      user.pushSubscription,
                       `🎉 Offer from ${result.company}!`,
                       `TRKR detected a job offer from ${result.company}. Your job card has been updated. Log in to review it!`
                     )

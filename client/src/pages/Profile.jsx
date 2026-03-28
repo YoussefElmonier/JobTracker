@@ -99,22 +99,6 @@ export default function Profile() {
         return setAlertError('Push notifications are not supported on this browser/device.');
     }
 
-    let topic = user?.ntfyTopic;
-    
-    // 2. Lazy recovery: if topic is missing in state, try to re-fetch user
-    if (!topic) {
-        try {
-            const { data } = await api.get('/auth/me');
-            topic = data.user?.ntfyTopic;
-        } catch (err) {
-            return setAlertError('Session expired. Please log in again.');
-        }
-    }
-
-    if (!topic) {
-        return setAlertError('No mobile alert topic found for your account. Please refresh.');
-    }
-
     try {
         setEnableLoading(true);
         const reg = await navigator.serviceWorker.ready;
@@ -129,8 +113,8 @@ export default function Profile() {
         const oldSub = await reg.pushManager.getSubscription();
         if (oldSub) await oldSub.unsubscribe();
 
-        // Subscribe with ntfy.sh's VAPID key
-        const vapidPublicKey = 'BEMjM0sNxh41x0a6Lz3YaqkJ7AUhZefxsOQgw-at69i0fM1CybVBcj7-QQXf4N_tPCgFnOXdRbQ5jrSrr9Yg9Lc';
+        // TRKR Native VAPID Public Key
+        const vapidPublicKey = 'BIYildETI2nVN7bLjBlDRU0RNjHBY8yn6Q_lLAo0RG458hUvt0Q6J87reTfCRseFlUbrKDPg0UYfP4gxkvxVrSU';
         const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
         let subscription;
@@ -146,42 +130,24 @@ export default function Profile() {
           return;
         }
 
-        // Send subscription to ntfy.sh
-        const subJSON = subscription.toJSON();
-        const payload = {
-          endpoint: subJSON.endpoint,
-          auth:     subJSON.keys.auth,
-          p256dh:   subJSON.keys.p256dh,
-          topic:    topic,
-          topics:   [topic]
-        };
-
-        const res = await fetch('https://ntfy.sh/v1/webpush', {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' }
+        // Send subscription to TRKR Backend natively
+        const res = await api.post('/auth/push/subscribe', {
+          subscription: subscription
         });
 
-        if (!res.ok) {
-          const body = await res.text();
-          console.error('ntfy.sh error:', res.status, body);
-          
-          if (res.status === 500 || body.includes('50001')) {
-            setAlertError('ntfy.sh public server is currently locked/down. Trying again later.');
-          } else {
-            setAlertError(`ntfy server error: ${res.status}`);
-          }
-          
+        if (res.status !== 200) {
+          setAlertError('Failed to save your alert channel. Trying again later.');
           setEnableLoading(false);
           return;
         }
 
-        setAlertMessage('🚀 Success! Notifications enabled inside TRKR.');
+        setAlertMessage('🚀 Success! Native Mobile Alerts enabled!');
     } catch (err) {
       console.error('Subscription error:', err);
       setAlertError(`Failed: ${err.message}`);
     } finally {
       setEnableLoading(false);
+      await refreshUser();
     }
   };
 
@@ -212,10 +178,8 @@ export default function Profile() {
     try {
         setTestLoading(true);
         setTestError(null);
-        const topic = user?.ntfyTopic;
-        if (!topic) return;
         
-        await api.post('/auth/test-push', { topic });
+        await api.post('/auth/test-push');
         setAlertMessage('📬 Test push sent! Check your phone.');
     } catch (err) {
         setTestError('Manual test failed.');
