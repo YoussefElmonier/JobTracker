@@ -15,10 +15,30 @@ export default function Profile() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
-  const [isSubscribed, setIsSubscribed] = useState(false)
 
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Track the browser's native notification permission state
+  const [notifPermission, setNotifPermission] = useState(
+    typeof Notification !== "undefined" ? Notification.permission : "default"
+  );
+
+  useEffect(() => {
+    // 1. Initial Check
+    if (typeof Notification !== "undefined") {
+      setNotifPermission(Notification.permission);
+    }
+
+    // 2. Permission Change Listener (Permissions API)
+    if (typeof navigator !== "undefined" && navigator.permissions) {
+      navigator.permissions.query({ name: 'notifications' }).then((status) => {
+        status.onchange = () => {
+          setNotifPermission(Notification.permission);
+        };
+      });
+    }
+  }, []);
 
   // Platform detection — used to tailor the notification subscribe experience
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
@@ -33,22 +53,10 @@ export default function Profile() {
       refreshUser()
       navigate('/profile', { replace: true })
     }
-    checkSubscription()
   }, [user, location, navigate])
 
-  const checkSubscription = async () => {
-    if (!('serviceWorker' in navigator)) return
-    try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      setIsSubscribed(!!sub)
-    } catch (err) {
-      console.error('Error checking subscription:', err)
-    }
-  }
-
   const handleTextChange = (e) => {
-    setCvText(e.target.value.slice(0, 3000))
+    setCvText(e.target.value.slice(0, 2000))
   }
 
   const handleFileChange = (e) => {
@@ -125,8 +133,11 @@ export default function Profile() {
   };
 
   const handleEnableNotifications = async () => {
-    setMessage('');
-    setError('');
+    // If already granted, don't trigger the handshake again — purely for UX/Optimization
+    if (notifPermission === 'granted') {
+      setMessage('✅ Notifications are already active in your browser.');
+      return;
+    }
     const topic = user?.ntfyTopic;
     if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
         return setError('Feature not supported on this browser.');
@@ -134,12 +145,6 @@ export default function Profile() {
 
     try {
       setLoading(true);
-      
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-          return setError('Notification permission denied.');
-      }
-
       const reg = await navigator.serviceWorker.ready;
       
       // Real VAPID Public Key for ntfy.sh public server
@@ -170,46 +175,10 @@ export default function Profile() {
 
       if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
 
-      setIsSubscribed(true);
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
     } catch (err) {
       console.error('Subscription error:', err);
       setError('Failed to enable background notifications.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDisableNotifications = async () => {
-    try {
-      setLoading(true);
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      
-      if (sub) {
-        await sub.unsubscribe();
-        // Also tell ntfy to remove it (optional but good practice)
-        try {
-          await fetch('https://ntfy.sh/v1/webpush', {
-            method: 'POST',
-            body: JSON.stringify({
-              endpoint: sub.endpoint,
-              auth:     sub.toJSON().keys.auth,
-              p256dh:   sub.toJSON().keys.p256dh,
-              topics:   [] // Empty topics removes the subscription from ntfy
-            }),
-            headers: { 'Content-Type': 'application/json' }
-          });
-        } catch (e) {
-          console.warn('Failed to unregister at ntfy side (non-fatal)', e);
-        }
-      }
-      
-      setIsSubscribed(false);
-      setMessage('Notifications disabled.');
-    } catch (err) {
-      console.error('Unsubscribe error:', err);
-      setError('Failed to disable notifications.');
     } finally {
       setLoading(false);
     }
@@ -259,13 +228,19 @@ export default function Profile() {
             <form onSubmit={handleSubmit} className="profile__cv-form">
               <div className="profile__cv-upload">
                 <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
-                <label className="profile__action-btn">
+                <label className="custom-file-upload">
                   {file ? (
-                    <span>{file.name} (Ready)</span>
+                    <>
+                      <RiCheckLine className="file-upload-icon" style={{ color: '#10b981' }} />
+                      <span style={{ color: 'var(--text-main)', fontSize: '0.85rem' }}>{file.name}</span>
+                    </>
                   ) : (
-                    <span>Choose PDF CV</span>
+                    <>
+                      <RiUpload2Line className="file-upload-icon" />
+                      <span>Choose PDF File</span>
+                    </>
                   )}
-                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} />
+                  <input type="file" accept="application/pdf" onChange={handleFileChange} />
                 </label>
               </div>
 
@@ -280,14 +255,14 @@ export default function Profile() {
                   rows={10}
                 />
                 <div className="profile__cv-counter">
-                  {cvText.length} / 3000 characters
+                  {cvText.length} / 2000 characters
                 </div>
               </div>
 
               {error && <div className="profile__error">{error}</div>}
               {message && <div className="profile__success">{message}</div>}
 
-              <button type="submit" className="profile__action-btn" disabled={loading || (!cvText && !file)}>
+              <button type="submit" className="profile__save-btn" disabled={loading || (!cvText && !file)}>
                 {loading ? 'Saving...' : 'Save CV'}
               </button>
             </form>
@@ -412,64 +387,51 @@ export default function Profile() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px', marginBottom: '16px' }}>
-                  {isSubscribed ? (
-                    <button
-                      type="button"
-                      onClick={handleDisableNotifications}
-                      className="profile__save-btn"
-                      style={{ 
-                        background: '#fff1f2',
-                        color: '#e11d48',
-                        border: '1px solid #fecdd3',
-                        boxShadow: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                      disabled={loading}
-                    >
-                      {loading ? 'Disabling...' : <>🔴 Disable Notifications</>}
-                    </button>
+                <button
+                  id="enable-notifications-btn"
+                  onClick={handleEnableNotifications}
+                  className="profile__save-btn"
+                  style={{ 
+                     marginTop: '12px', 
+                     marginBottom: notifPermission === 'granted' ? '4px' : '16px', 
+                     display: 'flex', 
+                     alignItems: 'center', 
+                     gap: '4px',
+                     // Visual feedback for 'Granted' state
+                     background: notifPermission === 'granted' ? '#f3f4f6' : 'var(--accent)',
+                     color: notifPermission === 'granted' ? 'var(--text-muted)' : '#fff',
+                     border: notifPermission === 'granted' ? '1px solid var(--border)' : 'none',
+                     cursor: notifPermission === 'granted' ? 'default' : 'pointer'
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                      'Enabling...'
                   ) : (
-                    <button
-                      type="button"
-                      id="enable-notifications-btn"
-                      onClick={handleEnableNotifications}
-                      className="profile__save-btn"
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: '6px' 
-                      }}
-                      disabled={loading}
-                    >
-                      {loading ? 'Enabling...' : <>🔔 Enable Notifications</>}
-                    </button>
+                      notifPermission === 'granted' ? (
+                        <>✅ Notifications Enabled</>
+                      ) : (
+                        <>🔔 Enable Notifications</>
+                      )
                   )}
+                </button>
 
-                  {user?.isPremium && isSubscribed && (
+                {/* Status-aware hint since JS cannot programmatically revoke permission */}
+                {notifPermission === 'granted' && !message && (
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', fontStyle: 'italic' }}>
+                    Tip: If you wish to disable alerts, please clear site permissions in your browser.
+                  </p>
+                )}
+
+                {user?.isPremium && (
                     <button 
-                        type="button"
                         onClick={handleTestPush}
                         className="btn-ghost"
-                        style={{ 
-                          fontSize: '13px', 
-                          color: 'var(--accent)', 
-                          textDecoration: 'none', 
-                          padding: '8px', 
-                          textAlign: 'center',
-                          border: '1px solid var(--border)',
-                          borderRadius: '8px',
-                          marginTop: '4px'
-                        }}
+                        style={{ fontSize: '13px', textDecoration: 'underline', marginBottom: '16px', display: 'block' }}
                     >
-                        ⚡ Send verify alert
+                        Send a verify alert
                     </button>
-                  )}
-                </div>
+                )}
 
                 {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
                 {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}

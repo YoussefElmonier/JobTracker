@@ -147,7 +147,7 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
       name,
       email: email.toLowerCase(),
       password,
-      cvText: cvText ? cvText.trim().slice(0, 3000) : ''
+      cvText: cvText ? cvText.trim().slice(0, 2000) : ''
     })
     const token = signToken(user._id)
 
@@ -357,7 +357,7 @@ router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
       return res.status(400).json({ message: 'Please provide either a PDF file or text.' })
     }
 
-    cvText = cvText.trim().slice(0, 3000)
+    cvText = cvText.trim().slice(0, 2000)
 
     const user = await User.findByIdAndUpdate(req.userId, { cvText }, { new: true })
     if (!user) return res.status(404).json({ message: 'User not found' })
