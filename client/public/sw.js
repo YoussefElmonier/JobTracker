@@ -1,7 +1,13 @@
 /*
- * sw.js — Service Worker for TRKR PWA.
+ * sw.js — Service Worker for TRKR PWA. v4
  * Handles background push notifications from ntfy.sh.
  */
+
+// Force new SW to take over from old one immediately
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 self.addEventListener('push', (event) => {
   let data = {};
