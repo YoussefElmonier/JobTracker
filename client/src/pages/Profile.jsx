@@ -11,13 +11,14 @@ export default function Profile() {
   const { user, refreshUser } = useAuth()
   const [cvText, setCvText] = useState('')
   const [file, setFile] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [alertError, setAlertError] = useState(null)
-  const [alertMessage, setAlertMessage] = useState(null)
-  const [testLoading, setTestLoading] = useState(false)
-  const [testError, setTestError] = useState('')
-  const [message, setMessage] = useState('')
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [enableLoading, setEnableLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [alertError, setAlertError] = useState(null);
+  const [alertMessage, setAlertMessage] = useState(null);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testError, setTestError] = useState(null);
+  const [message, setMessage] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false)
 
   const location = useLocation()
@@ -45,33 +46,6 @@ export default function Profile() {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0])
-    }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-    setError('')
-    try {
-      if (file) {
-        const formData = new FormData()
-        formData.append('cvFile', file)
-        const res = await api.put('/auth/profile/cv', formData)
-        setMessage(res.data.message)
-        setCvText(res.data.cvText || '')
-        setFile(null)
-      } else {
-        const res = await api.put('/auth/profile/cv', { cvText })
-        setMessage(res.data.message)
-        setCvText(res.data.cvText || '')
-      }
-      await refreshUser()
-    } catch (err) {
-      console.error(err)
-      setError(err.response?.data?.message || 'Failed to save CV')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -142,13 +116,13 @@ export default function Profile() {
     }
 
     try {
-        setLoading(true);
+        setEnableLoading(true);
         const reg = await navigator.serviceWorker.ready;
         
         // 3. Check for browser-level blocks
         if (Notification.permission === 'denied') {
           setAlertError('Please enable notifications in your phone settings to continue.');
-          setLoading(false);
+          setEnableLoading(false);
           return;
         }
 
@@ -191,7 +165,29 @@ export default function Profile() {
       console.error('Subscription error:', err);
       setAlertError('Failed to enable background notifications.');
     } finally {
-      setLoading(false);
+      setEnableLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+        setSaveLoading(true);
+        setError(null);
+        setMessage(null);
+        const formData = new FormData();
+        formData.append('cvText', cvText);
+        if (file) {
+            formData.append('cvFile', file);
+        }
+        await api.put('/auth/profile/cv', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setMessage('CV updated successfully!');
+    } catch (err) {
+        setError('Failed to update CV.');
+    } finally {
+        setSaveLoading(false);
     }
   };
 
@@ -238,7 +234,7 @@ export default function Profile() {
               <p className="profile__cv-warning">You can update your CV anytime — just overwrites the existing one.</p>
             )}
 
-            <form onSubmit={handleSubmit} className="profile__cv-form">
+            <form onSubmit={handleUpdateProfile} className="profile__cv-form">
               <div className="profile__cv-upload">
                 <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
                 <label className="custom-file-upload">
@@ -275,9 +271,13 @@ export default function Profile() {
               {error && <div className="profile__error">{error}</div>}
               {message && <div className="profile__success">{message}</div>}
 
-              <button type="submit" className="profile__save-btn" disabled={loading || (!cvText && !file)}>
-                {loading ? 'Saving...' : 'Save CV'}
-              </button>
+              <button 
+              type="submit" 
+              className="profile__save-btn" 
+              disabled={saveLoading}
+            >
+              {saveLoading ? 'Saving...' : 'Save CV'}
+            </button>
             </form>
           </section>
 
@@ -406,9 +406,9 @@ export default function Profile() {
                   onClick={handleEnableNotifications}
                   className="profile__save-btn"
                   style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  disabled={loading}
+                  disabled={enableLoading}
                 >
-                  {loading ? (
+                  {enableLoading ? (
                       'Enabling...'
                   ) : (
                       <>🔔 Enable Notifications</>
