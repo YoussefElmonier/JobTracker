@@ -168,7 +168,8 @@ export default function Profile() {
         endpoint: subJSON.endpoint,
         auth:     subJSON.keys.auth,
         p256dh:   subJSON.keys.p256dh,
-        topics:   [topic] // Mandatory for ntfy to link the topic
+        topic:    topic,   // Singular format (legacy/standard)
+        topics:   [topic]  // Plural format (v1 spec)
       };
 
       // Send the subscription to ntfy.sh backend silently
@@ -179,7 +180,10 @@ export default function Profile() {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) throw new Error('ntfy.sh rejected the subscription handshake.');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(`ntfy.sh rejection: ${errorData.error || res.statusText || 'Unknown error'}`);
+      }
 
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
       setNotifPermission('granted'); // Update state immediately
