@@ -69,10 +69,13 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
+  position: relative;
+  z-index: 5; /* Ensure it stays on top */
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.25);
   text-align: center;
   text-decoration: none;
+  pointer-events: auto;
 }
 
 .profile__action-btn:hover:not(:disabled) {
@@ -125,6 +128,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: 1.5rem; /* Ensure space for the button above */
+  position: relative;
+  z-index: 1;
 }
 
 .profile__cv-textarea-wrapper textarea {
