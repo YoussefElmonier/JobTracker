@@ -253,15 +253,9 @@ export default function Profile() {
                 <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
                 <label className="custom-file-upload">
                   {file ? (
-                    <>
-                      <RiCheckLine className="file-upload-icon" style={{ color: '#fff' }} />
-                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold' }}>{file.name} (Ready)</span>
-                    </>
+                    <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 'bold' }}>{file.name} (Ready)</span>
                   ) : (
-                    <>
-                      <RiUpload2Line className="file-upload-icon" style={{ color: '#fff' }} />
-                      <span style={{ color: '#fff' }}>Choose PDF CV</span>
-                    </>
+                    <span style={{ color: '#fff' }}>Choose PDF CV</span>
                   )}
                   <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} />
                 </label>
