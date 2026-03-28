@@ -106,8 +106,19 @@ export default function Profile() {
 
           const reg = await navigator.serviceWorker.ready;
           
+          // Desktop browsers usually strictly require an explicit permission request 
+          // before pushManager.subscribe will succeed without a 'push service error'.
+          if (Notification.permission === 'default') {
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') {
+               setAlertError('Permission was not granted. Please allow notifications.');
+               setEnableLoading(false);
+               return;
+            }
+          }
+
           if (Notification.permission === 'denied') {
-            setAlertError('Please enable notifications in your phone settings to continue.');
+            setAlertError('Please enable notifications in your browser/device settings to continue.');
             setEnableLoading(false);
             return;
           }
