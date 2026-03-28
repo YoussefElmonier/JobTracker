@@ -152,6 +152,7 @@ export default function Profile() {
           endpoint: subJSON.endpoint,
           auth:     subJSON.keys.auth,
           p256dh:   subJSON.keys.p256dh,
+          topic:    topic,
           topics:   [topic]
         };
 
