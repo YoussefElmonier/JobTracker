@@ -12,8 +12,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // Register SW for PWA & Push Notifications
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => { /* console.log('SW Registered', reg) */ })
-      .catch((err) => { /* console.log('SW failed', err) */ });
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        // Force browser to check for a new SW version on every page load
+        reg.update();
+      })
+      .catch(() => {});
   });
 }
