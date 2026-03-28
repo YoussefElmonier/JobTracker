@@ -385,11 +385,25 @@ export default function Profile() {
                   type="button"
                   onClick={handleEnableNotifications}
                   className="profile__save-btn"
-                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  disabled={enableLoading}
+                  style={{ 
+                    marginTop: '12px', 
+                    marginBottom: '16px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '4px',
+                    ...(user?.pushSubscription ? {
+                      background: '#f3f4f6',
+                      color: 'var(--text-muted)',
+                      border: '1px solid var(--border)',
+                      cursor: 'default'
+                    } : {})
+                  }}
+                  disabled={enableLoading || !!user?.pushSubscription}
                 >
                   {enableLoading ? (
                       'Enabling...'
+                  ) : user?.pushSubscription ? (
+                      <>✅ Notifications Enabled</>
                   ) : (
                       <>🔔 Enable Notifications</>
                   )}
