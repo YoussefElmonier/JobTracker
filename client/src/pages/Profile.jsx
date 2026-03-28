@@ -12,10 +12,12 @@ export default function Profile() {
   const [cvText, setCvText] = useState('')
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [alertError, setAlertError] = useState(null)
+  const [alertMessage, setAlertMessage] = useState(null)
   const [testLoading, setTestLoading] = useState(false)
   const [testError, setTestError] = useState('')
+  const [message, setMessage] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
 
   const location = useLocation()
@@ -117,16 +119,18 @@ export default function Profile() {
     if (e) e.preventDefault();
     const topic = user?.ntfyTopic;
     if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        return setError('Feature not supported on this browser.');
+        return setAlertError('Feature not supported on this browser.');
     }
 
     try {
       setLoading(true);
+      setAlertError(null);
+      setAlertMessage(null);
       const reg = await navigator.serviceWorker.ready;
       
       // Check if user already blocked notifications at the browser level
       if (Notification.permission === 'denied') {
-        setError('Notifications are blocked by your browser. Please allow them in your phone settings.');
+        setAlertError('Notifications are blocked by your browser. Please allow them in your phone settings.');
         setLoading(false);
         return;
       }
@@ -165,10 +169,10 @@ export default function Profile() {
 
       if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
 
-      setMessage('🚀 Success! Notifications enabled inside TRKR.');
+      setAlertMessage('🚀 Success! Notifications enabled inside TRKR.');
     } catch (err) {
       console.error('Subscription error:', err);
-      setError('Failed to enable background notifications.');
+      setAlertError('Failed to enable background notifications.');
     } finally {
       setLoading(false);
     }
@@ -183,7 +187,7 @@ export default function Profile() {
         if (!topic) return;
         
         await api.post('/auth/test-push', { topic });
-        setMessage('📬 Test push sent! Check your phone.');
+        setAlertMessage('📬 Test push sent! Check your phone.');
     } catch (err) {
         setTestError('Manual test failed.');
     } finally {
@@ -407,8 +411,8 @@ export default function Profile() {
                 )}
 
                 {testError && <div className="profile__error" style={{ marginBottom: '16px', fontSize: '13px' }}>{testError}</div>}
-                {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
-                {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}
+                {alertError && <div className="profile__error" style={{ marginBottom: '16px' }}>{alertError}</div>}
+                {alertMessage && <div className="profile__success" style={{ marginBottom: '16px' }}>{alertMessage}</div>}
 
                 {/* iOS PWA install hint — only shown in Safari when NOT already on home screen */}
                 {isIOS && !isStandalone && (
