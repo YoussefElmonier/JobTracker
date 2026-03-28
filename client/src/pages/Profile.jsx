@@ -113,7 +113,8 @@ export default function Profile() {
     return outputArray;
   };
 
-  const handleEnableNotifications = async () => {
+  const handleEnableNotifications = async (e) => {
+    if (e) e.preventDefault();
     const topic = user?.ntfyTopic;
     if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
         return setError('Feature not supported on this browser.');
@@ -380,6 +381,7 @@ export default function Profile() {
 
                 <button
                   id="enable-notifications-btn"
+                  type="button"
                   onClick={handleEnableNotifications}
                   className="profile__save-btn"
                   style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
