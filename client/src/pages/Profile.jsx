@@ -119,51 +119,60 @@ export default function Profile() {
         setEnableLoading(true);
         const reg = await navigator.serviceWorker.ready;
         
-        // 3. Check for browser-level blocks
         if (Notification.permission === 'denied') {
           setAlertError('Please enable notifications in your phone settings to continue.');
           setEnableLoading(false);
           return;
         }
 
-      // Cleanup: Force-unsubscribe any stale/old subscriptions to avoid key-mismatch errors on iOS
-      const oldSub = await reg.pushManager.getSubscription();
-      if (oldSub) {
-        await oldSub.unsubscribe();
-      }
-      
-      // Real VAPID Public Key for ntfy.sh public server
-      const vapidPublicKey = 'BEMjM0sNxh41x0a6Lz3YaqkJ7AUhZefxsOQgw-at69i0fM1CybVBcj7-QQXf4N_tPCgFnOXdRbQ5jrSrr9Yg9Lc';
-      const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+        // Cleanup stale subscriptions (fixes VAPID key mismatch on iOS)
+        const oldSub = await reg.pushManager.getSubscription();
+        if (oldSub) await oldSub.unsubscribe();
 
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey
-      });
+        // Subscribe with ntfy.sh's VAPID key
+        const vapidPublicKey = 'BEMjM0sNxh41x0a6Lz3YaqkJ7AUhZefxsOQgw-at69i0fM1CybVBcj7-QQXf4N_tPCgFnOXdRbQ5jrSrr9Yg9Lc';
+        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
-      // Prepare the exact payload required by ntfy.sh v1/webpush
-      const subJSON = subscription.toJSON();
-      const payload = {
-        endpoint: subJSON.endpoint,
-        auth:     subJSON.keys.auth,
-        p256dh:   subJSON.keys.p256dh,
-        topics:   [topic] // Mandatory for ntfy to link the topic
-      };
+        let subscription;
+        try {
+          subscription = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertedVapidKey
+          });
+        } catch (subErr) {
+          console.error('pushManager.subscribe failed:', subErr);
+          setAlertError(`Subscribe failed: ${subErr.message}`);
+          setEnableLoading(false);
+          return;
+        }
 
-      // Send the subscription to ntfy.sh backend silently
-      const ntfyWebPushUrl = 'https://ntfy.sh/v1/webpush';
-      const res = await fetch(ntfyWebPushUrl, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' }
-      });
+        // Send subscription to ntfy.sh
+        const subJSON = subscription.toJSON();
+        const payload = {
+          endpoint: subJSON.endpoint,
+          auth:     subJSON.keys.auth,
+          p256dh:   subJSON.keys.p256dh,
+          topics:   [topic]
+        };
 
-      if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
+        const res = await fetch('https://ntfy.sh/v1/webpush', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' }
+        });
 
-      setAlertMessage('🚀 Success! Notifications enabled inside TRKR.');
+        if (!res.ok) {
+          const body = await res.text();
+          console.error('ntfy.sh error:', res.status, body);
+          setAlertError(`Server error ${res.status}: ${body}`);
+          setEnableLoading(false);
+          return;
+        }
+
+        setAlertMessage('🚀 Success! Notifications enabled inside TRKR.');
     } catch (err) {
       console.error('Subscription error:', err);
-      setAlertError('Failed to enable background notifications.');
+      setAlertError(`Failed: ${err.message}`);
     } finally {
       setEnableLoading(false);
     }
