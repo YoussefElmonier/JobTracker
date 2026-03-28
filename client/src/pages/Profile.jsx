@@ -130,11 +130,20 @@ export default function Profile() {
         applicationServerKey: convertedVapidKey
       });
 
+      // Prepare the exact payload required by ntfy.sh v1/webpush
+      const subJSON = subscription.toJSON();
+      const payload = {
+        endpoint: subJSON.endpoint,
+        auth:     subJSON.keys.auth,
+        p256dh:   subJSON.keys.p256dh,
+        topics:   [topic] // Mandatory for ntfy to link the topic
+      };
+
       // Send the subscription to ntfy.sh backend silently
-      const ntfyWebPushUrl = `https://ntfy.sh/${topic}/webpush`;
+      const ntfyWebPushUrl = 'https://ntfy.sh/v1/webpush';
       const res = await fetch(ntfyWebPushUrl, {
         method: 'POST',
-        body: JSON.stringify(subscription),
+        body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' }
       });
 
