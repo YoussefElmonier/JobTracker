@@ -123,6 +123,13 @@ export default function Profile() {
       setLoading(true);
       const reg = await navigator.serviceWorker.ready;
       
+      // Check if user already blocked notifications at the browser level
+      if (Notification.permission === 'denied') {
+        setError('Notifications are blocked by your browser. Please allow them in your phone settings.');
+        setLoading(false);
+        return;
+      }
+
       // Cleanup: Force-unsubscribe any stale/old subscriptions to avoid key-mismatch errors on iOS
       const oldSub = await reg.pushManager.getSubscription();
       if (oldSub) {
