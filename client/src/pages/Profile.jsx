@@ -102,24 +102,52 @@ export default function Profile() {
     }
   }
 
-  const handleEnableNotifications = () => {
-    const topic = user?.ntfyTopic
-    if (!topic) return
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+    return outputArray;
+  };
 
-    const shareUrl = `https://ntfy.sh/${topic}`
-    const appUrl   = `ntfy://ntfy.sh/${topic}?display=TRKR+Alerts`
-
-    if (/Android/i.test(navigator.userAgent)) {
-      // Try to open the ntfy Android app directly via deep link.
-      // If the app isn't installed the browser will just ignore the URI,
-      // so we fall back to the web page after 500 ms.
-      window.location.href = appUrl
-      setTimeout(() => { window.open(shareUrl, '_blank', 'noopener,noreferrer') }, 500)
-    } else {
-      // iOS (web subscribe), Desktop — open the ntfy web page
-      window.open(shareUrl, '_blank', 'noopener,noreferrer')
+  const handleEnableNotifications = async () => {
+    const topic = user?.ntfyTopic;
+    if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return setError('Feature not supported on this browser.');
     }
-  }
+
+    try {
+      setLoading(true);
+      const reg = await navigator.serviceWorker.ready;
+      
+      // VAPID Public Key for ntfy.sh public server
+      const vapidPublicKey = 'BJAnE9_8_7n5pX6_u_24i58hbdeBptjS6qn314llc-p_Ssqp7Y';
+      const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey
+      });
+
+      // Send the subscription to ntfy.sh backend silently
+      const ntfyWebPushUrl = `https://ntfy.sh/${topic}/webpush`;
+      const res = await fetch(ntfyWebPushUrl, {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
+
+      setMessage('🚀 Success! Notifications enabled inside TRKR.');
+    } catch (err) {
+      console.error('Subscription error:', err);
+      setError('Failed to enable background notifications.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PageWrapper>
@@ -293,14 +321,38 @@ export default function Profile() {
                   Get real-time push notifications the moment TRKR detects a job offer in your inbox.
                 </p>
 
+                {/* Requirement Note — Important for Web Push reliability */}
+                {!isStandalone && (
+                  <div style={{
+                    marginBottom: '16px',
+                    padding: '12px 14px',
+                    background: '#fffbeb', // Light amber
+                    border: '1px solid #fde68a',
+                    borderRadius: '10px',
+                    fontSize: '13px',
+                    color: '#92400e',
+                    lineHeight: '1.6',
+                  }}>
+                    <strong style={{ color: '#78350f' }}>⚠️ Action Required:</strong> To receive background notifications, you must first <strong>&ldquo;Add to Home Screen&rdquo;</strong> and open TRKR from your phone's home screen.
+                  </div>
+                )}
+
                 <button
                   id="enable-notifications-btn"
                   onClick={handleEnableNotifications}
                   className="profile__save-btn"
-                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  disabled={loading}
                 >
-                  🔔 Enable Notifications
+                  {loading ? (
+                      'Enabling...'
+                  ) : (
+                      <>🔔 Enable Notifications</>
+                  )}
                 </button>
+
+                {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
+                {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}
 
                 {/* iOS PWA install hint — only shown in Safari when NOT already on home screen */}
                 {isIOS && !isStandalone && (
@@ -336,10 +388,10 @@ export default function Profile() {
                   lineHeight: '1.7',
                 }}>
                   <p style={{ margin: 0 }}>
-                    📱 <strong style={{ color: 'var(--text-main)' }}>iPhone / Desktop:</strong> No app needed — click Enable and subscribe in your browser.
+                    📱 <strong style={{ color: 'var(--text-main)' }}>Background Push:</strong> TRKR uses the official Web Push API. Stay notified even when the app is closed.
                   </p>
                   <p style={{ margin: '6px 0 0' }}>
-                    🤖 <strong style={{ color: 'var(--text-main)' }}>Android:</strong> For the best experience, download the free{' '}
+                    🤖 <strong style={{ color: 'var(--text-main)' }}>Reliability:</strong> For the best experience on old Android devices, download the{' '}
                     <a
                       href="https://ntfy.sh"
                       target="_blank"
@@ -347,8 +399,7 @@ export default function Profile() {
                       style={{ color: 'var(--accent)', textDecoration: 'underline' }}
                     >
                       ntfy app
-                    </a>{' '}
-                    — we'll open it automatically.
+                    </a>.
                   </p>
                 </div>
               </div>
