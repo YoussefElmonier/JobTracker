@@ -4,28 +4,32 @@
  */
 
 self.addEventListener('push', (event) => {
-  if (!(self.notificationPermission === 'granted')) {
-    // console.log('Permission not granted');
-  }
-
   let data = {};
-  try {
-    data = event.data ? event.data.json() : {};
-  } catch (e) {
-    // Falls back to simple text if JSON parsing fails
-    data = { message: event.data ? event.data.text() : 'New alert from TRKR' };
+  
+  if (event.data) {
+    try {
+      // ntfy.sh usually sends JSON for web push
+      data = event.data.json();
+    } catch (e) {
+      // Fallback to plain text if it's not JSON
+      data = { message: event.data.text() };
+    }
   }
 
+  // ntfy.sh JSON format usually uses 'message' or 'body'
+  const message = data.message || data.body || (typeof data === 'string' ? data : 'New alert from TRKR');
   const title = data.title || 'TRKR Alert';
+  const clickUrl = data.click || data.url || '/dashboard';
+
   const options = {
-    body: data.message || data.body || 'Job search update detected!',
+    body: typeof message === 'object' ? JSON.stringify(message) : message,
     icon: '/icon-192.png',
-    badge: '/favicon.png', // Small icon for notification tray
+    badge: '/favicon.png',
     vibrate: [200, 100, 200],
-    tag: 'trkr-notification', // Replaces old notifications with new ones of the same tag
+    tag: 'trkr-notification',
     renotify: true,
     data: {
-      url: data.click || '/dashboard'
+      url: clickUrl
     }
   };
 
