@@ -251,13 +251,31 @@ export default function Profile() {
             <form onSubmit={handleSubmit} className="profile__cv-form">
               <div className="profile__cv-upload">
                 <label className="form-label" style={{ marginBottom: '12px' }}>Update PDF CV:</label>
-                <label className="custom-file-upload">
+                <label 
+                  className="custom-file-upload"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '14px 28px',
+                    background: '#4f46e5', // Direct primary blue
+                    color: '#ffffff',
+                    borderRadius: '999px',
+                    fontWeight: '600',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center',
+                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)',
+                    border: 'none'
+                  }}
+                >
                   {file ? (
-                    <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 'bold' }}>{file.name} (Ready)</span>
+                    <span style={{ fontWeight: 'bold' }}>{file.name} (Ready)</span>
                   ) : (
-                    <span style={{ color: '#fff' }}>Choose PDF CV</span>
+                    <span>Choose PDF CV</span>
                   )}
-                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} />
+                  <input type="file" id="cv-upload-input" accept="application/pdf" onChange={handleFileChange} style={{ display: 'none' }} />
                 </label>
               </div>
 
