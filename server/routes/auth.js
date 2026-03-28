@@ -397,6 +397,22 @@ router.post('/push/subscribe', auth, async (req, res) => {
   }
 });
 
+// POST /api/auth/push/unsubscribe (protected)
+router.post('/push/unsubscribe', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    user.pushSubscription = null;
+    await user.save();
+    
+    res.json({ success: true, message: 'Push subscription removed' });
+  } catch (err) {
+    console.error('Push unsubscribe error:', err);
+    res.status(500).json({ message: 'Failed to remove push subscription' });
+  }
+});
+
 // POST /api/auth/test-push (protected) — Manual notification verification
 router.post('/test-push', auth, async (req, res) => {
   try {

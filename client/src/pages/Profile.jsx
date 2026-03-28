@@ -89,61 +89,79 @@ export default function Profile() {
     return outputArray;
   };
 
-  const handleEnableNotifications = async (e) => {
-    if (e) e.preventDefault();
+  const handleToggleNotifications = async (enable) => {
     setAlertError(null);
     setAlertMessage(null);
 
-    // 1. Check for basic browser support
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        return setAlertError('Push notifications are not supported on this browser/device.');
-    }
-
     try {
         setEnableLoading(true);
-        const reg = await navigator.serviceWorker.ready;
-        
-        if (Notification.permission === 'denied') {
-          setAlertError('Please enable notifications in your phone settings to continue.');
-          setEnableLoading(false);
-          return;
-        }
 
-        // Cleanup stale subscriptions (fixes VAPID key mismatch on iOS)
-        const oldSub = await reg.pushManager.getSubscription();
-        if (oldSub) await oldSub.unsubscribe();
+        if (enable) {
+          // Enable Logic
+          if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+              setAlertError('Push notifications are not supported on this browser/device.');
+              setEnableLoading(false);
+              return;
+          }
 
-        // TRKR Native VAPID Public Key
-        const vapidPublicKey = 'BIYildETI2nVN7bLjBlDRU0RNjHBY8yn6Q_lLAo0RG458hUvt0Q6J87reTfCRseFlUbrKDPg0UYfP4gxkvxVrSU';
-        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+          const reg = await navigator.serviceWorker.ready;
+          
+          if (Notification.permission === 'denied') {
+            setAlertError('Please enable notifications in your phone settings to continue.');
+            setEnableLoading(false);
+            return;
+          }
 
-        let subscription;
-        try {
-          subscription = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: convertedVapidKey
+          // Cleanup stale subscriptions
+          const oldSub = await reg.pushManager.getSubscription();
+          if (oldSub) await oldSub.unsubscribe();
+
+          // TRKR Native VAPID Public Key
+          const vapidPublicKey = 'BIYildETI2nVN7bLjBlDRU0RNjHBY8yn6Q_lLAo0RG458hUvt0Q6J87reTfCRseFlUbrKDPg0UYfP4gxkvxVrSU';
+          const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+
+          let subscription;
+          try {
+            subscription = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: convertedVapidKey
+            });
+          } catch (subErr) {
+            console.error('pushManager.subscribe failed:', subErr);
+            setAlertError(`Subscribe failed: ${subErr.message}`);
+            setEnableLoading(false);
+            return;
+          }
+
+          // Send subscription to TRKR Backend natively
+          const res = await api.post('/auth/push/subscribe', {
+            subscription: subscription
           });
-        } catch (subErr) {
-          console.error('pushManager.subscribe failed:', subErr);
-          setAlertError(`Subscribe failed: ${subErr.message}`);
-          setEnableLoading(false);
-          return;
+
+          if (res.status !== 200) {
+            setAlertError('Failed to save your alert channel. Trying again later.');
+            setEnableLoading(false);
+            return;
+          }
+
+          setAlertMessage('🚀 Success! Native Mobile Alerts enabled!');
+        } else {
+          // Disable Logic
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await sub.unsubscribe();
+          }
+          
+          const res = await api.post('/auth/push/unsubscribe');
+          if (res.status === 200) {
+            setAlertMessage('Notifications gracefully disabled.');
+          } else {
+            setAlertError('Failed to disable on server, but device was unsubscribed.');
+          }
         }
-
-        // Send subscription to TRKR Backend natively
-        const res = await api.post('/auth/push/subscribe', {
-          subscription: subscription
-        });
-
-        if (res.status !== 200) {
-          setAlertError('Failed to save your alert channel. Trying again later.');
-          setEnableLoading(false);
-          return;
-        }
-
-        setAlertMessage('🚀 Success! Native Mobile Alerts enabled!');
     } catch (err) {
-      console.error('Subscription error:', err);
+      console.error('Toggle notification error:', err);
       setAlertError(`Failed: ${err.message}`);
     } finally {
       setEnableLoading(false);
@@ -380,34 +398,20 @@ export default function Profile() {
                   </div>
                 )}
 
-                <button
-                  id="enable-notifications-btn"
-                  type="button"
-                  onClick={handleEnableNotifications}
-                  className="profile__save-btn"
-                  style={{ 
-                    marginTop: '12px', 
-                    marginBottom: '16px', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '4px',
-                    ...(user?.pushSubscription ? {
-                      background: '#f3f4f6',
-                      color: 'var(--text-muted)',
-                      border: '1px solid var(--border)',
-                      cursor: 'default'
-                    } : {})
-                  }}
-                  disabled={enableLoading || !!user?.pushSubscription}
-                >
-                  {enableLoading ? (
-                      'Enabling...'
-                  ) : user?.pushSubscription ? (
-                      <>✅ Notifications Enabled</>
-                  ) : (
-                      <>🔔 Enable Notifications</>
-                  )}
-                </button>
+                <div className="profile__setting-toggle" style={{ marginTop: '16px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {enableLoading ? 'Updating...' : user?.pushSubscription ? 'Notifications Active' : 'Enable Mobile Alerts'}
+                  </span>
+                  <label className="switch">
+                    <input 
+                      type="checkbox" 
+                      checked={!!user?.pushSubscription} 
+                      onChange={(e) => handleToggleNotifications(e.target.checked)}
+                      disabled={enableLoading}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
 
                  {user?.isPremium && (
                     <button 
