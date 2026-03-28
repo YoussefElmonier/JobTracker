@@ -14,6 +14,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [testLoading, setTestLoading] = useState(false)
+  const [testError, setTestError] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
 
   const location = useLocation()
@@ -167,16 +169,17 @@ export default function Profile() {
   const handleTestPush = async (e) => {
     if (e) e.preventDefault();
     try {
-        setLoading(true);
+        setTestLoading(true);
+        setTestError(null);
         const topic = user?.ntfyTopic;
         if (!topic) return;
         
         await api.post('/auth/test-push', { topic });
         setMessage('📬 Test push sent! Check your phone.');
     } catch (err) {
-        setError('Manual test failed.');
+        setTestError('Manual test failed.');
     } finally {
-        setLoading(false);
+        setTestLoading(false);
     }
   };
 
@@ -382,17 +385,19 @@ export default function Profile() {
                   )}
                 </button>
 
-                {user?.isPremium && (
+                 {user?.isPremium && (
                     <button 
                         type="button"
                         onClick={handleTestPush}
                         className="btn-ghost"
                         style={{ fontSize: '13px', textDecoration: 'underline', marginBottom: '16px', display: 'block' }}
+                        disabled={testLoading}
                     >
-                        Send a verify alert
+                        {testLoading ? 'Sending...' : 'Send a verify alert'}
                     </button>
                 )}
 
+                {testError && <div className="profile__error" style={{ marginBottom: '16px', fontSize: '13px' }}>{testError}</div>}
                 {error && <div className="profile__error" style={{ marginBottom: '16px' }}>{error}</div>}
                 {message && <div className="profile__success" style={{ marginBottom: '16px' }}>{message}</div>}
 
