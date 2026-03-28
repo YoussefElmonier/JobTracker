@@ -39,18 +39,14 @@ async function sendPremiumAlert(userTopic, title, body) {
   const clientUrl = process.env.CLIENT_URL || 'https://usetrkr.xyz'
 
   try {
-    const res = await fetch('https://ntfy.sh', {
+    const res = await fetch(`https://ntfy.sh/${userTopic}`, {
       method: 'POST',
-      body: JSON.stringify({
-        topic: userTopic,
-        title,
-        message: body,
-        priority: 4,
-        tags: ['money', 'tada'],
-        click: `${clientUrl}/dashboard`,
-      }),
+      body, 
       headers: {
-        'Content-Type': 'application/json',
+        'Title':    title.replace(/[^\x00-\x7F]/g, ""), // Strip emojis for header safety
+        'Priority': '4',
+        'Tags':     'money,tada',
+        'Click':    `${clientUrl}/dashboard`,
       },
       // Abort after 5 s so the Vercel function is never held open by a slow ntfy response
       signal: AbortSignal.timeout(5000),
