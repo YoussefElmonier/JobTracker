@@ -378,4 +378,27 @@ router.put('/profile/cv', auth, upload.single('cvFile'), async (req, res) => {
   }
 })
 
+// POST /api/auth/test-push (protected) — Manual notification verification
+router.post('/test-push', auth, async (req, res) => {
+  try {
+    const { sendPremiumAlert } = require('../utils/notificationService');
+    const user = await User.findById(req.userId);
+    
+    if (!user || !user.isPremium || !user.ntfyTopic) {
+      return res.status(403).json({ message: 'Premium and ntfyTopic required' });
+    }
+
+    await sendPremiumAlert(
+      user.ntfyTopic,
+      '💎 TRKR: Connection Verified!',
+      'Your real-time notification system is now fully active. Happy job searching!'
+    );
+
+    res.json({ success: true, message: 'Test notification sent' });
+  } catch (err) {
+    console.error('Test push error:', err);
+    res.status(500).json({ message: 'Failed to send test push' });
+  }
+})
+
 module.exports = router
