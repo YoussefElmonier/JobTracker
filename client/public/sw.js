@@ -20,10 +20,22 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  // Surgical extraction from ntfy schema
-  const title   = data.title || 'TRKR Alert';
-  const message = data.message || (typeof data === 'string' ? data : 'Job search update detected!');
-  const click   = data.click || data.url || '/dashboard';
+  // Bulletproof extraction: check all common keys
+  const title = data.title || data.t || 'TRKR Alert';
+  let message = data.message || data.body || data.m || data.text;
+
+  // If we still don't have a string message, use a fallback or stringify what we have
+  if (!message || typeof message !== 'string') {
+    if (typeof data === 'string') {
+      message = data;
+    } else if (data.message && typeof data.message === 'string') {
+      message = data.message;
+    } else {
+      message = 'New job search update detected!';
+    }
+  }
+
+  const clickUrl = data.click || data.url || data.link || '/dashboard';
 
   const options = {
     body: message, 
@@ -33,7 +45,7 @@ self.addEventListener('push', (event) => {
     tag: 'trkr-notification',
     renotify: true,
     data: {
-      url: click
+      url: clickUrl
     }
   };
 
