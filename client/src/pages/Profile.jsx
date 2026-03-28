@@ -125,6 +125,8 @@ export default function Profile() {
   };
 
   const handleEnableNotifications = async () => {
+    setMessage('');
+    setError('');
     const topic = user?.ntfyTopic;
     if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
         return setError('Feature not supported on this browser.');
@@ -132,6 +134,12 @@ export default function Profile() {
 
     try {
       setLoading(true);
+      
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+          return setError('Notification permission denied.');
+      }
+
       const reg = await navigator.serviceWorker.ready;
       
       // Real VAPID Public Key for ntfy.sh public server
