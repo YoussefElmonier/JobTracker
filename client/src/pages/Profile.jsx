@@ -48,7 +48,7 @@ export default function Profile() {
   }
 
   const handleTextChange = (e) => {
-    setCvText(e.target.value.slice(0, 2000))
+    setCvText(e.target.value.slice(0, 3000))
   }
 
   const handleFileChange = (e) => {
@@ -278,7 +278,7 @@ export default function Profile() {
                   rows={10}
                 />
                 <div className="profile__cv-counter">
-                  {cvText.length} / 2000 characters
+                  {cvText.length} / 3000 characters
                 </div>
               </div>
 
