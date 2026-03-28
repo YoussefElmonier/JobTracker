@@ -19,27 +19,6 @@ export default function Profile() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // Track the browser's native notification permission state
-  const [notifPermission, setNotifPermission] = useState(
-    typeof Notification !== "undefined" ? Notification.permission : "default"
-  );
-
-  useEffect(() => {
-    // 1. Initial Check
-    if (typeof Notification !== "undefined") {
-      setNotifPermission(Notification.permission);
-    }
-
-    // 2. Permission Change Listener (Permissions API)
-    if (typeof navigator !== "undefined" && navigator.permissions) {
-      navigator.permissions.query({ name: 'notifications' }).then((status) => {
-        status.onchange = () => {
-          setNotifPermission(Notification.permission);
-        };
-      });
-    }
-  }, []);
-
   // Platform detection — used to tailor the notification subscribe experience
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -133,11 +112,6 @@ export default function Profile() {
   };
 
   const handleEnableNotifications = async () => {
-    // If already granted, don't trigger the handshake again — purely for UX/Optimization
-    if (notifPermission === 'granted') {
-      setMessage('✅ Notifications are already active in your browser.');
-      return;
-    }
     const topic = user?.ntfyTopic;
     if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
         return setError('Feature not supported on this browser.');
@@ -145,12 +119,6 @@ export default function Profile() {
 
     try {
       setLoading(true);
-
-      // Check for explicit 'denied' permission
-      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
-        throw new Error('Notification permission was denied. Please unblock TRKR in your browser settings and try again.');
-      }
-
       const reg = await navigator.serviceWorker.ready;
       
       // Real VAPID Public Key for ntfy.sh public server
@@ -162,32 +130,29 @@ export default function Profile() {
         applicationServerKey: convertedVapidKey
       });
 
-      // Prepare the payload for ntfy.sh subscription
+      // Prepare the exact payload required by ntfy.sh v1/webpush
       const subJSON = subscription.toJSON();
       const payload = {
         endpoint: subJSON.endpoint,
         auth:     subJSON.keys.auth,
         p256dh:   subJSON.keys.p256dh,
-        topic:    topic // Standard root-level topic field
+        topics:   [topic] // Mandatory for ntfy to link the topic
       };
 
-      // Send the subscription to ntfy.sh backend silently using the base endpoint
-      const res = await fetch('https://ntfy.sh/v1/webpush', {
+      // Send the subscription to ntfy.sh backend silently
+      const ntfyWebPushUrl = 'https://ntfy.sh/v1/webpush';
+      const res = await fetch(ntfyWebPushUrl, {
         method: 'POST',
-        body: JSON.stringify({ ...payload, topics: [topic] }), // Send both to be safe
+        body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(`ntfy.sh error: ${errorData.error || res.statusText || 'Server Error'}`);
-      }
+      if (!res.ok) throw new Error('Subscription failed at ntfy.sh');
 
       setMessage('🚀 Success! Notifications enabled inside TRKR.');
-      setNotifPermission('granted'); // Update state immediately
     } catch (err) {
       console.error('Subscription error:', err);
-      setError(err.message || 'Failed to enable background notifications.');
+      setError('Failed to enable background notifications.');
     } finally {
       setLoading(false);
     }
@@ -400,37 +365,15 @@ export default function Profile() {
                   id="enable-notifications-btn"
                   onClick={handleEnableNotifications}
                   className="profile__save-btn"
-                  style={{ 
-                     marginTop: '12px', 
-                     marginBottom: notifPermission === 'granted' ? '4px' : '16px', 
-                     display: 'flex', 
-                     alignItems: 'center', 
-                     gap: '4px',
-                     // Visual feedback for 'Granted' state
-                     background: notifPermission === 'granted' ? '#f3f4f6' : 'var(--accent)',
-                     color: notifPermission === 'granted' ? 'var(--text-muted)' : '#fff',
-                     border: notifPermission === 'granted' ? '1px solid var(--border)' : 'none',
-                     cursor: notifPermission === 'granted' ? 'default' : 'pointer'
-                  }}
+                  style={{ marginTop: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '4px' }}
                   disabled={loading}
                 >
                   {loading ? (
                       'Enabling...'
                   ) : (
-                      notifPermission === 'granted' ? (
-                        <>✅ Notifications Enabled</>
-                      ) : (
-                        <>🔔 Enable Notifications</>
-                      )
+                      <>🔔 Enable Notifications</>
                   )}
                 </button>
-
-                {/* Status-aware hint since JS cannot programmatically revoke permission */}
-                {notifPermission === 'granted' && !message && (
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', fontStyle: 'italic' }}>
-                    Tip: If you wish to disable alerts, please clear site permissions in your browser.
-                  </p>
-                )}
 
                 {user?.isPremium && (
                     <button 
