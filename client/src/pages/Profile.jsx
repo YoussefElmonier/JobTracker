@@ -117,23 +117,40 @@ export default function Profile() {
 
   const handleEnableNotifications = async (e) => {
     if (e) e.preventDefault();
-    const topic = user?.ntfyTopic;
-    if (!topic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-        return setAlertError('Feature not supported on this browser.');
+    setAlertError(null);
+    setAlertMessage(null);
+
+    // 1. Check for basic browser support
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return setAlertError('Push notifications are not supported on this browser/device.');
+    }
+
+    let topic = user?.ntfyTopic;
+    
+    // 2. Lazy recovery: if topic is missing in state, try to re-fetch user
+    if (!topic) {
+        try {
+            const { data } = await api.get('/auth/me');
+            topic = data.user?.ntfyTopic;
+        } catch (err) {
+            return setAlertError('Session expired. Please log in again.');
+        }
+    }
+
+    if (!topic) {
+        return setAlertError('No mobile alert topic found for your account. Please refresh.');
     }
 
     try {
-      setLoading(true);
-      setAlertError(null);
-      setAlertMessage(null);
-      const reg = await navigator.serviceWorker.ready;
-      
-      // Check if user already blocked notifications at the browser level
-      if (Notification.permission === 'denied') {
-        setAlertError('Notifications are blocked by your browser. Please allow them in your phone settings.');
-        setLoading(false);
-        return;
-      }
+        setLoading(true);
+        const reg = await navigator.serviceWorker.ready;
+        
+        // 3. Check for browser-level blocks
+        if (Notification.permission === 'denied') {
+          setAlertError('Please enable notifications in your phone settings to continue.');
+          setLoading(false);
+          return;
+        }
 
       // Cleanup: Force-unsubscribe any stale/old subscriptions to avoid key-mismatch errors on iOS
       const oldSub = await reg.pushManager.getSubscription();
