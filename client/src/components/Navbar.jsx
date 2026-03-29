@@ -119,7 +119,17 @@ export default function Navbar() {
 
           {/* User / Actions */}
           <div className="navbar__right">
-            {/* Notifications */}
+            {/* Theme Toggle - Swapped here */}
+            <button className="navbar__toggle" onClick={toggleTheme} title="Toggle Theme">
+              {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}
+            </button>
+
+            <div className="navbar__avatar" title={user?.email}>
+              {initials}
+              {isPremium && <RiVipCrownFill className="navbar__avatar-crown" />}
+            </div>
+
+            {/* Notifications (Reminders) - Swapped here */}
             <div className="navbar__notifs" ref={notifRef} style={{ position: 'relative' }}>
               <button 
                 className={`navbar__toggle ${unreadCount > 0 ? 'notif-pulse' : ''}`} 
@@ -173,13 +183,6 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="navbar__avatar" title={user?.email}>
-              {initials}
-              {isPremium && <RiVipCrownFill className="navbar__avatar-crown" />}
-            </div>
-            <button className="navbar__toggle" onClick={toggleTheme} title="Toggle Theme">
-              {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}
-            </button>
             <button className="navbar__logout" onClick={handleLogout} title="Logout">
               <RiLogoutBoxLine />
             </button>
