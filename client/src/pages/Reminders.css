@@ -12,6 +12,14 @@
   font-size: 0.85rem;
   font-weight: 600;
   border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.reminders__summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .reminders__badge--overdue {
@@ -112,6 +120,11 @@
   flex-shrink: 0;
 }
 
+.reminders__item-info {
+  flex: 1;
+  min-width: 0; /* Allow the content to shrink and wrap */
+}
+
 .reminders__item-company {
   font-size: 1.1rem;
   font-weight: 700;
@@ -129,6 +142,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap; /* Allow badges/contact to wrap on small screens */
 }
 
 .reminders__item-dates {
@@ -136,6 +150,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .reminders__date-row {
@@ -157,67 +172,166 @@
   margin-left: auto;
 }
 
-.reminders__empty {
+.reminders__empty,
+.empty-state {
   text-align: center;
-  padding: 80px 40px;
-  color: var(--text-muted);
+  padding: 100px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  margin-top: 40px;
+  border: 1px dashed var(--border);
 }
 
-.reminders__empty-icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  color: var(--tag-green);
+.reminders__empty-icon,
+.empty-state__icon {
+  font-size: 4rem;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));
+}
+
+.empty-state__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.empty-state__text {
+  font-size: 1rem;
+  color: var(--text-muted);
+  max-width: 400px;
+  line-height: 1.5;
 }
 
 /* ─── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .reminders__item {
     flex-wrap: wrap;
-    padding: 16px 16px 16px 20px;
-    gap: 12px;
-    align-items: flex-start;
+    padding: 24px 20px;
+    gap: 16px;
+    align-items: center;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+
+  .reminders__urgency-bar {
+    width: 6px;
+  }
+
+  .reminders__item-logo {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+    order: 1;
+  }
+
+  .reminders__item-info {
+    width: calc(100% - 64px); /* logo width + gap */
+    flex: none;
+    order: 2;
+  }
+
+  .reminders__item-company {
+    font-size: 1.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .reminders__item-dates {
     margin-left: 0;
-    margin-top: 4px;
+    margin-top: 0;
     width: 100%;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    order: 3;
+  }
+
+  .reminders__date-row {
+    font-size: 0.8rem;
+    flex: 1 0 45%; /* Stack into 2 columns if space allows */
+    min-width: 140px;
   }
 
   .reminders__item-actions {
     width: 100%;
-    justify-content: flex-end;
+    display: flex;
+    gap: 10px;
     margin-left: 0;
+    order: 4;
   }
 
-  .reminders__item-logo {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
-    flex-shrink: 0;
+  .reminders__item-actions .btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.85rem;
+    min-width: 0;
   }
 
-  .reminders__item-company {
-    font-size: 0.95rem;
+  .reminders__item-actions .btn-secondary {
+    flex: 2;
   }
 
   .reminders__sections {
-    gap: 28px;
-    margin-top: 20px;
+    gap: 32px;
+    margin-top: 24px;
   }
 
   .reminders__section-title {
-    font-size: 1.05rem;
+    font-size: 1.2rem;
   }
 }
 
 @media (max-width: 480px) {
   .reminders__item {
-    padding: 14px 14px 14px 18px;
+    padding: 20px 16px;
+  }
+
+  .reminders__item-info {
+    width: calc(100% - 60px);
+  }
+
+  .reminders__item-company {
+    font-size: 1.05rem;
+  }
+
+  .reminders__item-dates {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .reminders__date-row {
+    flex: none;
+    width: 100%;
+  }
+
+  .reminders__item-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .reminders__item-actions .btn:last-child {
+    grid-column: span 2;
   }
 
   .reminders__badge {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     padding: 6px 12px;
+  }
+
+  .page-header {
+    padding: 16px 0;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 1.5rem !important;
   }
 }
