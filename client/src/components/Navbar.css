@@ -166,11 +166,23 @@
 .navbar__dropdown {
   position: absolute;
   top: calc(100% + 12px);
-  right: 0;
-  width: 320px;
+  right: -60px; /* Offset right to shift it left on desktop */
+  width: 300px;
   overflow: hidden;
   z-index: 1000;
   animation: scaleIn 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .navbar__dropdown {
+    position: fixed;
+    top: 72px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: 100%;
+    margin-top: 0;
+  }
 }
 
 .notif-dropdown__header {
