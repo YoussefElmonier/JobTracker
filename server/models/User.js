@@ -59,6 +59,10 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  lastEmailScan: {
+    type: Date,
+    default: null,
+  },
   ntfyTopic: {
     type:   String,
     unique: true,

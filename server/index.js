@@ -103,8 +103,12 @@ app.get('/api/cron/scan-emails', async (req, res) => {
 
   try {
     const User = require('./models/User')
-    // Find up to 3 users who are premium and have Gmail connected
-    const users = await User.find({ gmailConnected: true, isPremium: true }).limit(3)
+    // Find up to 3 users who are premium and have Gmail connected, rotating through
+    const users = await User.find({ 
+      gmailConnected: true,
+      isPremium: true,
+      autoTrackEmails: { $ne: false } // autoTrackEmails defaults to true
+    }).sort({ lastEmailScan: 1 }).limit(3);
     
     if (users.length === 0) {
       return res.json({ success: true, scanned: 0, message: 'No premium users with Gmail connected' })
@@ -117,6 +121,9 @@ app.get('/api/cron/scan-emails', async (req, res) => {
         await scanUserEmails(user)
       } catch (err) {
         console.error('Error scanning user:', user.email, err.message)
+      } finally {
+        user.lastEmailScan = new Date()
+        await user.save()
       }
     }
 

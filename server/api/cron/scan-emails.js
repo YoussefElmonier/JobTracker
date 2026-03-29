@@ -125,14 +125,21 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Limits to 3 users per execution (Vercel timeout prevention)
-    const users = await User.find({ gmailConnected: true, isPremium: true }).limit(3);
+    // Limits to 3 users per execution (Vercel timeout prevention), rotating through the users list
+    const users = await User.find({ 
+      gmailConnected: true,
+      isPremium: true,
+      autoTrackEmails: { $ne: false } // autoTrackEmails defaults to true
+    }).sort({ lastEmailScan: 1 }).limit(3);
     
     for (const user of users) {
       try {
         await scanUserEmails(user);
       } catch (err) {
         console.error('Error scanning user:', user.email, err.message);
+      } finally {
+        user.lastEmailScan = new Date();
+        await user.save();
       }
     }
     
