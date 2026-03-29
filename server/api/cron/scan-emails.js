@@ -107,12 +107,14 @@ async function scanUserEmails(user) {
              });
 
              // Premium real-time push notification natively
-             if (user.isPremium && user.pushSubscription && json.type === 'offer') {
+             if (user.isPremium && user.pushSubscription) {
                try {
+                 const alertEmoji = json.type === 'offer' ? '🎉' : json.type === 'interview' ? '📅' : 'ℹ️';
+                 const alertTitle = `${alertEmoji} ${json.type === 'offer' ? 'Offer' : json.type === 'interview' ? 'Interview' : 'Update'} from ${json.company}!`;
                  await sendPremiumAlert(
                    user.pushSubscription,
-                   `🎉 Offer from ${json.company}!`,
-                   `TRKR detected a job offer from ${json.company}. Your job card has been updated. Log in to review it!`
+                   alertTitle,
+                   `TRKR detected a job ${json.type} from ${json.company}. Log in to review it!`
                  );
                } catch (pushErr) {
                  console.error('Failed to send push notification:', pushErr.message);

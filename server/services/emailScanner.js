@@ -154,12 +154,14 @@ async function scanUserEmails(user) {
               jobId: matchedJob._id
             });
             // Premium real-time push notification natively
-            if (user.isPremium && user.pushSubscription && detectedType === 'offer') {
+            if (user.isPremium && user.pushSubscription) {
+              const alertEmoji = detectedType === 'offer' ? '🎉' : detectedType === 'interview' ? '📅' : 'ℹ️';
+              const alertTitle = `${alertEmoji} ${detectedType === 'offer' ? 'Offer' : detectedType === 'interview' ? 'Interview' : 'Update'} from ${matchedJob.company}!`;
               await sendPremiumAlert(
                 user.pushSubscription,
-                `🎉 Offer from ${matchedJob.company}!`,
-                `TRKR detected a job offer from ${matchedJob.company}. Your job card has been updated. Log in to review it!`
-              )
+                alertTitle,
+                `TRKR detected a job ${detectedType} from ${matchedJob.company}. Log in to review it!`
+              );
             }
             console.log('Job card updated without Groq:', matchedJob.company, '→', detectedType);
           } else {
@@ -209,12 +211,14 @@ async function scanUserEmails(user) {
                   });
                   console.log('Notification created for:', result.company);
                   // Premium real-time push notification natively
-                  if (user.isPremium && user.pushSubscription && result.type === 'offer') {
+                  if (user.isPremium && user.pushSubscription) {
+                    const alertEmoji = result.type === 'offer' ? '🎉' : result.type === 'interview' ? '📅' : 'ℹ️';
+                    const alertTitle = `${alertEmoji} ${result.type === 'offer' ? 'Offer' : result.type === 'interview' ? 'Interview' : 'Update'} from ${result.company}!`;
                     await sendPremiumAlert(
                       user.pushSubscription,
-                      `🎉 Offer from ${result.company}!`,
-                      `TRKR detected a job offer from ${result.company}. Your job card has been updated. Log in to review it!`
-                    )
+                      alertTitle,
+                      `TRKR detected a job ${result.type} from ${result.company}. Log in to review it!`
+                    );
                   }
                 }
               } else {
