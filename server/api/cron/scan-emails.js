@@ -4,6 +4,7 @@ const User = require('../../models/User');
 const Job = require('../../models/Job');
 const Notification = require('../../models/Notification');
 const Groq = require('groq-sdk');
+const { sendPremiumAlert } = require('../../utils/notificationService');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -104,6 +105,19 @@ async function scanUserEmails(user) {
                 message: `Recruiter email for ${json.company} detected! Job card automatically updated.`, 
                 jobId: job._id 
              });
+
+             // Premium real-time push notification natively
+             if (user.isPremium && user.pushSubscription && json.type === 'offer') {
+               try {
+                 await sendPremiumAlert(
+                   user.pushSubscription,
+                   `🎉 Offer from ${json.company}!`,
+                   `TRKR detected a job offer from ${json.company}. Your job card has been updated. Log in to review it!`
+                 );
+               } catch (pushErr) {
+                 console.error('Failed to send push notification:', pushErr.message);
+               }
+             }
           }
         }
       }
