@@ -166,11 +166,22 @@
 .navbar__dropdown {
   position: absolute;
   top: calc(100% + 12px);
-  right: -60px; /* Offset right to shift it left on desktop */
+  right: -60px;
   width: 300px;
+  background: var(--bg-page); /* Solid color instead of glass */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft), 0 10px 40px rgba(0,0,0,0.15);
   overflow: hidden;
   z-index: 1000;
   animation: scaleIn 0.3s ease;
+  backdrop-filter: none !important; /* Remove blur */
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme='dark'] .navbar__dropdown {
+  background: #0f172a; /* Solid dark color */
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 768px) {

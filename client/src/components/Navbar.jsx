@@ -146,7 +146,7 @@ export default function Navbar() {
               </button>
               
               {showNotifs && (
-                <div className="navbar__dropdown glass-panel">
+                <div className="navbar__dropdown">
                   <div className="notif-dropdown__header">
                     <strong>Notifications</strong>
                     {unreadCount > 0 && (
