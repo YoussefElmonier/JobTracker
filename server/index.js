@@ -42,15 +42,27 @@ async function connectDB() {
     });
   }
 
+  // Diagnostic: show which env var is being used and the cluster host
+  const connectionString = process.env.MONGO_URI || process.env.MONGODB_URI;
+  if (!connectionString) {
+    const err = new Error('❌ FATAL: Neither MONGO_URI nor MONGODB_URI is set in environment variables!');
+    console.error(err.message);
+    throw err;
+  }
+  // Log which var is active and the cluster host (never log the full URI with credentials)
+  const activeVar = process.env.MONGO_URI ? 'MONGO_URI' : 'MONGODB_URI';
+  try {
+    const host = connectionString.replace(/\/\/[^@]+@/, '//<credentials>@').split('?')[0];
+    console.log(`[DB] Using env var: ${activeVar}, host: ${host}`);
+  } catch { console.log(`[DB] Using env var: ${activeVar}`); }
+
   console.log('Initiating new MongoDB connection...');
   const opts = {
     bufferCommands: false,
-    serverSelectionTimeoutMS: 20000, // Increased to 20s for Atlas FREE TIER / Cold Start resilience
+    serverSelectionTimeoutMS: 20000,
     heartbeatFrequencyMS: 10000,
   };
 
-  // Ensure we use the user's MONGO_URI consistently
-  const connectionString = (process.env.MONGO_URI || process.env.MONGODB_URI);
   cachedDbPromise = mongoose.connect(connectionString, opts);
   
   try {
