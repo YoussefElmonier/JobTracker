@@ -45,11 +45,13 @@ async function connectDB() {
   console.log('Initiating new MongoDB connection...');
   const opts = {
     bufferCommands: false,
-    serverSelectionTimeoutMS: 5000, // Fail after 5s if DB unreachable
+    serverSelectionTimeoutMS: 20000, // Increased to 20s for Atlas FREE TIER / Cold Start resilience
     heartbeatFrequencyMS: 10000,
   };
 
-  cachedDbPromise = mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, opts);
+  // Ensure we use the user's MONGO_URI consistently
+  const connectionString = (process.env.MONGO_URI || process.env.MONGODB_URI);
+  cachedDbPromise = mongoose.connect(connectionString, opts);
   
   try {
     await cachedDbPromise;

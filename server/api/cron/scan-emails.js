@@ -142,7 +142,7 @@ module.exports = async (req, res) => {
     console.log('Initiating database connection...');
     await mongoose.connect(MONGO_URI, {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 20000,
     });
   }
 
