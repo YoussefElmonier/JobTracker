@@ -22,17 +22,45 @@ const aiLimiter = rateLimit({
 const app  = express()
 const PORT = process.env.PORT || 5000
 
-let cachedDb = null;
+// Fail fast on queries if the connection is not established
+mongoose.set('bufferCommands', false);
+
+let cachedDbPromise = null;
 
 async function connectDB() {
-  if (cachedDb) {
-    console.log('Using cached MongoDB connection');
-    return cachedDb;
+  if (mongoose.connection.readyState === 1) {
+    console.log('Using active MongoDB connection');
+    return mongoose.connection;
   }
-  const db = await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI);
-  cachedDb = db;
-  console.log('✅ MongoDB connected');
-  return cachedDb;
+
+  if (mongoose.connection.readyState === 2) {
+    console.log('Waiting for pending MongoDB connection...');
+    if (cachedDbPromise) return cachedDbPromise;
+    // If somehow readyState is 2 but promise is missing, we still want to wait
+    return new Promise((resolve) => {
+      mongoose.connection.once('connected', () => resolve(mongoose.connection));
+    });
+  }
+
+  console.log('Initiating new MongoDB connection...');
+  const opts = {
+    bufferCommands: false,
+    serverSelectionTimeoutMS: 5000, // Fail after 5s if DB unreachable
+    heartbeatFrequencyMS: 10000,
+  };
+
+  cachedDbPromise = mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI, opts);
+  
+  try {
+    await cachedDbPromise;
+    console.log('✅ MongoDB connected');
+  } catch (err) {
+    cachedDbPromise = null; // reset to allow retries
+    console.error('❌ MongoDB connection error:', err.message);
+    throw err;
+  }
+  
+  return mongoose.connection;
 }
 
 // CORS — allow configured client origins
@@ -44,15 +72,24 @@ const allowedOrigins = [
   process.env.CLIENT_URL?.replace(/\/$/, ''), // strip trailing slash if any
 ].filter(Boolean)
 
+// Health checks (Moved BEFORE middleware to avoid DB block on heartbeat)
+app.get('/health',     (_, res) => res.json({ status: 'ok' }))
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+app.get('/', (_, res) => res.json({ message: 'TRKR API is online', health: '/api/health' }))
+
 // Middleware
 app.use(async (req, res, next) => {
+  // Log request
   console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  
   try {
     await connectDB();
     next();
   } catch (err) {
     console.error('Database connection failed:', err.message);
-    res.status(500).json({ message: 'Internal server error (DB)' });
+    res.status(500).json({ message: 'Internal server error (DB connection failure)' });
   }
 });
 // Handle OPTIONS preflight manually BEFORE cors() — Vercel can return 405 otherwise
@@ -170,12 +207,7 @@ app.get('/api/test/scan-emails', auth, async (req, res) => {
 // Removed for Vercel/serverless compatibility. 
 // Use /api/cron/scan-emails instead.
 
-// Health checks
-app.get('/health',     (_, res) => res.json({ status: 'ok' }))
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date() });
-});
-app.get('/', (_, res) => res.json({ message: 'TRKR API is online', health: '/api/health' }))
+// Health checks (Handled above now)
 
 // 404
 app.use((_, res) => res.status(404).json({ message: 'Route not found' }))

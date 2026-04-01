@@ -135,9 +135,15 @@ module.exports = async (req, res) => {
   const MONGO_URI = process.env.MONGODB_URI;
   if (!MONGO_URI) return res.status(500).json({ success: false, error: 'Database URI missing' });
 
-  // Connect at start
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(MONGO_URI);
+  // Use same robust connection logic as index.js
+  if (mongoose.connection.readyState === 1) {
+    console.log('Using active MongoDB connection');
+  } else {
+    console.log('Initiating database connection...');
+    await mongoose.connect(MONGO_URI, {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+    });
   }
 
   try {
@@ -163,8 +169,6 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error('Email scan error:', err);
     res.status(500).json({ success: false, error: err.message });
-  } finally {
-    // Disconnect at end
-    await mongoose.connection.close();
   }
+  // CRITICAL: Do NOT close connection in serverless environment
 };
