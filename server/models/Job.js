@@ -94,6 +94,10 @@ const JobSchema = new mongoose.Schema({
     type: Object,
     default: null
   },
+  isPremiumPreview: {
+    type:    Boolean,
+    default: false,  // True when a free user consumed a preview slot on this job
+  },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Job', JobSchema)

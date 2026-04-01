@@ -83,6 +83,10 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  premiumCardsConsumed: {
+    type: Number,
+    default: 0,   // Tracks how many free "Premium Preview" job cards this user has claimed (max 3)
+  },
 }, { timestamps: true })
 
 // Hash password before saving

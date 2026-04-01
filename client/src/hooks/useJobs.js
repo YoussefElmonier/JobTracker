@@ -50,7 +50,6 @@ export function useJobs() {
   const generateQuestions = useCallback(async (id) => {
     try {
       const res = await api.post(`/jobs/${id}/interview-questions`)
-      // Backend returns the flat { behavioral, technical, company_fit } for the user's tier
       setJobs(prev => prev.map(j => j._id === id ? { ...j, interviewQuestions: res.data } : j))
       return res.data
     } catch (err) {
@@ -62,7 +61,7 @@ export function useJobs() {
     }
   }, [])
 
-  // Returns { coverLetter: string, warning: string? }
+  // Returns { coverLetter, warning?, used?, limit?, remaining? }
   const generateCoverLetter = useCallback(async (id, regenerate = false) => {
     try {
       const res = await api.post(`/jobs/${id}/cover-letter`, { regenerate })
@@ -107,7 +106,33 @@ export function useJobs() {
       setJobs(prev => prev.map(j => j._id === jobId ? { ...j, salaryInsights: res.data } : j))
       return res.data
     } catch (err) {
-      throw new Error(err.response?.data?.message || 'Failed to fetch salary insights')
+      const code = err.response?.data?.error
+      const msg  = err.response?.data?.message || 'Failed to fetch salary insights'
+      const e    = new Error(msg)
+      e.code     = code
+      throw e
+    }
+  }, [])
+
+  // Claim a free "Premium Preview" slot for this job.
+  // Returns { job, premiumCardsConsumed, slotsRemaining, slotJustActivated, isLastSlot }
+  const activatePreview = useCallback(async (jobId) => {
+    try {
+      const res = await api.post(`/jobs/${jobId}/activate-preview`)
+      // Merge the upgraded job object back into state
+      if (res.data.job) {
+        setJobs(prev => prev.map(j => j._id === jobId ? { ...j, ...res.data.job } : j))
+      }
+      return res.data
+    } catch (err) {
+      const code = err.response?.data?.error
+      const msg  = err.response?.data?.message || 'Failed to activate preview'
+      const e    = new Error(msg)
+      e.code     = code
+      // Expose usage info so the UI can render the "limit reached" banner
+      e.premiumCardsConsumed = err.response?.data?.premiumCardsConsumed
+      e.slotsRemaining       = err.response?.data?.slotsRemaining ?? 0
+      throw e
     }
   }, [])
 
@@ -115,6 +140,7 @@ export function useJobs() {
     jobs, loading, error, 
     setJobs, // Exported for optimistic updates
     fetchJobs, createJob, updateJob, deleteJob, 
-    generateQuestions, generateCoverLetter, confirmQuestion, analyzeCV, generateSalaryInsights 
+    generateQuestions, generateCoverLetter, confirmQuestion,
+    analyzeCV, generateSalaryInsights, activatePreview
   }
 }

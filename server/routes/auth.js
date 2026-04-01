@@ -159,6 +159,7 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
         email: user.email,
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
+        premiumCardsConsumed: user.premiumCardsConsumed || 0,
         cvText: user.cvText || '',
         gmailConnected: !!user.gmailConnected,
         ntfyTopic: user.ntfyTopic || null
@@ -204,6 +205,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         isPremium: !!user.isPremium,
         coverLettersGenerated: user.coverLettersGenerated || 0,
+        premiumCardsConsumed: user.premiumCardsConsumed || 0,
         cvText: user.cvText || '',
         gmailConnected: !!user.gmailConnected,
         ntfyTopic: user.ntfyTopic || null

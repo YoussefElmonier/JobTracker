@@ -50,39 +50,40 @@ const runAI = async (job, isPremium) => {
 
 // ─── Helper: strip AI data the user is not allowed to see ────────────────────
 // The GET /jobs route always calls this before responding
+// effectivePremium = isPremium || isPremiumPreview (free user's trial slot)
 const filterJobForUser = (job, isPremium) => {
   const j = job.toObject ? job.toObject() : { ...job }
 
-  // Summary — return a plain array for the user's tier
+  // A free user on a preview job gets premium-tier content
+  const effectivePremium = isPremium || !!j.isPremiumPreview
+
+  // Summary — return a plain array for the effective tier
   const rawSummary = j.aiSummary
   if (rawSummary && typeof rawSummary === 'object' && !Array.isArray(rawSummary)) {
-    // Tiered object { free: [], premium: [] }
-    j.aiSummary = isPremium
+    j.aiSummary = effectivePremium
       ? (rawSummary.premium?.length ? rawSummary.premium : rawSummary.free || [])
       : (rawSummary.free || [])
   } else if (!Array.isArray(j.aiSummary)) {
     j.aiSummary = []
   }
 
-  // Salary — return a plain { mid, currency } or { low,mid,high,currency } object
+  // Salary — return a plain object for the effective tier
   const rawSalary = j.aiSalary
   if (rawSalary && typeof rawSalary === 'object' && ('free' in rawSalary || 'premium' in rawSalary)) {
-    j.aiSalary = isPremium
+    j.aiSalary = effectivePremium
       ? (rawSalary.premium?.mid ? rawSalary.premium : rawSalary.free || null)
       : (rawSalary.free || null)
   }
 
-  // Interview questions — return the flat { behavioral,technical,company_fit } for the tier, or null
+  // Interview questions — return the flat { behavioral,technical,company_fit } for the effective tier
   const rawQ = j.interviewQuestions
   if (rawQ && typeof rawQ === 'object') {
     if (rawQ.free !== undefined || rawQ.premium !== undefined) {
-      // New tiered format
-      const tierResult = isPremium
+      const tierResult = effectivePremium
         ? (rawQ.premium || rawQ.free || null)
         : (rawQ.free || null)
       j.interviewQuestions = tierResult
     } else if (rawQ.behavioral) {
-      // Legacy flat format — show as-is for all users
       j.interviewQuestions = rawQ
     } else {
       j.interviewQuestions = null
@@ -91,10 +92,10 @@ const filterJobForUser = (job, isPremium) => {
     j.interviewQuestions = null
   }
 
-  // Cover letter — return a plain string for the user's tier
+  // Cover letter — return a plain string for the effective tier
   const rawCL = j.aiCoverLetter
   if (rawCL && typeof rawCL === 'object') {
-    j.aiCoverLetter = isPremium
+    j.aiCoverLetter = effectivePremium
       ? (rawCL.premium || rawCL.free || '')
       : (rawCL.free || '')
   } else if (typeof rawCL !== 'string') {
@@ -218,10 +219,95 @@ router.put('/:id', async (req, res) => {
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/jobs/:id/activate-preview
+// Free users can activate 3 "Premium Preview" job cards.
+// Each activation: marks job.isPremiumPreview=true, runs premium AI, increments
+// user.premiumCardsConsumed. Idempotent if job already a preview.
+// Returns: { job, premiumCardsConsumed, slotsRemaining, slotJustActivated }
+// ═══════════════════════════════════════════════════════════════════════════════
+const PREVIEW_SLOT_LIMIT = 3
+
+router.post('/:id/activate-preview', async (req, res) => {
+  try {
+    const user = await User.findById(req.userId)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+
+    // Premium users don't need preview — they already have full access
+    if (user.isPremium) {
+      const job = await Job.findOne({ _id: req.params.id, user: req.userId })
+      if (!job) return res.status(404).json({ message: 'Job not found' })
+      return res.json({ job: filterJobForUser(job, true), premiumCardsConsumed: null, slotsRemaining: null, slotJustActivated: false })
+    }
+
+    const job = await Job.findOne({ _id: req.params.id, user: req.userId })
+    if (!job) return res.status(404).json({ message: 'Job not found' })
+
+    const consumed = user.premiumCardsConsumed || 0
+
+    // Idempotent: already a preview — just return current state
+    if (job.isPremiumPreview) {
+      return res.json({
+        job: filterJobForUser(job, false),
+        premiumCardsConsumed: consumed,
+        slotsRemaining: Math.max(0, PREVIEW_SLOT_LIMIT - consumed),
+        slotJustActivated: false
+      })
+    }
+
+    // No slots left — return 403 so UI can show the conversion banner
+    if (consumed >= PREVIEW_SLOT_LIMIT) {
+      return res.status(403).json({
+        error: 'preview_limit_reached',
+        message: 'You have used all 3 Premium Preview job cards.',
+        premiumCardsConsumed: consumed,
+        slotsRemaining: 0
+      })
+    }
+
+    // ── Claim the slot ────────────────────────────────────────────────────────
+    // Run premium-tier AI for this job so data is immediately available
+    const jobData = job.toObject()
+    if (job.description) {
+      await runAI(jobData, true /* treat as premium */)
+      // Persist the AI results back into the job document
+      await Job.findByIdAndUpdate(job._id, {
+        $set: {
+          aiSummary: jobData.aiSummary,
+          aiSalary:  jobData.aiSalary,
+          isPremiumPreview: true
+        }
+      })
+    } else {
+      await Job.findByIdAndUpdate(job._id, { $set: { isPremiumPreview: true } })
+    }
+
+    // Increment user counter
+    user.premiumCardsConsumed = consumed + 1
+    await user.save()
+
+    const updatedJob = await Job.findById(job._id)
+    const newConsumed = user.premiumCardsConsumed
+
+    res.json({
+      job: filterJobForUser(updatedJob, false),
+      premiumCardsConsumed: newConsumed,
+      slotsRemaining: Math.max(0, PREVIEW_SLOT_LIMIT - newConsumed),
+      slotJustActivated: true,
+      isLastSlot: newConsumed === PREVIEW_SLOT_LIMIT
+    })
+  } catch (err) {
+    console.error('POST /jobs/:id/activate-preview error:', err)
+    res.status(500).json({ message: 'Failed to activate preview' })
+  }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/jobs/:id/cover-letter
-// Free:    max 1 generation ever, tracked by coverLettersGenerated on User
+// Free:    max 3 generations ever, tracked by coverLettersGenerated on User
 // Premium: unlimited
 // ═══════════════════════════════════════════════════════════════════════════════
+const FREE_COVER_LETTER_LIMIT = 3
+
 router.post('/:id/cover-letter', async (req, res) => {
   try {
     const user = await User.findById(req.userId)
@@ -242,13 +328,13 @@ router.post('/:id/cover-letter', async (req, res) => {
     
     if (cached && !regenerate) {
       console.log('[cover-letter] cache hit, returning cached')
-      return res.json({ coverLetter: cached })
+      return res.json({ coverLetter: cached, used: user.coverLettersGenerated || 0, limit: isPremium ? null : FREE_COVER_LETTER_LIMIT })
     }
 
-    // Free limit guard — only block if no cached letter AND limit already used
-    if (!isPremium && (user.coverLettersGenerated || 0) >= 1) {
+    // Free limit guard — only block if no cached letter AND limit already exhausted
+    if (!isPremium && (user.coverLettersGenerated || 0) >= FREE_COVER_LETTER_LIMIT) {
       console.log('[cover-letter] free limit reached, blocking')
-      return res.status(403).json({ error: 'limit_reached', message: 'Free limit reached (1 cover letter ever). Upgrade for unlimited.' })
+      return res.status(403).json({ error: 'limit_reached', message: `Free limit reached (${FREE_COVER_LETTER_LIMIT} cover letters). Upgrade for unlimited.` })
     }
 
     if (!job.description) {
@@ -274,10 +360,12 @@ router.post('/:id/cover-letter', async (req, res) => {
       await user.save()
     }
 
+    const remaining = isPremium ? null : Math.max(0, FREE_COVER_LETTER_LIMIT - (user.coverLettersGenerated || 0))
+
     const warning = !user.cvText ? "Add your CV in your profile for a more personalized cover letter" : undefined
 
     console.log('[cover-letter] saved, returning to client')
-    res.json({ coverLetter, warning })
+    res.json({ coverLetter, warning, used: user.coverLettersGenerated || 0, limit: isPremium ? null : FREE_COVER_LETTER_LIMIT, remaining })
   } catch (err) {
     console.error('POST /jobs/:id/cover-letter error:', err)
     res.status(500).json({ message: 'Failed to generate cover letter' })
@@ -378,14 +466,11 @@ router.post('/:id/interview-questions/:questionIndex/confirm', async (req, res) 
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/jobs/:id/salary-insights
+// Available to ALL users (free & premium) — no usage cap
 // ═══════════════════════════════════════════════════════════════════════════════
 router.post('/:id/salary-insights', async (req, res) => {
   try {
-    const user = await User.findById(req.userId)
-    if (!user?.isPremium) {
-      return res.status(403).json({ error: 'premium_required', message: 'Premium feature.' })
-    }
-
+    // Salary insights are unlimited for all tiers
     const job = await Job.findOne({ _id: req.params.id, user: req.userId })
     if (!job) return res.status(404).json({ message: 'Job not found' })
 

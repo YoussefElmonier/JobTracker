@@ -17,10 +17,11 @@ import './Pricing.css'
 const FREE_FEATURES = [
   { icon: <RiBriefcaseLine />, text: 'Track up to 10 active jobs', ok: true },
   { icon: <RiCheckLine />, text: 'Kanban board & organization', ok: true },
-  { icon: <RiRobot2Line />, text: 'Basic AI Cover Letters', ok: true },
+  { icon: <RiRobot2Line />, text: '3 AI Cover Letters (free)', ok: true },
+  { icon: <RiMoneyDollarCircleLine />, text: 'AI Salary Estimates (unlimited)', ok: true },
   { icon: <RiLockLine />, text: 'Gmail Scanner (Auto-track)', ok: false },
   { icon: <RiLockLine />, text: 'Detailed Resume Match Score', ok: false },
-  { icon: <RiLockLine />, text: 'Advanced Interview Prep', ok: false },
+  { icon: <RiLockLine />, text: 'Advanced Interview Prep (10 questions)', ok: false },
 ]
 
 const PREMIUM_FEATURES = [
@@ -28,8 +29,8 @@ const PREMIUM_FEATURES = [
   { icon: <RiMailLine />, text: 'Gmail Email Scanner (Auto-track)', ok: true },
   { icon: <RiScan2Line />, text: 'Resume Match Analysis (0-100%)', ok: true },
   { icon: <RiRobot2Line />, text: 'Unlimited AI Cover Letters', ok: true },
-  { icon: <RiListCheck />, text: 'Tailored Interview Questions', ok: true },
-  { icon: <RiMoneyDollarCircleLine />, text: 'Premium Salary Insights', ok: true },
+  { icon: <RiListCheck />, text: 'Tailored Interview Questions (10 per job)', ok: true },
+  { icon: <RiMoneyDollarCircleLine />, text: 'AI Salary Estimates (unlimited)', ok: true },
 ]
 
 export default function Pricing() {
@@ -108,8 +109,8 @@ export default function Pricing() {
 
         <div className="pricing-hero">
           <div className="pricing-badge">Simple Pricing</div>
-          <h1 className="pricing-title">One payment.<br />Unlimited access.</h1>
-          <div className="pricing-sub">No subscriptions. No monthly fees. Pay once, use forever.</div>
+          <h1 className="pricing-title">Monthly payment.<br />Access as long as you want.</h1>
+          <div className="pricing-sub">No hidden fees. Pay monthly, use as long as you want.</div>
         </div>
 
         <div className="pricing-cards">
@@ -148,10 +149,10 @@ export default function Pricing() {
             <div className="pricing-card__header">
               <div className="pricing-card__plan">Premium</div>
               <div className="pricing-card__price">
-                <span className="pricing-card__amount">$10</span>
-                <span className="pricing-card__per">one-time</span>
+                <span className="pricing-card__amount">$11,99</span>
+                <span className="pricing-card__per">Monthly</span>
               </div>
-              <p className="pricing-card__desc">Everything you need to land the perfect job, forever.</p>
+              <p className="pricing-card__desc">Everything you need to land the perfect job.</p>
             </div>
 
             <ul className="pricing-card__features">
@@ -173,12 +174,12 @@ export default function Pricing() {
                 onClick={handleUpgrade}
                 disabled={loading}
               >
-                {loading ? 'Opening checkout...' : '⚡ Upgrade for $10'}
+                {loading ? 'Opening checkout...' : '⚡ Upgrade for $11.99'}
               </button>
             )}
 
             <p className="pricing-card__guarantee">
-              🔒 Secure payment via Paddle · One-time charge · No hidden fees
+              🔒 Secure payment via Paddle · Monthly charge · No hidden fees
             </p>
           </div>
         </div>

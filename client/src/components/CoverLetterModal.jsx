@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { RiCloseLine, RiDownloadLine, RiFileCopyLine, RiRefreshLine } from 'react-icons/ri'
+import { RiCloseLine, RiDownloadLine, RiFileCopyLine, RiRefreshLine, RiVipCrownFill } from 'react-icons/ri'
 import jsPDF from 'jspdf'
 import UpgradeModal from './UpgradeModal'
 import './AddJobModal.css'
 
-export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }) {
+export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess, isPremium }) {
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState(() => {
     const cl = job.aiCoverLetter
@@ -14,6 +14,7 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
   const [error, setError] = useState('')
   const [warning, setWarning] = useState('')
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [usageInfo, setUsageInfo] = useState(null) // { used, limit, remaining }
   const generatingRef = useRef(false)  // prevent StrictMode double-fire
 
   useEffect(() => {
@@ -29,14 +30,15 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
     setError('')
     setWarning('')
     try {
-      const data = await onGenerate(job._id, regenerate) // { coverLetter: string, warning?: string }
+      const data = await onGenerate(job._id, regenerate) // { coverLetter, warning?, used?, limit?, remaining? }
       setContent(data.coverLetter)
       if (data.warning) setWarning(data.warning)
+      if (data.limit != null) setUsageInfo({ used: data.used, limit: data.limit, remaining: data.remaining })
       if (onSuccess) onSuccess()
     } catch (err) {
       if (err.code === 'limit_reached') {
         setShowUpgrade(true)
-        setError("Free limit reached. Upgrade for unlimited.")
+        setError('You have used all 3 free cover letters. Upgrade for unlimited.')
       } else {
         setError(err.message || 'Failed to generate cover letter. Please try again.')
       }
@@ -63,7 +65,21 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess }
             <h2 className="modal__title">Cover Letter</h2>
             <p className="modal__subtitle">{job.title} at {job.company}</p>
           </div>
-          <button className="modal__close" onClick={onClose}><RiCloseLine /></button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {!isPremium && usageInfo && (
+              <span style={{
+                fontSize: '0.72rem', fontWeight: 600,
+                padding: '3px 10px', borderRadius: '20px',
+                background: usageInfo.remaining === 0 ? 'rgba(239,68,68,0.15)' : 'rgba(99,102,241,0.12)',
+                color: usageInfo.remaining === 0 ? '#ef4444' : '#6366f1',
+                border: `1px solid ${usageInfo.remaining === 0 ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.25)'}`,
+                whiteSpace: 'nowrap'
+              }}>
+                {usageInfo.used}/{usageInfo.limit} used
+              </span>
+            )}
+            <button className="modal__close" onClick={onClose}><RiCloseLine /></button>
+          </div>
         </div>
 
         <div className="modal__form" style={{ gap: '16px' }}>
