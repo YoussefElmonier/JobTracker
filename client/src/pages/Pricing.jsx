@@ -51,12 +51,12 @@ export default function Pricing() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [showPremiumModal, setShowPremiumModal] = useState(false)
   
-  // Toggle between Monthly ('mo') and Yearly ('yr')
-  const [billingCycle, setBillingCycle] = useState('mo')
+  // Toggle between Monthly ('mo') and Yearly ('yr') - Yearly default to show savings first
+  const [billingCycle, setBillingCycle] = useState('yr')
 
   const PRICES = {
-    pro: { mo: 11.99, yr: 9.59 }, // 9.59 is ~20% off 11.99
-    elite: { mo: 29.99, yr: 23.99 } // 23.99 is ~20% off 29.99
+    pro: { mo: 11.99, yr: 8.25 },   // $11.99 monthly, $99 yearly ($8.25/mo equivalent)
+    elite: { mo: 29.99, yr: 19.99 } // $29.99 monthly, ~$240 yearly ($19.99/mo equivalent)
   }
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function Pricing() {
               <div className="billing-switch__dot" />
             </button>
             <span className={`billing-label ${billingCycle === 'yr' ? 'active' : ''}`}>
-              Yearly <span className="savings-badge">Save 20%</span>
+              Yearly <span className="savings-badge">2 Months Free · Best Value</span>
             </span>
           </div>
         </div>
