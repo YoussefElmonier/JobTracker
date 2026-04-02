@@ -360,15 +360,9 @@ function JobCard({
                         </button>
                       ))}
                     </div>
-                    {activeQuestions.slice(0, effectivePremium ? 10 : 3).map((q, idx) => (
+                    {activeQuestions.slice(0, 10).map((q, idx) => (
                       <p key={idx} style={{ marginBottom: '8px', borderBottom: '1px solid #e5e5e0', paddingBottom: '4px' }}>{q}</p>
                     ))}
-                    {!effectivePremium && (
-                      <div className="job-card__ai-lock" style={{ marginTop: '8px' }}
-                        onClick={e => { e.stopPropagation(); onGenerateLetter(null, 'premium') }}>
-                        <RiLockLine /> <span>Upgrade for 10 tailored questions (you have 3 now)</span>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

@@ -103,21 +103,19 @@ exports.generateCoverLetter = async ({ title, company, description, cvText, anal
 
 
 // ─── Interview Questions ──────────────────────────────────────────────────────
-// Free:    3 questions (1/1/1), max_tokens 150
-// Premium: 10 questions (3/4/3), max_tokens 400
+// Both: 10 questions (3/4/3), max_tokens 400
 exports.generateInterviewQuestions = async ({ title, description }, isPremium) => {
   if (!description) return null
   try {
-    const systemPrompt = isPremium
-      ? `Return JSON: { "behavioral": string[], "technical": string[], "company_fit": string[] }. Generate exactly 10 interview questions for a ${title} — 3 behavioral, 4 technical, 3 company_fit. Use the job description.`
-      : `Return JSON: { "behavioral": string[], "technical": string[], "company_fit": string[] }. Generate exactly 3 interview questions for a ${title} — 1 behavioral, 1 technical, 1 company_fit. Use the job description.`
+    const systemPrompt = `Return JSON: { "behavioral": string[], "technical": string[], "company_fit": string[] }. Generate exactly 10 interview questions for a ${title} — 3 behavioral, 4 technical, 3 company_fit. Use the job description.`
+    
     const res = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user',   content: description }
       ],
       model: 'llama-3.3-70b-versatile',
-      max_tokens: isPremium ? 400 : 150,
+      max_tokens: 400,
       temperature: 0.7,
       response_format: { type: 'json_object' }
     })
