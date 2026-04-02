@@ -38,6 +38,11 @@ router.post('/create-checkout', auth, async (req, res) => {
     // Map plan and cycle to Pro IDs from .env
     const isYearly = req.body.billingCycle === 'yr'
     const priceId = isYearly ? process.env.PADDLE_PRO_YEARLY_ID : process.env.PADDLE_PRO_MONTHLY_ID
+    
+    console.log(`🛒 Attempting checkout for Price ID: ${priceId} (Yearly: ${isYearly})`)
+    if (!priceId || priceId === 'TBD') {
+      return res.status(400).json({ message: 'Invalid or missing Price ID for this plan' })
+    }
 
     // Use the official SDK to create the transaction
     const transaction = await paddle.transactions.create({

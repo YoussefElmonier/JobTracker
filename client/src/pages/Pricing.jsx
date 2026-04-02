@@ -98,7 +98,8 @@ export default function Pricing() {
       })
     } catch (err) {
       console.error('❌ Upgrade Error:', err)
-      setToast({ type: 'error', msg: '❌ Failed to open checkout. Try again.' })
+      const errorMsg = err.response?.data?.message || 'Failed to open checkout. Try again.'
+      setToast({ type: 'error', msg: `❌ ${errorMsg}` })
     } finally {
       setLoading(false)
     }
