@@ -273,7 +273,7 @@ export default function Profile() {
                   rows={10}
                 />
                 <div className="profile__cv-counter">
-                  {cvText.length} / 2000 characters
+                  {cvText.length} / 4000 characters
                 </div>
               </div>
 
