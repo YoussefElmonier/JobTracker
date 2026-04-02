@@ -35,15 +35,9 @@ router.post('/create-checkout', auth, async (req, res) => {
     console.log('Environment:', paddleEnv)
     console.log('--- END DEBUG ---')
 
-    // Map plan and cycle to Price IDs from .env
-    let priceId = process.env.PADDLE_PRO_MONTHLY_ID
+    // Map plan and cycle to Pro IDs from .env
     const isYearly = req.body.billingCycle === 'yr'
-
-    if (req.body.planType === 'pro') {
-      priceId = isYearly ? process.env.PADDLE_PRO_YEARLY_ID : process.env.PADDLE_PRO_MONTHLY_ID
-    } else if (req.body.planType === 'elite') {
-      priceId = isYearly ? process.env.PADDLE_ELITE_YEARLY_ID : process.env.PADDLE_ELITE_MONTHLY_ID
-    }
+    const priceId = isYearly ? process.env.PADDLE_PRO_YEARLY_ID : process.env.PADDLE_PRO_MONTHLY_ID
 
     // Use the official SDK to create the transaction
     const transaction = await paddle.transactions.create({

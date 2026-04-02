@@ -34,14 +34,6 @@ const PRO_FEATURES = [
   { icon: <RiShieldFlashLine />, text: 'Premium AI Insights on every card', ok: true },
 ]
 
-const ELITE_FEATURES = [
-  { icon: <RiStarFill />, text: 'Everything in Pro', ok: true },
-  { icon: <RiTimerFlashLine />, text: 'Priority AI processing', ok: true },
-  { icon: <RiGroupLine />, text: '1-on-1 resume review session', ok: true },
-  { icon: <RiSmartphoneLine />, text: 'Multi-platform device sync', ok: true },
-  { icon: <RiFlashlightFill />, text: 'Early access to new features', ok: true },
-]
-
 export default function Pricing() {
   const { user, token, isPremium, refreshUser } = useAuth()
   const navigate = useNavigate()
@@ -56,7 +48,6 @@ export default function Pricing() {
 
   const PRICES = {
     pro: { mo: 11.99, yr: 8.25 },   // $11.99 monthly, $99 yearly ($8.25/mo equivalent)
-    elite: { mo: 29.99, yr: 19.99 } // $29.99 monthly, ~$240 yearly ($19.99/mo equivalent)
   }
 
   useEffect(() => {
@@ -91,12 +82,10 @@ export default function Pricing() {
 
   const handleUpgrade = async (planType = 'pro') => {
     if (!user) { navigate('/login'); return }
-    if (isPremium && planType === 'pro') return // Already pro
+    if (isPremium) return // Already premium
     
     setLoading(true)
     try {
-      // In a real scenario, you'd send the planType and billingCycle to the backend
-      // so it can create the correct Paddle transaction (Subscription vs Transaction)
       const res = await api.post('/payment/create-checkout', { planType, billingCycle })
       const { transactionId } = res.data
       paddle?.Checkout.open({
@@ -126,7 +115,7 @@ export default function Pricing() {
         <div className="pricing-hero">
           <div className="pricing-badge">Pricing Plans</div>
           <h1 className="pricing-title">Level up your<br />job search.</h1>
-          <div className="pricing-sub">Pick the plan that fits your ambition.</div>
+          <div className="pricing-sub">Upgrade to Pro and land your dream job faster.</div>
           
           {/* Billing Toggle */}
           <div className="billing-toggle-wrapper">
@@ -138,12 +127,12 @@ export default function Pricing() {
               <div className="billing-switch__dot" />
             </button>
             <span className={`billing-label ${billingCycle === 'yr' ? 'active' : ''}`}>
-              Yearly <span className="savings-badge">2 Months Free · Best Value</span>
+              Yearly <span className="savings-badge">4 Months Free · Best Value</span>
             </span>
           </div>
         </div>
 
-        <div className="pricing-cards-grid">
+        <div className="pricing-cards-grid pricing-cards-grid--two">
           {/* Free Card */}
           <div className="pricing-card pricing-card--glass pricing-card--free">
             <div className="pricing-card__header">
@@ -169,10 +158,10 @@ export default function Pricing() {
             </button>
           </div>
 
-          {/* Pro Card (Middle - Featured with Glow) */}
+          {/* Pro Card (Featured with Glow) */}
           <div className="pricing-card pricing-card--glass pricing-card--pro pricing-card--featured">
             <div className="pricing-card__pro-glow" />
-            <div className="pricing-card__popular">Most Popular</div>
+            <div className="pricing-card__popular">Best Value</div>
 
             <div className="pricing-card__header">
               <div className="pricing-card__plan">Pro</div>
@@ -194,7 +183,7 @@ export default function Pricing() {
 
             {isPremium ? (
               <button className="pricing-card__btn pricing-card__btn--owned" disabled>
-                <RiVipCrownFill /> Active Product
+                <RiVipCrownFill /> You're Pro!
               </button>
             ) : (
               <button
@@ -206,36 +195,6 @@ export default function Pricing() {
               </button>
             )}
             <p className="pricing-card__small-print">Secure payment via Paddle</p>
-          </div>
-
-          {/* Elite Card */}
-          <div className="pricing-card pricing-card--glass pricing-card--elite">
-            <div className="pricing-card__header">
-              <div className="pricing-card__plan">Elite</div>
-              <div className="pricing-card__price">
-                <span className="pricing-card__amount">${PRICES.elite[billingCycle]}</span>
-                <span className="pricing-card__per">{billingCycle === 'mo' ? '/mo' : '/mo, billed yearly'}</span>
-              </div>
-              <p className="pricing-card__desc">The ultimate platform for serious candidates.</p>
-            </div>
-
-            <ul className="pricing-card__features">
-              {ELITE_FEATURES.map((f, i) => (
-                <li key={i} className="pricing-card__feature">
-                  <span className="pricing-card__feature-icon ok">{f.icon}</span>
-                  <span className="pricing-card__feature-text">{f.text}</span>
-                </li>
-              ))}
-            </ul>
-
-            <button
-              className="pricing-card__btn pricing-card__btn--upgrade-elite"
-              onClick={() => handleUpgrade('elite')}
-              disabled={loading}
-            >
-              {loading ? 'Opening checkout...' : `Join Elite - $${PRICES.elite[billingCycle]}`}
-            </button>
-            <p className="pricing-card__small-print">Priority support included</p>
           </div>
         </div>
 
