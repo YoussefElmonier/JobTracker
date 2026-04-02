@@ -10,6 +10,7 @@ import {
   RiTimerFlashLine, RiStarFill
 } from 'react-icons/ri'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import api from '../api/axios'
 import PremiumConfetti from '../components/PremiumConfetti'
 import PremiumSuccessModal from '../components/PremiumSuccessModal'
@@ -36,6 +37,7 @@ const PRO_FEATURES = [
 
 export default function Pricing() {
   const { user, token, isPremium, refreshUser } = useAuth()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const [paddle, setPaddle] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -104,7 +106,7 @@ export default function Pricing() {
 
   return (
     <PageWrapper>
-      <div className="pricing-page pricing-dark-theme animate-fade">
+      <div className={`pricing-page ${theme === 'dark' ? 'pricing-dark-theme' : 'pricing-light-theme'} animate-fade`}>
         {toast && (
           <div className={`pricing-toast pricing-toast--${toast.type}`}>
             {toast.msg}

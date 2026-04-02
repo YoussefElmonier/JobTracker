@@ -1,21 +1,37 @@
-/* ===== Pricing Page - Sleek Dark Evolution ===== */
-:root {
+/* ===== Pricing Page — Theme Responsive Evolution ===== */
+
+/* ─── Light Mode Defaults ─── */
+.pricing-page.pricing-light-theme {
+  --pricing-bg: var(--bg-page);
+  --pricing-surface: #ffffff;
+  --pricing-border: rgba(0, 0, 0, 0.08);
+  --pricing-accent: var(--accent);
+  --pricing-accent-glow: rgba(75, 110, 245, 0.15);
+  --pricing-text-main: var(--text-main);
+  --pricing-text-muted: var(--text-muted);
+  --pricing-card-bg: #ffffff;
+}
+
+/* ─── Dark Mode Overrides (Sleek High-End) ─── */
+.pricing-page.pricing-dark-theme {
   --pricing-bg: #030408;
   --pricing-surface: #0a0c12;
   --pricing-border: #1a1e26;
   --pricing-accent: #6366f1;
   --pricing-accent-glow: rgba(99, 102, 241, 0.5);
-  --pricing-elite: #f59e0b; /* Gold/Amber for Elite */
+  --pricing-text-main: #ffffff;
+  --pricing-text-muted: #94a3b8;
+  --pricing-card-bg: rgba(10, 12, 18, 0.6);
+  background: var(--pricing-bg);
 }
 
-.pricing-page.pricing-dark-theme {
-  background: var(--pricing-bg);
+.pricing-page {
   min-height: 100vh;
   padding-bottom: 120px;
   padding-top: 60px;
-  color: #fff;
-  font-family: 'Outfit', 'Inter', sans-serif;
-  overflow-x: hidden;
+  color: var(--pricing-text-main);
+  font-family: 'Sora', 'Inter', sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ─── Hero & Toggle ─── */
@@ -29,14 +45,14 @@
 .pricing-title {
   font-size: 3.5rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--pricing-text-main);
   margin-bottom: 20px;
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
 
 .pricing-sub {
-  color: #94a3b8;
+  color: var(--pricing-text-muted);
   font-size: 1.2rem;
   max-width: 520px;
   margin: 0 auto 40px;
@@ -55,24 +71,28 @@
 .billing-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--pricing-text-muted);
   transition: color 0.3s ease;
 }
 
 .billing-label.active {
-  color: #fff;
+  color: var(--pricing-text-main);
 }
 
 .billing-switch {
   width: 56px;
   height: 30px;
-  background: #1e293b;
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 100px;
-  border: none;
+  border: 1px solid var(--pricing-border);
   cursor: pointer;
   position: relative;
   padding: 4px;
-  transition: background 0.3s ease;
+}
+
+.pricing-dark-theme .billing-switch {
+  background: #1e293b;
+  border: none;
 }
 
 .billing-switch.switched {
@@ -80,11 +100,12 @@
 }
 
 .billing-switch__dot {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   background: #fff;
   border-radius: 50%;
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .billing-switch.switched .billing-switch__dot {
@@ -92,8 +113,8 @@
 }
 
 .savings-badge {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
   padding: 4px 10px;
   border-radius: 100px;
   font-size: 0.75rem;
@@ -102,22 +123,28 @@
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
+.pricing-dark-theme .savings-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
 /* ─── Pricing Grid ─── */
 .pricing-cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 32px;
-  max-width: 800px; /* Narrower for 2 cards */
+  max-width: 800px;
   margin: 0 auto;
   padding: 0 24px;
   position: relative;
   z-index: 5;
 }
 
-/* Glassmorphism Card Style */
+/* Card Style */
 .pricing-card--glass {
-  background: rgba(10, 12, 18, 0.6);
+  background: var(--pricing-card-bg);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--pricing-border);
   border-radius: 32px;
   padding: 48px 40px;
@@ -125,22 +152,41 @@
   flex-direction: column;
   position: relative;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: var(--shadow-soft);
+}
+
+.pricing-light-theme .pricing-card--glass {
+  background: #ffffff;
+  border-color: rgba(0,0,0,0.06);
 }
 
 .pricing-card--glass:hover {
   transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-dark-theme .pricing-card--glass:hover {
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(15, 18, 26, 0.8);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 /* ─── Featured Pro Card Glow ─── */
 .pricing-card--pro {
   position: relative;
+}
+
+.pricing-dark-theme .pricing-card--pro {
   background: rgba(13, 16, 24, 0.8);
   border: 1px solid rgba(99, 102, 241, 0.4);
 }
 
 .pricing-card__pro-glow {
+  display: none; /* Only show in dark mode */
+}
+
+.pricing-dark-theme .pricing-card__pro-glow {
+  display: block;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -153,7 +199,7 @@
   pointer-events: none;
 }
 
-.pricing-card--pro .pricing-card__popular {
+.pricing-card__popular {
   position: absolute;
   top: -14px;
   left: 50%;
@@ -166,17 +212,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-/* ─── Elite Card Style ─── */
-.pricing-card--elite {
-  border: 1px solid rgba(245, 158, 11, 0.25);
-}
-
-.pricing-card--elite:hover {
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 20px 40px rgba(245, 158, 11, 0.05);
+  box-shadow: 0 4px 12px var(--pricing-accent-glow);
 }
 
 /* ─── Card Content ─── */
@@ -187,14 +223,13 @@
 .pricing-card__plan {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--pricing-text-muted);
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
-.pricing-card--pro .pricing-card__plan { color: #fff; }
-.pricing-card--elite .pricing-card__plan { color: var(--pricing-elite); }
+.pricing-card--pro .pricing-card__plan { color: var(--pricing-accent); }
 
 .pricing-card__price {
   display: flex;
@@ -206,19 +241,19 @@
 .pricing-card__amount {
   font-size: 3.5rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--pricing-text-main);
   letter-spacing: -0.04em;
 }
 
 .pricing-card__per {
-  color: #64748b;
+  color: var(--pricing-text-muted);
   font-size: 1rem;
   font-weight: 500;
 }
 
 .pricing-card__desc {
   font-size: 0.95rem;
-  color: #64748b;
+  color: var(--pricing-text-muted);
   line-height: 1.6;
 }
 
@@ -237,7 +272,7 @@
   align-items: center;
   gap: 12px;
   font-size: 0.95rem;
-  color: #e2e8f0;
+  color: var(--pricing-text-main);
 }
 
 .pricing-card__feature-icon {
@@ -248,8 +283,6 @@
   height: 20px;
   color: var(--pricing-accent);
 }
-
-.pricing-card--elite .pricing-card__feature-icon { color: var(--pricing-elite); }
 
 /* Buttons */
 .pricing-card__btn {
@@ -268,46 +301,49 @@
 }
 
 .pricing-card__btn--current {
-  background: #1e293b;
-  color: #64748b;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--pricing-text-muted);
   cursor: default;
+}
+
+.pricing-dark-theme .pricing-card__btn--current {
+  background: #1e293b;
 }
 
 .pricing-card__btn--upgrade-pro {
   background: var(--pricing-accent);
   color: #fff;
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 25px var(--pricing-accent-glow);
 }
 
 .pricing-card__btn--upgrade-pro:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 30px var(--pricing-accent-glow);
   filter: brightness(1.1);
 }
 
-.pricing-card__btn--upgrade-elite {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+.pricing-card__btn--owned {
+  background: #000;
+  color: #fff;
+  cursor: default;
+}
+
+.pricing-dark-theme .pricing-card__btn--owned {
+  background: #fff;
   color: #000;
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.2);
-}
-
-.pricing-card__btn--upgrade-elite:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(245, 158, 11, 0.3);
-  filter: brightness(1.1);
 }
 
 .pricing-card__small-print {
   text-align: center;
   font-size: 0.75rem;
-  color: #334155;
+  color: var(--pricing-text-muted);
   margin-top: 16px;
+  opacity: 0.6;
 }
 
 /* ─── Mobile / Tablet ─── */
 @media (max-width: 1024px) {
   .pricing-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
     max-width: 800px;
   }
 }
@@ -323,17 +359,6 @@
   }
 
   .pricing-card--pro {
-    order: -1; /* Keep Pro on top for mobile */
-  }
-  
-  .pricing-card__pro-glow {
-    width: 110%;
-    height: 110%;
-  }
-}
-
-@media (max-width: 480px) {
-  .pricing-title {
-    font-size: 2.2rem;
+    order: -1; /* Pro on top for mobile */
   }
 }
