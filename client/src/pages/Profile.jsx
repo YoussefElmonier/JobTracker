@@ -40,7 +40,7 @@ export default function Profile() {
   }, [user, location, navigate])
 
   const handleTextChange = (e) => {
-    setCvText(e.target.value.slice(0, 2000))
+    setCvText(e.target.value.slice(0, 4000))
   }
 
   const handleFileChange = (e) => {
