@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "trkr Clipper",
+  "version": "1.2",
+  "description": "Clip job listings from LinkedIn and Indeed directly to your trkr dashboard.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://*.linkedin.com/*",
+    "https://*.indeed.com/*",
+    "https://trkr-job.vercel.app/*",
+    "https://job-tracker-five-dusky.vercel.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.linkedin.com/*",
+        "https://*.indeed.com/*",
+        "https://trkr-job.vercel.app/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
