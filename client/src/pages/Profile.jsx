@@ -309,7 +309,7 @@ export default function Profile() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', background: 'var(--surface-color)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                   <div style={{ flex: 1 }}>
                     <strong style={{ display: 'block', marginBottom: '4px' }}>Auto-track email updates</strong>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Automatically read recruiter emails and update job card statuses.</span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>We scan your inbox (last 7 days) for application receipts, interview invites, and offers to keep your board synced.</span>
                   </div>
                   <label className="toggle-switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
                     <input
@@ -338,7 +338,7 @@ export default function Profile() {
             ) : (
               <div style={{ marginTop: '16px' }}>
                 <p style={{ marginBottom: '16px', color: '#4b5563', fontSize: '15px' }}>
-                  Connect your Gmail to allow TRKR to automatically read recruiter emails and update your job applications accordingly.
+                  Connect your Gmail to allow TRKR to automatically sync your job search. We'll monitor your inbox for new applications and status updates from recruiters.
                 </p>
 
                 <button
@@ -491,15 +491,7 @@ export default function Profile() {
                     📱 <strong style={{ color: 'var(--text-main)' }}>Background Push:</strong> TRKR uses the official Web Push API. Stay notified even when the app is closed.
                   </p>
                   <p style={{ margin: '6px 0 0' }}>
-                    🤖 <strong style={{ color: 'var(--text-main)' }}>Reliability:</strong> For the best experience on old Android devices, download the{' '}
-                    <a
-                      href="https://ntfy.sh"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: 'var(--accent)', textDecoration: 'underline' }}
-                    >
-                      ntfy app
-                    </a>.
+                    🤖 <strong style={{ color: 'var(--text-main)' }}>Android Users:</strong> Notifications work directly in Chrome. No extra setup required.
                   </p>
                 </div>
               </div>
@@ -523,8 +515,8 @@ export default function Profile() {
                     background: 'var(--bg-page)', border: '1px solid var(--border)',
                     borderRadius: '10px', padding: '14px 16px', fontSize: '13px', color: 'var(--text-muted)',
                   }}>
-                    <p style={{ margin: 0 }}>📱 iPhone / Desktop: No app needed.</p>
-                    <p style={{ margin: '6px 0 0' }}>🤖 Android: Download the ntfy app for the best experience.</p>
+                    <p style={{ margin: 0 }}>📱 iOS: Requires "Add to Home Screen".</p>
+                    <p style={{ margin: '6px 0 0' }}>🤖 Android / Desktop: Works directly in your browser.</p>
                   </div>
                 </div>
 

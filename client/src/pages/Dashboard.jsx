@@ -167,7 +167,7 @@ export default function Dashboard() {
             <p>Save jobs from LinkedIn and Indeed with one click using the browser extension.</p>
           </div>
           <div className="extension-banner__actions">
-            <button className="btn btn-primary" onClick={() => alert("Extension Link")}>Get Extension</button>
+            <button className="btn btn-primary" onClick={() => window.open("https://chromewebstore.google.com/detail/hhijikdgibndadckjonhggcnfbhnjpnf?utm_source=item-share-cb", "_blank")}>Get Extension</button>
           </div>
         </div>
 

@@ -186,3 +186,19 @@
   display: inline-block;
   animation: subtle-bounce 2s infinite;
 }
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .profile-page {
+    padding-bottom: 100px; /* Clearance for mobile nav */
+  }
+
+  .profile__section {
+    padding: 20px;
+  }
+
+  .profile__cv-upload {
+    width: 100%;
+  }
+}
+

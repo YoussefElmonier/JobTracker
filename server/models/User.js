@@ -45,7 +45,7 @@ const UserSchema = new mongoose.Schema({
   },
   cvText: {
     type: String,
-    maxLength: 3000,
+    maxLength: 4000,
   },
   gmailIntegration: {
     accessToken:  String,

@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   RiBriefcaseLine, RiBarChart2Line, RiNotification3Line,
-  RiArrowRightLine, RiCheckLine, RiStarLine, RiMoonLine, RiSunLine
+  RiArrowRightLine, RiCheckLine, RiStarLine, RiMoonLine, RiSunLine,
+  RiMenuLine, RiCloseLine
 } from 'react-icons/ri'
 import { useTheme } from '../context/ThemeContext'
 import Footer from '../components/Footer'
@@ -16,30 +17,24 @@ const FEATURES = [
   {
     icon: <RiBriefcaseLine />,
     color: 'indigo',
-    title: 'Smart Pipeline',
+    title: 'Visual Pipeline',
     desc: 'Transform your job search into a professional workflow. Drag and drop jobs through custom stages and track every touchpoint.',
-    points: ['Visual Kanban board', 'One-click application clipper', 'Status-based pipeline tracking'],
+    points: ['Fluid Kanban board', 'One-click status updates', 'Organized job tracking'],
   },
   {
     icon: <RiBarChart2Line />,
     color: 'cyan',
-    title: 'Intelligent Insights',
-    desc: 'Uncover bottlenecks in your search. Visualize response rates, interview conversion, and application volume over time.',
-    points: ['Performance analytics', 'Weekly goal setting', 'Progress visualization'],
+    title: 'AI Intelligence',
+    desc: 'Uncover your application potential. Get instant resume matching scores, tailored cover letters, and interview preparation.',
+    points: ['Resume matching score', 'AI-powered cover letters', 'Curated interview prep'],
   },
   {
     icon: <RiNotification3Line />,
     color: 'violet',
-    title: 'AI Generation',
-    desc: 'Stop staring at a blank page. Generate tailored cover letters and common interview questions using our intelligent assistant.',
-    points: ['Instant cover letters', 'Curated interview Prep', 'AI-powered writing helper'],
+    title: 'Seamless Automation',
+    desc: 'Stop entering data manually. Use our Chrome extension and Gmail scanner to automatically import applications.',
+    points: ['Chrome browser extension', 'Automatic Gmail scanning', 'Instant job importing'],
   },
-]
-
-const STATS = [
-  { value: '25k+', label: 'Apps Tracked' },
-  { value: '94%',  label: 'Faster Placement' },
-  { value: '4.9★', label: 'User Satisfaction' },
 ]
 
 export default function Landing() {
@@ -47,6 +42,7 @@ export default function Landing() {
   const { user } = useAuth()
   const navigate  = useNavigate()
   const heroRef   = useRef(null)
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
 
   // Redirect if already logged in
   useEffect(() => {
@@ -56,21 +52,28 @@ export default function Landing() {
 
   return (
     <PageWrapper>
-      <div className="landing">
+      <div className={`landing ${isMenuOpen ? 'menu-open' : ''}`}>
         {/* Navbar */}
         <nav className="landing__nav">
           <div className="landing__nav-inner">
             <div className="landing__nav-logo">
               <img src={theme === 'light' ? logoLight : logoDark} alt="trkr" className="landing__logo-img" />
             </div>
-            <div className="landing__nav-links">
-              <a href="#features" className="landing__nav-link">Features</a>
-              <button className="landing__theme-toggle" onClick={toggleTheme}>
-                {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}
-              </button>
-              <Link to="/login"    className="btn btn-ghost">Log In</Link>
-              <Link to="/register" className="btn btn-primary">Get Started</Link>
+            
+            <div className={`landing__nav-links ${isMenuOpen ? 'active' : ''}`}>
+              <a href="#features" className="landing__nav-link" onClick={() => setIsMenuOpen(false)}>Features</a>
+              <div className="landing__nav-actions">
+                <button className="landing__theme-toggle" onClick={toggleTheme}>
+                  {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}
+                </button>
+                <Link to="/login"    className="btn btn-ghost">Log In</Link>
+                <Link to="/register" className="btn btn-primary">Get Started</Link>
+              </div>
             </div>
+
+            <button className="landing__mobile-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <RiCloseLine /> : <RiMenuLine />}
+            </button>
           </div>
         </nav>
 
@@ -95,8 +98,8 @@ export default function Landing() {
             <div className="landing__hero-content">
               {/* Badge */}
               <div className="landing__badge">
-                <RiStarLine />
-                <span>Trusted by 10,000+ job seekers</span>
+                <RiBriefcaseLine style={{ marginRight: '6px' }} />
+                <span>Modernize your job search today</span>
               </div>
 
               {/* Headline */}
@@ -120,14 +123,14 @@ export default function Landing() {
                 </Link>
               </div>
 
-              {/* Stats row */}
-              <div className="landing__stats animate-slide-up stagger-3">
-                {STATS.map(s => (
-                  <div key={s.label} className="landing__stat">
-                    <span className="landing__stat-value">{s.value}</span>
-                    <span className="landing__stat-label">{s.label}</span>
-                  </div>
-                ))}
+              {/* Benefits list (Replacing fake stats with real value props) */}
+              <div className="landing__hero-benefits animate-slide-up stagger-3" style={{ marginTop: '32px', display: 'flex', gap: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  <RiCheckLine style={{ color: 'var(--accent)' }} /> No credit card required
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  <RiCheckLine style={{ color: 'var(--accent)' }} /> 1-minute setup
+                </div>
               </div>
             </div>
 
@@ -155,7 +158,7 @@ export default function Landing() {
                             <div className="landing__mini-card-logo" style={{ background: `${col.color}15`, color: col.color }}>
                               {['G', 'A', 'M', 'S'][i % 4]}
                             </div>
-                            <div>
+                            <div className="landing__mini-card-details">
                               <div className="landing__mini-card-company" />
                               <div className="landing__mini-card-role" />
                             </div>
@@ -205,7 +208,7 @@ export default function Landing() {
             Ready to take control of your <span>job search?</span>
           </h2>
           <p className="landing__cta-banner-sub">
-            Join thousands of career-movers who landed their dream role faster with trkr.
+            Join the early testers who are landing their dream role faster with trkr.
           </p>
           <Link to="/register" id="bottom-cta-register" className="btn btn-primary btn-lg">
             Get started — it's free

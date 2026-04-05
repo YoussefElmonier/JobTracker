@@ -476,6 +476,7 @@ export default function Kanban() {
   const [isDragging, setIsDragging]         = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [importPrefill, setImportPrefill]   = useState(null)
+  const [activeMobileCol, setActiveMobileCol] = useState('applied')
 
   const toggleExpand = (colId) => {
     setExpandedCols(prev => ({ ...prev, [colId]: !prev[colId] }))
@@ -535,15 +536,29 @@ export default function Kanban() {
           </div>
         </div>
 
+        <div className="kanban__mobile-nav">
+          {COLUMNS.map(col => (
+            <button 
+              key={col.id} 
+              className={`kanban__mobile-tab ${activeMobileCol === col.id ? 'active' : ''}`}
+              onClick={() => setActiveMobileCol(col.id)}
+            >
+              {col.icon}
+              <span>{col.label}</span>
+            </button>
+          ))}
+        </div>
+
         <DragDropContext onDragStart={() => setIsDragging(true)} onDragEnd={handleDragEnd}>
           <div className={`kanban__board ${isDragging ? 'kanban__board--dragging' : ''} animate-slide-up stagger-2`}>
             {COLUMNS.map(col => {
               const colJobs   = getColumnJobs(col.id)
               const isExpanded = expandedCols[col.id]
               const hasMore   = colJobs.length > 2
+              const isActiveOnMobile = activeMobileCol === col.id
 
               return (
-                <div key={col.id} className={`kanban__col kanban-col-${col.id}`}>
+                <div key={col.id} className={`kanban__col kanban-col-${col.id} ${isActiveOnMobile ? 'kanban__col--active-mobile' : ''}`}>
                   <div className="kanban__col-header">
                     <div className="kanban__col-title-row">
                       <span className="kanban__col-icon">{col.icon}</span>
@@ -569,7 +584,7 @@ export default function Kanban() {
                             <div className="empty-state animate-float">
                               <span className="empty-state__icon">🎯</span>
                               <h3 className="empty-state__title">No applications yet</h3>
-                              <p className="empty-state__text">Add your first job or use the Chrome extension</p>
+                              <p className="empty-state__text">Add your first job or use the <a href="https://chromewebstore.google.com/detail/hhijikdgibndadckjonhggcnfbhnjpnf?utm_source=item-share-cb" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Chrome extension</a></p>
                               <button className="btn btn-secondary btn-sm" onClick={() => handleAddForColumn(col.id)}>+ Add Job</button>
                             </div>
                           ) : (

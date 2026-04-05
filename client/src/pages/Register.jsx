@@ -166,7 +166,7 @@ export default function Register() {
             <div className="form-group" style={{ marginTop: '4px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                 <label className="form-label" style={{ marginBottom: 0 }}>Your CV (Optional)</label>
-                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{form.cvText.length}/2000</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>{form.cvText.length}/4000</span>
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', alignItems: 'stretch' }}>
@@ -195,7 +195,7 @@ export default function Register() {
                   placeholder="Or paste text..."
                   value={form.cvText}
                   onChange={handleChange}
-                  maxLength={2000}
+                  maxLength={4000}
                 />
               </div>
               <p style={{ marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.3 }}>
