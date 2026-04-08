@@ -153,8 +153,10 @@ function JobCard({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isEstimating, setIsEstimating] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState('')
   const [salaryError, setSalaryError] = useState('')
+
   // Local preview state so activation updates instantly without full refetch
   const [localConsumed, setLocalConsumed] = useState(premiumCardsConsumed)
 
@@ -218,7 +220,15 @@ function JobCard({
     } finally { setIsActivating(false) }
   }
 
-  const getCount = (idx) => job.questionConfirmations?.find(c => c.questionIndex === idx)?.userIds?.length || 0
+  const handleDeleteClick = async (e) => {
+    e.stopPropagation()
+    if (window.confirm(`Delete ${job.company} application?`)) {
+      setIsDeleting(true)
+      setTimeout(() => {
+        onDelete(job._id)
+      }, 350)
+    }
+  }
 
   return (
     <Draggable draggableId={job._id} index={index}>
@@ -229,7 +239,7 @@ function JobCard({
             {...provided.draggableProps}
             {...provided.dragHandleProps}
             style={provided.draggableProps.style}
-            className={`job-card ${!snapshot.isDragging ? 'animate-scale' : 'job-card--dragging'}`}
+            className={`job-card ${!snapshot.isDragging ? 'animate-scale' : 'job-card--dragging'} ${isDeleting ? 'job-card--deleting' : ''}`}
           >
             {/* Header */}
             <div className="job-card__header">
@@ -245,11 +255,12 @@ function JobCard({
                 <button className="job-card__action-btn" onClick={() => onEdit(job)} title="Edit">
                   <RiEdit2Line />
                 </button>
-                <button className="job-card__action-btn" onClick={() => onDelete(job._id)} title="Delete">
+                <button className="job-card__action-btn" onClick={handleDeleteClick} title="Delete">
                   <RiDeleteBinLine />
                 </button>
               </div>
             </div>
+
 
             <p className="job-card__company">{job.company}</p>
             <p className="job-card__title">{job.title}</p>
@@ -511,8 +522,9 @@ export default function Kanban() {
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete this application?')) await deleteJob(id)
+    await deleteJob(id)
   }
+
 
   return (
     <PageWrapper>

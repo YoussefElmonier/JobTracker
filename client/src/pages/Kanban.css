@@ -170,6 +170,18 @@
   cursor: grabbing !important;
 }
 
+.job-card--deleting {
+  animation: cardDelete 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes cardDelete {
+  0% { transform: scale(1); opacity: 1; max-height: 800px; }
+  100% { transform: scale(0.9); opacity: 0; max-height: 0; margin-top: -20px; padding-top: 0; padding-bottom: 0; }
+}
+
+
 .skeleton-card {
   pointer-events: none;
 }
