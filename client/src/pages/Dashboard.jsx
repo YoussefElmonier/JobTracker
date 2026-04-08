@@ -15,7 +15,9 @@ import { useTheme } from '../context/ThemeContext'
 import AddJobModal from '../components/AddJobModal'
 import UpgradeModal from '../components/UpgradeModal'
 import ImportFromURLModal from '../components/ImportFromURLModal'
+import OnboardingTour from '../components/OnboardingTour'
 import PageWrapper from '../components/PageWrapper'
+import api from '../api/axios'
 import './Dashboard.css'
 
 function CompanyLogo({ logo, company }) {
@@ -99,12 +101,35 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Dashboard() {
   const { theme } = useTheme()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, refreshUser } = useAuth()
   const { jobs, loading, createJob } = useJobs()
   const [showModal, setShowModal] = useState(false)
   const [showUpgrade, setShowUpgrade] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [importPrefill, setImportPrefill] = useState(null)
+  
+  // Onboarding Logic
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  
+  useEffect(() => {
+    // Show onboarding if user exists and hasn't completed it
+    if (user && user.onboardingCompleted === false) {
+      setShowOnboarding(true)
+    }
+  }, [user])
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await api.post('/auth/onboarding/complete')
+      await refreshUser()
+      setShowOnboarding(false)
+    } catch (err) {
+      console.error('Failed to save onboarding progress', err)
+      setShowOnboarding(false) // Still close it to not block the user
+    }
+  }
+
+
   const WEEKLY_GOAL = 5
   const stats = useMemo(() => {
     const total = jobs.length
@@ -134,6 +159,7 @@ export default function Dashboard() {
 
   return (
     <PageWrapper>
+      {showOnboarding && <OnboardingTour onComplete={handleOnboardingComplete} />}
       <div className="page-container dashboard">
         {/* Header */}
         <div className="page-header">
@@ -212,7 +238,67 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Onboarding Checklist — and show only if not completed */}
+        {!user?.onboardingCompleted && (
+          <div className="onboarding-checklist glass-panel animate-slide-up stagger-5">
+            <div className="checklist-header">
+              <div>
+                <h3 className="checklist-title">Getting Started</h3>
+                <p className="checklist-subtitle">Complete these steps to master TRKR</p>
+              </div>
+              <div className="checklist-completion">
+                <span className="completion-text">
+                  {Math.round([
+                    true, // Account created
+                    jobs.length > 0,
+                    user?.cvText?.length > 0,
+                    user?.gmailConnected,
+                  ].filter(Boolean).length / 4 * 100)}% Complete
+                </span>
+              </div>
+            </div>
+            
+            <div className="checklist-grid">
+              <div className={`checklist-item ${true ? 'done' : ''}`}>
+                <div className="checklist-point"><RiCheckLine /></div>
+                <div className="checklist-info">
+                  <h4>Create Account</h4>
+                  <p>You're already here! Welcome aboard.</p>
+                </div>
+              </div>
+
+              <div className={`checklist-item ${jobs.length > 0 ? 'done' : ''}`} onClick={() => !jobs.length && setShowModal(true)}>
+                <div className="checklist-point">{jobs.length > 0 ? <RiCheckLine /> : '2'}</div>
+                <div className="checklist-info">
+                  <h4>Add your first job</h4>
+                  <p>Manual add or import from URL to start tracking.</p>
+                </div>
+                {!jobs.length && <RiArrowRightLine className="item-arrow" />}
+              </div>
+
+              <div className={`checklist-item ${user?.cvText?.length > 0 ? 'done' : ''}`} onClick={() => navigate('/profile')}>
+                <div className="checklist-point">{user?.cvText?.length > 0 ? <RiCheckLine /> : '3'}</div>
+                <div className="checklist-info">
+                  <h4>Upload your CV</h4>
+                  <p>Enable AI matching and automated cover letters.</p>
+                </div>
+                {!user?.cvText && <RiArrowRightLine className="item-arrow" />}
+              </div>
+
+              <div className={`checklist-item ${user?.gmailConnected ? 'done' : ''}`} onClick={() => navigate('/profile')}>
+                <div className="checklist-point">{user?.gmailConnected ? <RiCheckLine /> : '4'}</div>
+                <div className="checklist-info">
+                  <h4>Connect Gmail</h4>
+                  <p>Unlock automatic status updates from recruiter emails.</p>
+                </div>
+                {!user?.gmailConnected && <RiArrowRightLine className="item-arrow" />}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="dashboard__main-grid animate-slide-up stagger-2">
+
           {/* Chart Section */}
           <div className="card dashboard__chart-card">
             <h2 className="dashboard__chart-title">Applications Over Time</h2>

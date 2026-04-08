@@ -87,7 +87,12 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,   // Tracks how many free "Premium Preview" job cards this user has claimed (max 3)
   },
+  onboardingCompleted: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true })
+
 
 // Hash password before saving
 UserSchema.pre('save', async function () {

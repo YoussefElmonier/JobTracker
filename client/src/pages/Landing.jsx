@@ -62,6 +62,8 @@ export default function Landing() {
             
             <div className={`landing__nav-links ${isMenuOpen ? 'active' : ''}`}>
               <a href="#features" className="landing__nav-link" onClick={() => setIsMenuOpen(false)}>Features</a>
+              <Link to="/pricing" className="landing__nav-link">Pricing</Link>
+
               <div className="landing__nav-actions">
                 <button className="landing__theme-toggle" onClick={toggleTheme}>
                   {theme === 'light' ? <RiMoonLine /> : <RiSunLine />}

@@ -85,13 +85,8 @@ export default function App() {
               </AuthenticatedLayout>
             </ProtectedRoute>
           } />
-          <Route path="/pricing" element={
-            <ProtectedRoute>
-              <AuthenticatedLayout>
-                <Pricing />
-              </AuthenticatedLayout>
-            </ProtectedRoute>
-          } />
+          <Route path="/pricing" element={<PublicLayout><Pricing /></PublicLayout>} />
+
 
             {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

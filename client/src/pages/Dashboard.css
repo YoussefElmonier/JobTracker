@@ -382,3 +382,134 @@
     justify-content: space-between;
   }
 }
+/* Onboarding Checklist */
+.onboarding-checklist {
+  background: var(--bg-surface);
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 40px;
+  border: 1px solid var(--border-color);
+}
+
+.checklist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.checklist-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-main);
+}
+
+.checklist-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.completion-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.checklist-item {
+  padding: 20px;
+  border-radius: 20px;
+  background: var(--bg-main);
+  border: 1px solid transparent;
+  display: flex;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.checklist-item:hover:not(.done) {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  background: var(--bg-surface);
+}
+
+.checklist-point {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.checklist-item.done .checklist-point {
+  background: var(--accent);
+  color: white;
+}
+
+.checklist-info h4 {
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.checklist-item.done .checklist-info h4 {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.checklist-info p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.item-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  color: var(--accent);
+  transition: all 0.3s ease;
+}
+
+.checklist-item:hover .item-arrow {
+  opacity: 1;
+  right: 12px;
+}
+
+@media (max-width: 768px) {
+  .onboarding-checklist {
+    padding: 20px;
+  }
+  
+  .checklist-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .checklist-grid {
+    grid-template-columns: 1fr;
+  }
+}
