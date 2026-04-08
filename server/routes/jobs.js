@@ -615,6 +615,8 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
+const { isSafeUrl } = require('../utils/security')
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/jobs/fetch-from-url — extract job details from a URL via Groq
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -622,11 +624,16 @@ router.post('/fetch-from-url', async (req, res) => {
   const { url } = req.body
   if (!url) return res.status(400).json({ error: 'URL is required' })
 
+  if (!isSafeUrl(url)) {
+    return res.status(403).json({ error: 'Forbidden URL destination' })
+  }
+
   // 1. Fetch the page HTML
   let html
   try {
     const response = await axios.get(url, {
-      timeout: 12000,
+      timeout: 10000,
+      maxContentLength: 1024 * 1024 * 2, // 2MB limit
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -638,6 +645,7 @@ router.post('/fetch-from-url', async (req, res) => {
     console.error('[fetch-from-url] fetch error:', err.message)
     return res.status(422).json({ error: 'Could not fetch this URL. Try copying the job description manually.' })
   }
+
 
   // 2. Extract visible text using cheerio
   let pageText

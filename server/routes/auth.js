@@ -150,6 +150,13 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
       cvText: cvText ? cvText.trim().slice(0, 4000) : ''
     })
     const token = signToken(user._id)
+    
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
 
     res.status(201).json({
       token,
@@ -197,6 +204,13 @@ router.post('/login', async (req, res) => {
 
     const token = signToken(user._id)
 
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
     res.json({
       token,
       user: { 
@@ -243,7 +257,7 @@ router.get('/google', passport.authenticate('google', {
 
 // GET /api/auth/google/gmail (Using Gmail Connected Client)
 router.get('/google/gmail', async (req, res, next) => {
-  const token = req.query.token;
+  const token = req.query.token || req.cookies?.token;
   if (!token) return res.status(401).json({ message: 'No token provided' });
 
   try {
@@ -275,9 +289,18 @@ router.get('/google/callback',
     if (!req.user) return res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?error=auth_failed`)
     
     const token = signToken(req.user._id)
+
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
     res.redirect(`${process.env.CLIENT_URL || 'http://localhost:5173'}/login?token=${token}`)
   }
 )
+
 
 // GET /api/auth/google/gmail/callback (Gmail Client)
 router.get('/google/gmail/callback', 
