@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area, AreaChart,
@@ -7,7 +7,8 @@ import {
 import { format, subDays, startOfDay, isSameDay } from 'date-fns'
 import {
   RiBriefcaseLine, RiArrowRightUpLine, RiFocus3Line,
-  RiTrophyLine, RiTimeLine, RiAddLine, RiChromeLine, RiLinkM
+  RiTrophyLine, RiTimeLine, RiAddLine, RiChromeLine, RiLinkM,
+  RiCheckLine, RiArrowRightLine
 } from 'react-icons/ri'
 import { useJobs } from '../hooks/useJobs'
 import { useAuth } from '../context/AuthContext'
@@ -100,6 +101,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { theme } = useTheme()
   const { user, loading: authLoading, refreshUser } = useAuth()
   const { jobs, loading, createJob } = useJobs()
