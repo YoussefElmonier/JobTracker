@@ -6,11 +6,19 @@ const { optimizeCV } = require('../utils/ai')
 const multer  = require('multer')
 const pdfParse = require('pdf-parse-fork')
 
-const upload = multer({ limits: { fileSize: 5 * 1024 * 1024 } }) // 5MB
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } 
+})
 
 // ─── POST /api/cv/optimize ──────────────────────────────────────────────
 router.post('/optimize', auth, upload.single('cvFile'), async (req, res) => {
   try {
+    if (!req.userId) {
+      console.warn('❌ CV Optimize: req.userId is missing')
+      return res.status(401).json({ message: 'Authentication failed: User ID missing' })
+    }
+
     const user = await User.findById(req.userId)
     if (!user) return res.status(404).json({ message: 'User not found' })
 
@@ -26,27 +34,30 @@ router.post('/optimize', auth, upload.single('cvFile'), async (req, res) => {
     
     // If a file was uploaded, parse it
     if (req.file) {
+      console.log('📄 PDF detected:', req.file.originalname)
       try {
         const data = await pdfParse(req.file.buffer)
-        inputText = data.text + '\n' + inputText
+        inputText = (data.text || '') + '\n' + inputText
       } catch (err) {
         console.error('PDF Parse Error:', err)
         return res.status(400).json({ message: 'Failed to parse PDF file. Please try copy-pasting the text instead.' })
       }
     }
 
-    if (!inputText.trim()) {
-      return res.status(400).json({ message: 'Please provide resume text or upload a file.' })
+    const cleanedInput = inputText.trim()
+    if (!cleanedInput || cleanedInput.length < 20) {
+      return res.status(400).json({ message: 'Please provide more complete resume text or upload a PDF.' })
     }
 
-    const result = await optimizeCV(inputText)
+    const result = await optimizeCV(cleanedInput)
     
-    if (!result) throw new Error('AI optimization failed')
+    if (!result) {
+       console.error('❌ AI optimization returned null result')
+       throw new Error('The AI failed to generate an optimization. Please try again with more detail.')
+    }
 
-    // Always increment even on "insufficient" if we want to be strict, but actually 
-    // it's better to ONLY increment if successful.
     if (!result.insufficient) {
-       user.atsOptimizationsUsed += 1
+       user.atsOptimizationsUsed = (user.atsOptimizationsUsed || 0) + 1
        await user.save()
     }
 
@@ -57,9 +68,13 @@ router.post('/optimize', auth, upload.single('cvFile'), async (req, res) => {
       remaining: user.isPremium ? Infinity : Math.max(0, 2 - user.atsOptimizationsUsed)
     })
   } catch (err) {
-    console.error('CV Optimize API error:', err.message)
-    res.status(500).json({ message: 'Internal server error during CV optimization' })
+    console.error('CV Optimize API Panic:', err)
+    res.status(500).json({ 
+      message: 'Internal server error during CV optimization',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    })
   }
 })
+
 
 module.exports = router
