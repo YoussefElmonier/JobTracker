@@ -162,7 +162,6 @@ router.post('/register', upload.single('cvFile'), async (req, res) => {
         premiumCardsConsumed: user.premiumCardsConsumed || 0,
         cvText: user.cvText || '',
         gmailConnected: !!user.gmailConnected,
-        onboardingCompleted: !!user.onboardingCompleted,
         ntfyTopic: user.ntfyTopic || null
       },
     })
@@ -439,21 +438,5 @@ router.post('/test-push', auth, async (req, res) => {
   }
 })
 
-// POST /api/auth/onboarding/complete (protected)
-router.post('/onboarding/complete', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    
-    user.onboardingCompleted = true;
-    await user.save();
-    
-    res.json({ success: true, message: 'Onboarding completed' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to complete onboarding' });
-  }
-});
-
 module.exports = router
-
 
