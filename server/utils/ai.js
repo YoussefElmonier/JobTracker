@@ -158,15 +158,15 @@ exports.analyzeResume = async (cvText, description) => {
 exports.optimizeCV = async (inputText) => {
   if (!inputText || inputText.length < 50) return { insufficient: true, missing: ['More detailed work history or skills'] }
   try {
-    const systemPrompt = `Expert ATS Resume Optimizer. Transform provided text into a professional, high-scoring ATS-friendly resume.
-Include: Summary, Experience, Education, Skills. Focus on quantified achievements.
-If info is insufficient, return {"insufficient":true,"missing":string[]}.
-Otherwise return {"cv":markdown_string,"score":0-100,"improvements":string[]}.`
+    const systemPrompt = `Expert ATS Resume Optimizer. Your task is to transform input info into a professional, ATS-friendly resume structure. 
+You MUST return your output as a valid JSON object with specific keys.
+- If insufficient info (<3 roles/projects), return: {"insufficient": true, "missing": string[]} 
+- If sufficient, return: {"cv": "markdown_string", "score": 85, "improvements": ["list", "of", "strings"]}`
 
     const res = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Source Info:\n${inputText.substring(0, 10000)}` }
+        { role: 'user', content: `Provided Info (Return JSON):\n${inputText.substring(0, 10000)}` }
       ],
       model: 'llama-3.3-70b-versatile',
       max_tokens: 2000,
@@ -180,6 +180,7 @@ Otherwise return {"cv":markdown_string,"score":0-100,"improvements":string[]}.`
     return null
   }
 }
+
 
 
 
