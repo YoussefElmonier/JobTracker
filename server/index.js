@@ -10,7 +10,9 @@ const authRoutes    = require('./routes/auth')
 const jobRoutes     = require('./routes/jobs')
 const logoRoutes    = require('./routes/logo')
 const paymentRoutes = require('./routes/payment')
+const cvRoutes      = require('./routes/cv')
 const notificationRoutes = require('./routes/notifications')
+
 const { scanUserEmails } = require('./services/emailScanner')
 const auth = require('./middleware/auth')
 const rateLimit = require('express-rate-limit')
@@ -215,6 +217,8 @@ app.use('/api/jobs',    jobRoutes)
 app.use('/api/logo',    logoRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/cv',      aiLimiter, cvRoutes)
+
 
 app.get('/api/test/scan-emails', auth, async (req, res) => {
   try {

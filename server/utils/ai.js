@@ -67,8 +67,8 @@ exports.generateSalaryInsights = async (description, isPremium, location = '') =
 // Premium: max_tokens 800
 exports.generateCoverLetter = async ({ title, company, description, cvText, analysis }) => {
   try {
-    const trimmedCV = cvText ? cvText.substring(0, 2000) : ''
-    const trimmedDesc = description ? description.substring(0, 1000) : ''
+    const trimmedCV = cvText ? cvText.substring(0, 6000) : ''
+    const trimmedDesc = description ? description.substring(0, 4000) : ''
     
     let prompt = `Job Title: ${title}\nCompany: ${company}\n\nJob Description:\n${trimmedDesc}`
     if (trimmedCV) {
@@ -83,7 +83,7 @@ exports.generateCoverLetter = async ({ title, company, description, cvText, anal
       if (analysis.highlights?.length) prompt += `- Emphasize these highlights: ${analysis.highlights.join('; ')}\n`
     }
 
-    const systemPrompt = "Write a professional cover letter based on this CV and job description. 3 paragraphs. Match the candidate's real experience to the job requirements. Sound natural and specific. No generic phrases."
+    const systemPrompt = "Write a professional 3-paragraph cover letter. Sound natural and link candidate's real experience to the job requirements. No generic boilerplate."
 
     const res = await groq.chat.completions.create({
       messages: [
@@ -107,15 +107,15 @@ exports.generateCoverLetter = async ({ title, company, description, cvText, anal
 exports.generateInterviewQuestions = async ({ title, description }, isPremium) => {
   if (!description) return null
   try {
-    const systemPrompt = `Return JSON: { "behavioral": string[], "technical": string[], "company_fit": string[] }. Generate exactly 10 interview questions for a ${title} — 3 behavioral, 4 technical, 3 company_fit. Use the job description.`
+    const systemPrompt = `Generate 10 interview questions for a ${title} based on the job description. Return JSON: { "behavioral": string[], "technical": string[], "company_fit": string[] }.`
     
     const res = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user',   content: description }
+        { role: 'user',   content: description.substring(0, 5000) }
       ],
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 400,
+      max_tokens: 600,
       temperature: 0.7,
       response_format: { type: 'json_object' }
     })
@@ -131,18 +131,18 @@ exports.generateInterviewQuestions = async ({ title, description }, isPremium) =
 exports.analyzeResume = async (cvText, description) => {
   if (!cvText || !description) return null
   try {
-    const trimmedCV = cvText.substring(0, 2000)
-    const trimmedDesc = description.substring(0, 1000)
+    const trimmedCV = cvText.substring(0, 6000)
+    const trimmedDesc = description.substring(0, 4000)
     
-    const systemPrompt = "Analyze this CV against this job description. Return only JSON: {score: number 0-100, matchedSkills: string[], missingSkills: string[], highlights: string[], verdict: 'Strong Match'|'Good Match'|'Partial Match'|'Weak Match'}"
+    const systemPrompt = "Analyze CV against Job Description. Return JSON: {score: 0-100, matchedSkills: [], missingSkills: [], highlights: [], verdict: string}"
     
     const res = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Candidate CV:\n${trimmedCV}\n\nJob description:\n${trimmedDesc}` }
+        { role: 'user', content: `CV:\n${trimmedCV}\n\nDesc:\n${trimmedDesc}` }
       ],
       model: 'llama-3.1-8b-instant',
-      max_tokens: 400,
+      max_tokens: 500,
       temperature: 0.1,
       response_format: { type: 'json_object' }
     })
@@ -153,3 +153,33 @@ exports.analyzeResume = async (cvText, description) => {
     return null
   }
 }
+
+// ─── CV Optimization (ATS-Ready) ──────────────────────────────────────────
+exports.optimizeCV = async (inputText) => {
+  if (!inputText || inputText.length < 50) return { insufficient: true, missing: ['More detailed work history or skills'] }
+  try {
+    const systemPrompt = `Expert ATS Resume Optimizer. Transform provided text into a professional, high-scoring ATS-friendly resume.
+Include: Summary, Experience, Education, Skills. Focus on quantified achievements.
+If info is insufficient, return {"insufficient":true,"missing":string[]}.
+Otherwise return {"cv":markdown_string,"score":0-100,"improvements":string[]}.`
+
+    const res = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Source Info:\n${inputText.substring(0, 10000)}` }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 2000,
+      temperature: 0.5,
+      response_format: { type: 'json_object' }
+    })
+    
+    return JSON.parse(res.choices[0]?.message?.content || 'null')
+  } catch (err) {
+    console.error('optimizeCV error:', err.message)
+    return null
+  }
+}
+
+
+

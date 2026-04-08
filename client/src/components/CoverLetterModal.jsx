@@ -87,8 +87,23 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess, 
           {warning && <div className="auth-error" style={{ color: '#d97706', backgroundColor: '#fef3c7', padding: '10px', borderRadius: '4px', marginBottom: '10px', fontSize: '0.9rem' }}>{warning}</div>}
 
           {loading ? (
-            <div style={{ display: 'flex', padding: '40px', justifyContent: 'center' }}>
-              <div className="auth-spinner" style={{ width: '30px', height: '30px' }} />
+            <div className="shimmer-container" style={{ minHeight: '300px' }}>
+              <div className="typewriter-text">
+                AI is crafting your cover letter
+                <div className="writing-dot"></div>
+                <div className="writing-dot"></div>
+                <div className="writing-dot"></div>
+              </div>
+              <div className="shimmer-line" style={{ width: '100%' }}></div>
+              <div className="shimmer-line" style={{ width: '90%' }}></div>
+              <div className="shimmer-line" style={{ width: '95%' }}></div>
+              <div className="shimmer-line" style={{ width: '85%' }}></div>
+              <div className="shimmer-line" style={{ width: '92%' }}></div>
+              <div className="shimmer-line" style={{ width: '40%' }}></div>
+              <div style={{ height: '20px' }}></div>
+              <div className="shimmer-line" style={{ width: '100%' }}></div>
+              <div className="shimmer-line" style={{ width: '95%' }}></div>
+              <div className="shimmer-line" style={{ width: '80%' }}></div>
             </div>
           ) : (
             <textarea
@@ -98,6 +113,7 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess, 
               onChange={e => setContent(e.target.value)}
             />
           )}
+
 
           <div className="modal__footer">
             <button type="button" className="btn btn-secondary" onClick={() => generateLetter(true)} disabled={loading}>

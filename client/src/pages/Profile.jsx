@@ -3,7 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UpgradeModal from '../components/UpgradeModal'
 import api from '../api/axios'
-import { RiUpload2Line, RiCheckLine, RiShareBoxLine } from 'react-icons/ri'
+import { 
+  RiUpload2Line, RiCheckLine, RiShareBoxLine, RiSparklingLine, 
+  RiInformationLine, RiDownloadLine, RiFileCopyLine, RiErrorWarningLine 
+} from 'react-icons/ri'
+import jsPDF from 'jspdf'
+
 import PageWrapper from '../components/PageWrapper'
 import './Profile.css'
 
@@ -20,6 +25,12 @@ export default function Profile() {
   const [testError, setTestError] = useState(null);
   const [message, setMessage] = useState(null);
   const [showUpgrade, setShowUpgrade] = useState(false)
+  
+  // ATS Optimization States
+  const [atsLoading, setAtsLoading] = useState(false)
+  const [atsResult, setAtsResult] = useState(null)
+  const [atsError, setAtsError] = useState(null)
+
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -217,6 +228,47 @@ export default function Profile() {
     }
   };
 
+  const handleOptimizeCV = async () => {
+    try {
+      setAtsLoading(true)
+      setAtsError(null)
+      const formData = new FormData()
+      if (file) {
+        formData.append('cvFile', file)
+      }
+      formData.append('manualText', cvText)
+
+      const res = await api.post('/cv/optimize', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      setAtsResult(res.data)
+      await refreshUser()
+    } catch (err) {
+      if (err.response?.data?.error === 'limit_reached') {
+        setShowUpgrade(true)
+      } else {
+        setAtsError(err.response?.data?.message || 'Failed to optimize CV.')
+      }
+    } finally {
+      setAtsLoading(false)
+    }
+  }
+
+  const handleDownloadCV = () => {
+    if (!atsResult?.cv) return
+    const doc = new jsPDF()
+    const lines = doc.splitTextToSize(atsResult.cv, 180)
+    doc.text(lines, 15, 20)
+    doc.save('Optimized_ATS_CV.pdf')
+  }
+
+  const handleCopyCV = () => {
+    if (atsResult?.cv) {
+      navigator.clipboard.writeText(atsResult.cv)
+    }
+  }
+
+
   return (
     <PageWrapper>
       <div className="page-container animate-fade">
@@ -289,6 +341,108 @@ export default function Profile() {
             </button>
             </form>
           </section>
+          
+          {/* ── ATS CV Optimizer Section ── */}
+          <section className="profile__section profile__ats-section" style={{ marginTop: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <RiSparklingLine style={{ color: 'var(--accent)' }} /> ATS CV Optimizer
+              </h2>
+              <span style={{ 
+                fontSize: '0.75rem', fontWeight: 600, padding: '4px 12px', borderRadius: '12px',
+                background: 'var(--bg-page)', border: '1px solid var(--border)', color: 'var(--text-muted)'
+              }}>
+                {user?.atsOptimizationsUsed || 0} / {user?.isPremium ? '∞' : '2'} optimizations used
+              </span>
+            </div>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '20px' }}>
+              Transform your experience into an ATS-friendly resume that gets past automated filters.
+            </p>
+
+            {atsLoading ? (
+              <div className="shimmer-container" style={{ minHeight: '150px', background: 'var(--bg-page)', borderRadius: '12px', marginBottom: '20px' }}>
+                <div className="typewriter-text" style={{ color: 'var(--text-main)' }}>AI is optimizing your CV...</div>
+                <div className="shimmer-line" style={{ width: '100%' }}></div>
+                <div className="shimmer-line" style={{ width: '90%' }}></div>
+                <div className="shimmer-line" style={{ width: '40%' }}></div>
+              </div>
+            ) : atsResult ? (
+              <div className="ats-result" style={{ background: 'var(--bg-page)', borderRadius: '12px', padding: '20px', border: '1px solid var(--border)', marginBottom: '20px' }}>
+                {atsResult.insufficient ? (
+                  <div className="ats-warning">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#d97706', fontWeight: 600, marginBottom: '12px' }}>
+                      <RiErrorWarningLine /> More Information Needed
+                    </div>
+                    <p style={{ fontSize: '0.9rem', marginBottom: '12px' }}>The AI needs more details to generate a professional CV. Please include:</p>
+                    <ul style={{ listStyle: 'disc', paddingLeft: '20px', fontSize: '0.85rem' }}>
+                      {atsResult.missing?.map((m, i) => <li key={i}>{m}</li>)}
+                    </ul>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ 
+                          width: '40px', height: '40px', borderRadius: '50%', background: 'var(--accent-glow)', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', fontWeight: 700
+                        }}>
+                          {atsResult.score}%
+                        </div>
+                        <span style={{ fontWeight: 600 }}>ATS Score</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn-icon" onClick={handleCopyCV} title="Copy Content"><RiFileCopyLine /></button>
+                        <button className="btn-icon" onClick={handleDownloadCV} title="Download PDF"><RiDownloadLine /></button>
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginBottom: '15px' }}>
+                      <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <RiCheckLine style={{ color: '#10b981' }} /> Key Improvements:
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {atsResult.improvements?.map((imp, i) => (
+                          <span key={i} style={{ fontSize: '0.7rem', padding: '2px 8px', background: 'rgba(16,185,129,0.1)', color: '#059669', borderRadius: '4px' }}>
+                            {imp}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <pre style={{ 
+                      whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: 'var(--bg-card)', 
+                      padding: '15px', borderRadius: '8px', border: '1px solid var(--border)', maxHeight: '300px', overflowY: 'auto' 
+                    }}>
+                      {atsResult.cv}
+                    </pre>
+                  </>
+                )}
+                <button 
+                  className="btn-ghost" 
+                  style={{ marginTop: '15px', width: '100%', fontSize: '0.85rem' }} 
+                  onClick={() => setAtsResult(null)}
+                >
+                  Clear Result
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {atsError && <div className="profile__error" style={{ margin: 0 }}>{atsError}</div>}
+                <button 
+                  className="profile__save-btn" 
+                  onClick={handleOptimizeCV}
+                  style={{ background: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <RiSparklingLine /> Optimize & Make ATS-Friendly
+                </button>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  <RiInformationLine /> This will analyze your current CV/Text and reformat it for recruiter software.
+                </p>
+              </div>
+            )}
+          </section>
+
 
           {/* ── Gmail Integration ── */}
           <section className="profile__section profile__gmail-section" style={{ marginTop: '24px' }}>
