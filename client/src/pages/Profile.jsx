@@ -257,10 +257,57 @@ export default function Profile() {
   const handleDownloadCV = () => {
     if (!atsResult?.cv) return
     const doc = new jsPDF()
-    const lines = doc.splitTextToSize(atsResult.cv, 180)
-    doc.text(lines, 15, 20)
-    doc.save('Optimized_ATS_CV.pdf')
+    
+    // Clean markdown first
+    const cleanText = atsResult.cv
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [text](url) -> text
+      .replace(/\*\*([^*]+)\*\*/g, '$1')       // **bold** -> bold
+      .replace(/#{1,6}\s+/g, '')               // # Header -> Header
+
+    const lines = cleanText.split('\n')
+    let y = 20
+    const margin = 20
+    const pageWidth = doc.internal.pageSize.width
+    const contentWidth = pageWidth - (margin * 2)
+
+    doc.setFont('Helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+
+    lines.forEach((line) => {
+      // Logic for headers: All caps lines or specific sections
+      const isHeader = /^[A-Z\s]{4,}$/.test(line.trim()) || 
+                      ['EXPERIENCE', 'SUMMARY', 'SKILLS', 'EDUCATION', 'PROJECTS'].some(h => line.toUpperCase().includes(h))
+      
+      if (isHeader) {
+        doc.setFont('Helvetica', 'bold')
+        doc.setFontSize(12)
+        doc.setTextColor(33, 33, 33)
+        y += 5
+      } else {
+        doc.setFont('Helvetica', 'normal')
+        doc.setFontSize(10)
+        doc.setTextColor(60, 60, 60)
+      }
+
+      // Check if line needs wrapping
+      const wrappedLines = doc.splitTextToSize(line, contentWidth)
+      
+      wrappedLines.forEach((wLine) => {
+        if (y > 280) { // Page break
+          doc.addPage()
+          y = 20
+        }
+        doc.text(wLine, margin, y)
+        y += 6
+      })
+
+      if (isHeader) y += 2
+    })
+
+    doc.save(`${user?.name || 'My'}_Optimized_CV.pdf`)
   }
+
 
   const handleCopyCV = () => {
     if (atsResult?.cv) {
@@ -410,22 +457,20 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    <pre style={{ 
-                      whiteSpace: 'pre-wrap', fontSize: '0.8rem', background: 'var(--bg-card)', 
-                      padding: '15px', borderRadius: '8px', border: '1px solid var(--border)', maxHeight: '300px', overflowY: 'auto' 
-                    }}>
+                    <div className="cv-preview">
                       {atsResult.cv}
-                    </pre>
+                    </div>
                   </>
                 )}
                 <button 
                   className="btn-ghost" 
-                  style={{ marginTop: '15px', width: '100%', fontSize: '0.85rem' }} 
+                  style={{ marginTop: '20px', width: '100%', fontSize: '0.8rem', color: 'var(--text-muted)' }} 
                   onClick={() => setAtsResult(null)}
                 >
-                  Clear Result
+                  Start Over
                 </button>
               </div>
+
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {atsError && <div className="profile__error" style={{ margin: 0 }}>{atsError}</div>}

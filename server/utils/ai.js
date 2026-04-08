@@ -158,10 +158,18 @@ exports.analyzeResume = async (cvText, description) => {
 exports.optimizeCV = async (inputText) => {
   if (!inputText || inputText.length < 50) return { insufficient: true, missing: ['More detailed work history or skills'] }
   try {
-    const systemPrompt = `Expert ATS Resume Optimizer. Your task is to transform input info into a professional, ATS-friendly resume structure. 
-You MUST return your output as a valid JSON object with specific keys.
-- If insufficient info (<3 roles/projects), return: {"insufficient": true, "missing": string[]} 
-- If sufficient, return: {"cv": "markdown_string", "score": 85, "improvements": ["list", "of", "strings"]}`
+    const systemPrompt = `Expert ATS Resume Optimizer. Transform input into a professional, polished resume.
+OUTPUT REQUIREMENTS:
+1. Use standard plain text only. Avoid complex markdown links like [text](url).
+2. Use CLEAN sections: PROFESSIONAL SUMMARY, WORK EXPERIENCE, TECHNICAL SKILLS, EDUCATION.
+3. Formatting: Use ALL CAPS for section headers. Use '*' for bullet points.
+4. Structure: Name and contact info at the top, followed by summary, then experience, etc.
+5. Tone: Results-oriented, quantifying achievements.
+
+RETURN JSON:
+- If insufficient (<3 roles/projects): {"insufficient": true, "missing": string[]}
+- If sufficient: {"cv": "plain_text_polished_resume", "score": number, "improvements": string[]}`
+
 
     const res = await groq.chat.completions.create({
       messages: [
