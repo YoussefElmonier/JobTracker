@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { 
   RiVipCrownFill, RiCloseLine, RiInfinityLine, 
@@ -46,7 +47,7 @@ export default function UpgradeModal({ onClose, reason = 'limit' }) {
 
   const { title, body } = messages[reason] || messages.limit
 
-  return (
+  return createPortal(
     <div className="upgrade-modal-overlay" onClick={onClose}>
       <div className="upgrade-modal" onClick={e => e.stopPropagation()}>
         {/* Close */}
@@ -86,6 +87,7 @@ export default function UpgradeModal({ onClose, reason = 'limit' }) {
 
         <p className="upgrade-modal__note">Secure payment via Paddle · No subscriptions</p>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

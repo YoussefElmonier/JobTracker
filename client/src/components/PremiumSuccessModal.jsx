@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { RiCheckLine, RiVipCrownFill } from 'react-icons/ri'
 import './PremiumSuccessModal.css'
 
@@ -23,7 +24,7 @@ export default function PremiumSuccessModal({ onClose }) {
     });
   }, []);
 
-  return (
+  return createPortal(
     <div className="premium-success-overlay">
       <div className="premium-success-modal glass-panel animate-slide-up">
         {/* Animated Particles */}
@@ -70,6 +71,7 @@ export default function PremiumSuccessModal({ onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { RiCloseLine, RiDownloadLine, RiFileCopyLine, RiRefreshLine, RiVipCrownFill } from 'react-icons/ri'
 import jsPDF from 'jspdf'
 import UpgradeModal from './UpgradeModal'
@@ -57,7 +58,7 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess, 
     doc.save(`Cover_Letter_${job.company.replace(/\s+/g, '_')}.pdf`)
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth: '600px' }}>
         <div className="modal__header">
@@ -131,6 +132,7 @@ export default function CoverLetterModal({ job, onClose, onGenerate, onSuccess, 
       {showUpgrade && (
         <UpgradeModal reason="limit" onClose={() => setShowUpgrade(false)} />
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
