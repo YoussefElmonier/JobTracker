@@ -158,15 +158,24 @@ app.use(express.json())
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
 
+const sessionSecret = process.env.JWT_SECRET || 'fallback-secret-for-dev'
+const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI
+
+if (!mongoUri) {
+  console.warn('⚠️  MONGODB_URI not found for session store. Falling back to MemoryStore (sessions will be lost on restart).')
+}
+
 app.use(session({
-  secret: process.env.JWT_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI || process.env.MONGODB_URI,
+  store: mongoUri ? MongoStore.create({
+    mongoUrl: mongoUri,
     collectionName: 'sessions',
-    ttl: 7 * 24 * 60 * 60 // 7 days
-  }),
+    ttl: 7 * 24 * 60 * 60,
+    autoRemove: 'native',
+    touchAfter: 24 * 3600 // Only update session in DB once per day unless data changes
+  }) : undefined,
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
