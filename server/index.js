@@ -155,10 +155,17 @@ app.use('/api/', generalLimiter);
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 const session = require('express-session')
+const MongoStore = require('connect-mongo')
+
 app.use(session({
   secret: process.env.JWT_SECRET,
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI || process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 7 * 24 * 60 * 60 // 7 days
+  }),
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
