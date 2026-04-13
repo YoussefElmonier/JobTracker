@@ -156,7 +156,7 @@ app.use('/api/', generalLimiter);
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
 const session = require('express-session')
-const MongoStore = require('connect-mongo')
+const MongoStore = require('connect-mongo').default
 
 const sessionSecret = process.env.JWT_SECRET || 'fallback-secret-for-dev'
 const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI
