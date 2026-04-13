@@ -477,7 +477,14 @@ export default function Profile() {
                 <button 
                   className="profile__save-btn" 
                   onClick={handleOptimizeCV}
-                  style={{ background: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  style={{ 
+                    background: 'var(--text-main)', 
+                    color: 'var(--bg-page)',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '8px' 
+                  }}
                 >
                   <RiSparklingLine /> Optimize & Make ATS-Friendly
                 </button>
